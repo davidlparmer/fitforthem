@@ -4,6 +4,17 @@
 // Globals used: subStatus, currentPlan, userName, workMode, weightLog
 // ─────────────────────────────────────────────────────────────
 
+// ── PERMANENT FREE ACCESS WHITELIST ──────────────────────────
+// These device IDs bypass all subscription checks permanently.
+// Collect device IDs from Settings → About page → Copy Device ID.
+// Add them here before deploying.
+var WHITELISTED_DEVICES = [
+  // 'fft-REPLACE-WITH-YOUR-IPHONE-ID',
+  // 'fft-REPLACE-WITH-YOUR-IPAD-ID',
+  // 'fft-REPLACE-WITH-WIFE-ID',
+  // 'fft-REPLACE-WITH-BIL-ID',
+];
+
 // — startJourney ——————————————————————————————————————
 function startJourney(){
   var n=document.getElementById('welcome-name').value.trim();
@@ -12,12 +23,9 @@ function startJourney(){
   localStorage.setItem('fft_name',n);
   saveAllData();
   document.getElementById('welcome-screen').style.display='none';
-  // ── PAYWALL BYPASSED FOR BETA TESTING ──────────────────────
-  // Go straight to app — no subscription check
   document.getElementById('main-nav').style.display='flex';
   updateDashGreeting();
   showPage('builder');
-  // ───────────────────────────────────────────────────────────
 }
 
 // — showPaywall ———————————————————————————————————————
@@ -49,7 +57,29 @@ async function checkSubscription(){
 
 // — isSubscribed ——————————————————————————————————————
 function isSubscribed(){
+  // Whitelisted devices always have access
+  if(WHITELISTED_DEVICES.indexOf(getDeviceId())>=0)return true;
   return subStatus==='active'||subStatus==='trialing';
+}
+
+// — isTrialExpired ————————————————————————————————————
+function isTrialExpired(){
+  // Whitelisted devices never expire
+  if(WHITELISTED_DEVICES.indexOf(getDeviceId())>=0)return false;
+  // Active subscribers never expire
+  if(isSubscribed())return false;
+  // No plan built yet — trial hasn't started
+  var trialStart=localStorage.getItem('fft_trial_start');
+  if(!trialStart)return false;
+  var THIRTY_DAYS=30*24*60*60*1000;
+  return(Date.now()-parseInt(trialStart))>THIRTY_DAYS;
+}
+
+// — checkTrialAndGate ————————————————————————————————
+function checkTrialAndGate(){
+  if(isTrialExpired()){
+    showPaywall();
+  }
 }
 
 // — subStatus + IIFE (initApp/bootApp/finishBoot) —————
@@ -212,24 +242,23 @@ var subStatus='none';// none | trialing | active | past_due | canceled
   }
 
   function finishBoot(){
-    // ── PAYWALL BYPASSED FOR BETA TESTING ──────────────────────
-    // To re-enable Stripe: restore the original finishBoot logic below
-    // and update startJourney to check fft_sub_status again.
-    // ───────────────────────────────────────────────────────────
     hideRestoreLoader();
     var hasName=!!localStorage.getItem('fft_name');
     document.getElementById('welcome-screen').style.display=hasName?'none':'flex';
     hidePaywall();
     if(hasName){
       // Pull latest group data before rendering — ensures weight log is current
-      if(typeof pullGroupData==='function' && localStorage.getItem('fft_group_id')){
+      if(typeof pullGroupData==='function'&&localStorage.getItem('fft_group_id')){
         pullGroupData(function(){
           initApp();
           if(typeof startBackgroundSync==='function')startBackgroundSync();
+          // Check trial after app is visible — 1.5s delay so user sees their data first
+          setTimeout(checkTrialAndGate,1500);
         });
       } else {
         initApp();
         if(typeof startBackgroundSync==='function')startBackgroundSync();
+        setTimeout(checkTrialAndGate,1500);
       }
     }
   }

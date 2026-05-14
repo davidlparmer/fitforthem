@@ -207,6 +207,13 @@ function generatePlan(){
 
   // Phase — determine mode first so bridge logic can react
   var phase=getPhase(wLbs,hIn);
+  // v1 launch: surplus/gain lanes are not yet available to new users.
+  // If formula produces a gain phase, redirect to maintenance (closest equivalent).
+  // Existing users who already have gain-mode plans are not affected — this only
+  // runs during plan generation, not on plan load.
+  if(phase.mode==='gain'){
+    phase={name:'maintenance',center:1.0,mode:'deficit',label:'Maintenance',msg:'You\'re at or near your target weight. Eat at your burn rate to stay here.'};
+  }
 
   // Bridge reference weight — no bridge for lean gain (use actual weight)
   var br=phase.mode==='gain'?{bridge:0,ref:wLbs}:calcBridgeReference(wLbs,tz.mid);
@@ -333,6 +340,13 @@ function generatePlan(){
 
   updateDashboard();
   buildDashDayTabs();
+
+  // Record when the first plan was built — this starts the 7-day free trial clock.
+  // Only set once — never overwrite. Earlier timestamp always wins.
+  if (!localStorage.getItem('fft_trial_start')) {
+    localStorage.setItem('fft_trial_start', Date.now().toString());
+    saveAllData();
+  }
 
   document.getElementById('results').classList.remove('hidden');
   setTimeout(function(){document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});},100);

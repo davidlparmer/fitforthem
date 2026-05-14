@@ -426,8 +426,9 @@ body.light-mode .progress-feedback{background:var(--s2) !important}
 <div id="paywall-screen">
   <div class="paywall-card">
     <div class="paywall-logo">Loftin Method</div>
-    <div class="paywall-price">$10<span>/month</span></div>
-    <div class="paywall-trial">7-day free trial — cancel anytime</div>
+    <div style="font-size:.95rem;font-weight:600;color:var(--t1);margin-bottom:6px;text-align:center">Your free trial has ended</div>
+    <div class="paywall-price">$19<span>/month</span></div>
+    <div class="paywall-trial">Continue with full access — cancel anytime</div>
     <div class="paywall-features">
       <div class="paywall-feature">Daily meals scaled to your exact body</div>
       <div class="paywall-feature">Eating out recommendations, anywhere</div>
@@ -435,9 +436,9 @@ body.light-mode .progress-feedback{background:var(--s2) !important}
       <div class="paywall-feature">Alcohol handled — not ignored</div>
       <div class="paywall-feature">Progress tracking and milestone badges</div>
     </div>
-    <button class="paywall-btn" id="paywall-subscribe-btn" onclick="startCheckout()">Start Free Trial →</button>
-    <button class="paywall-restore" onclick="restoreSubscription()">Restore subscription</button>
-    <div class="paywall-note">No charge until your trial ends.<br>Cancel anytime from your account settings.</div>
+    <button class="paywall-btn" id="paywall-subscribe-btn" onclick="startCheckout()">Continue — $19/month →</button>
+    <button class="paywall-restore" onclick="restoreSubscription()">Already subscribed? Restore access</button>
+    <div class="paywall-note">No contracts. Cancel anytime from your account settings.</div>
   </div>
 </div>
 
@@ -939,6 +940,16 @@ body.light-mode .progress-feedback{background:var(--s2) !important}
 
 <div class="page" id="page-about">
   <div class="wrap">
+  <script>
+    // Populate device ID display when about page is rendered
+    document.addEventListener('DOMContentLoaded', function() {
+      var el = document.getElementById('device-id-display');
+      if (el) {
+        var m = document.cookie.match(/fft_device=([^;]+)/);
+        el.textContent = m ? m[1] : 'Not set yet — open app fully first';
+      }
+    });
+  </script>
 
   <!-- SETTINGS -->
   <div class="card" style="margin-bottom:14px">
@@ -960,7 +971,14 @@ body.light-mode .progress-feedback{background:var(--s2) !important}
       </div>
       <button onclick="openCustomerPortal()" id="portal-btn" style="background:none;border:1px solid var(--gold-line);color:var(--gold);border-radius:8px;padding:6px 14px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:var(--font-body)">Manage</button>
     </div>
-  </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid var(--gold-line)">
+      <div>
+        <div style="font-size:.9rem;font-weight:600;color:var(--t1)">Device ID</div>
+        <div id="device-id-display" style="font-size:.68rem;color:var(--t3);margin-top:2px;font-family:monospace;word-break:break-all"></div>
+      </div>
+      <button onclick="(function(){var id=document.cookie.match(/fft_device=([^;]+)/);if(id){navigator.clipboard.writeText(id[1]).then(function(){var b=document.getElementById('copy-device-btn');b.textContent='Copied!';setTimeout(function(){b.textContent='Copy';},2000);});}else{alert('No device ID found.');}})()" id="copy-device-btn" style="background:none;border:1px solid var(--gold-line);color:var(--gold);border-radius:8px;padding:6px 14px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:var(--font-body);white-space:nowrap;flex-shrink:0;margin-left:12px">Copy</button>
+    </div>
 
   <!-- USING THE APP -->
   <div class="card">
@@ -1639,13 +1657,9 @@ function tdBase() {
 // Called by updateDashboard() and setDinnerTheme()/clearDinnerTheme().
 
 function buildDinnerThemeUI() {
-  var section = document.getElementById('dinner-theme-section');
-  var optionsEl = document.getElementById('dinner-theme-options');
-  var activeEl = document.getElementById('dinner-theme-active');
-  var clearBtn = document.getElementById('dinner-theme-clear-btn');
-  if (!section || !optionsEl) return;
-
-  if (!currentPlan || !currentPlan.cal) { section.style.display = 'none'; return; }
+  // Hidden for v1 launch — re-enable after first paying customers
+  // The dinner-theme-section div already has display:none
+  return;
   section.style.display = 'block';
 
   var lane = (currentPlan && currentPlan.lane) ? currentPlan.lane : 'men_deficit';

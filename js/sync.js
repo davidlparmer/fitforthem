@@ -36,6 +36,7 @@ function buildSavePayload(){
       fft_saved_meals:localStorage.getItem('fft_saved_meals'),
       fft_group_id:localStorage.getItem('fft_group_id'),
       fft_dinner_theme:localStorage.getItem('fft_dinner_theme'),
+      fft_trial_start:localStorage.getItem('fft_trial_start'),
     }
   };
 }
@@ -110,6 +111,21 @@ function restoreFromServer(callback){
         if(typeof currentPlan!=='undefined'&&d.fft_plan){
           currentPlan=JSON.parse(d.fft_plan);
           if(typeof runPlanMigration==='function')runPlanMigration();
+        }
+      }catch(e){}
+      // fft_trial_start: only restore from server if not already set locally.
+      // Earlier timestamp always wins — never reset the clock to a later date.
+      try{
+        if(d.fft_trial_start&&!localStorage.getItem('fft_trial_start')){
+          localStorage.setItem('fft_trial_start',d.fft_trial_start);
+        }
+      }catch(e){}
+      // Grace period for existing users who built a plan before the trial system existed.
+      // If they have a plan but no trial_start, give them 30 days from now.
+      try{
+        if(!localStorage.getItem('fft_trial_start')&&localStorage.getItem('fft_plan')){
+          var grace=Date.now(); // full 30 days from today
+          localStorage.setItem('fft_trial_start',grace.toString());
         }
       }catch(e){}
       callback(true);

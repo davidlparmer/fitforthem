@@ -1,7 +1,7 @@
 // Fit For Them — Service Worker
 // Update this version string whenever you deploy a new version
 // The browser will detect the change and refresh the cache automatically
-const CACHE_VERSION = 'fft-v150';
+const CACHE_VERSION = 'fft-v151';
 const CACHE_NAME = CACHE_VERSION;
 
 const STATIC_ASSETS = [
@@ -63,6 +63,9 @@ self.addEventListener('activate', function(event) {
 self.addEventListener('fetch', function(event) {
   // Never intercept POST requests or API calls
   if (event.request.method !== 'GET') return;
+  // Never intercept cross-origin requests — this causes CORS errors on staging
+  // and is incorrect SW behavior regardless of environment
+  if (!event.request.url.startsWith(self.location.origin)) return;
   if (event.request.url.includes('anthropic.com')) return;
   if (event.request.url.includes('netlify/functions')) return;
   if (event.request.url.includes('googleapis.com')) return;

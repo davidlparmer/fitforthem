@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loftin Method — Quiet system. Visible standard.</title>
+<meta name="description" content="A precision nutrition and movement system for men who want real fat loss — without supplements, complicated tracking, or programs that don't fit real life.">
+<meta name="theme-color" content="#0C0B09">
+<link rel="icon" href="icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-V1SKK7T2QS"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-V1SKK7T2QS');</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+:root{
+  --bg:#0C0B09;
+  --bg2:#0F0E0B;
+  --card:#151310;
+  --card2:#1A1814;
+  --gold:#C8A04A;
+  --gold-light:#D4AF6A;
+  --gold-dim:rgba(200,160,74,.2);
+  --gold-line:rgba(200,160,74,.13);
+  --gold-glow:rgba(200,160,74,.06);
+  --t1:#EDE0C8;
+  --t2:#8A7A5A;
+  --t3:#3A3020;
+  --font-display:'Playfair Display',Georgia,serif;
+  --font-body:'DM Sans','Segoe UI',system-ui,sans-serif;
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--font-body);
+  background:var(--bg) url('texture-bg.png') center center / cover fixed;
+  color:var(--t1);
+  overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background:rgba(10,9,7,.74);
+  pointer-events:none;z-index:0;
+}
+body>*{position:relative;z-index:1}
+body::after{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
+  opacity:.4;pointer-events:none;z-index:999;
+}
+
+/* NAV */
+nav{
+  position:fixed;top:0;left:0;width:100%;z-index:100;
+  padding:16px 24px;
+  background:rgba(10,9,7,.94);
+  backdrop-filter:blur(24px);
+  border-bottom:1px solid var(--gold-line);
+}
+.nav-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{font-family:var(--font-display);font-size:1rem;font-weight:600;color:var(--gold);letter-spacing:.04em;text-decoration:none}
+.nav-cta{
+  background:var(--gold);color:var(--bg);
+  font-size:.7rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  text-decoration:none;padding:10px 20px;border-radius:2px;
+  transition:background .2s;
+}
+.nav-cta:hover{background:var(--gold-light)}
+
+/* HERO */
+.hero{
+  min-height:100svh;padding:0 24px;
+  display:flex;flex-direction:column;
+  position:relative;overflow:hidden;
+}
+.hero-glow{
+  position:absolute;width:700px;height:700px;
+  background:radial-gradient(circle,rgba(200,160,74,.07) 0%,transparent 65%);
+  top:-150px;right:-200px;pointer-events:none;
+}
+.hero-content{
+  flex:1;display:flex;flex-direction:column;justify-content:center;
+  max-width:1100px;margin:0 auto;width:100%;
+  padding:140px 0 90px;
+}
+.hero-rule{width:36px;height:1px;background:var(--gold);margin-bottom:28px;opacity:0;animation:fadeUp .5s .1s forwards}
+.hero-eye{font-size:.62rem;font-weight:600;letter-spacing:.26em;text-transform:uppercase;color:var(--gold);margin-bottom:22px;opacity:0;animation:fadeUp .5s .15s forwards}
+.hero h1{
+  font-family:var(--font-display);
+  font-size:clamp(3rem,9.5vw,6rem);
+  font-weight:700;line-height:1.04;
+  color:var(--t1);margin-bottom:10px;
+  opacity:0;animation:fadeUp .6s .2s forwards;
+}
+.hero h1 em{font-style:italic;color:var(--gold-light)}
+.hero-tagline{
+  font-family:var(--font-display);font-style:italic;
+  font-size:clamp(.95rem,2.5vw,1.2rem);color:var(--t2);
+  margin-bottom:36px;opacity:0;animation:fadeUp .6s .28s forwards;
+}
+.hero-sub{
+  font-size:.95rem;font-weight:300;line-height:1.78;color:var(--t2);
+  max-width:460px;margin-bottom:52px;
+  opacity:0;animation:fadeUp .6s .36s forwards;
+}
+.hero-sub strong{color:var(--t1);font-weight:500}
+.cta-group{display:flex;gap:14px;flex-wrap:wrap;align-items:center;opacity:0;animation:fadeUp .6s .44s forwards}
+.btn-primary{
+  background:var(--gold);color:var(--bg);
+  font-size:.74rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  text-decoration:none;padding:18px 36px;border-radius:2px;
+  display:inline-flex;align-items:center;gap:8px;
+  transition:background .2s,transform .15s;
+}
+.btn-primary:hover{background:var(--gold-light);transform:translateY(-1px)}
+.btn-ghost{
+  color:var(--t2);font-size:.8rem;font-weight:400;letter-spacing:.06em;
+  text-decoration:none;display:inline-flex;align-items:center;gap:6px;
+  border:1px solid var(--gold-line);padding:17px 28px;border-radius:2px;
+  transition:color .2s,border-color .2s;
+}
+.btn-ghost:hover{color:var(--gold);border-color:var(--gold-dim)}
+.scroll-hint{
+  padding-bottom:36px;
+  display:flex;flex-direction:column;align-items:flex-start;gap:8px;
+  opacity:0;animation:fadeIn 1s .9s forwards;
+}
+.scroll-line{width:1px;height:40px;background:linear-gradient(to bottom,var(--gold-dim),transparent)}
+.scroll-label{font-size:.55rem;letter-spacing:.22em;text-transform:uppercase;color:var(--t3)}
+
+/* SHARED */
+.section-wrap{max-width:1100px;margin:0 auto}
+section{padding:96px 24px}
+.s-rule{width:30px;height:1px;background:var(--gold);margin-bottom:20px}
+.s-eye{font-size:.6rem;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);margin-bottom:14px}
+.s-title{font-family:var(--font-display);font-size:clamp(1.9rem,5.5vw,3rem);font-weight:700;line-height:1.1;color:var(--t1);margin-bottom:18px}
+.s-title em{font-style:italic;color:var(--gold-light)}
+.s-sub{font-size:.92rem;font-weight:300;line-height:1.75;color:var(--t2);max-width:500px;margin-bottom:52px}
+.s-sub strong{color:var(--t1);font-weight:500}
+.divider{height:1px;background:var(--gold-line);margin:0 24px}
+
+/* PILLARS */
+.pillars{border:1px solid var(--gold-line);border-radius:2px;overflow:hidden}
+.pillar{
+  padding:30px 28px;background:var(--card);
+  border-bottom:1px solid var(--gold-line);
+  position:relative;transition:background .2s;
+}
+.pillar:last-child{border-bottom:none}
+.pillar::after{
+  content:'';position:absolute;left:0;top:0;bottom:0;
+  width:2px;background:var(--gold);
+  transform:scaleY(0);transform-origin:bottom;transition:transform .3s;
+}
+.pillar:hover{background:var(--card2)}
+.pillar:hover::after{transform:scaleY(1)}
+.pillar-num{font-size:.55rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--t3);margin-bottom:10px}
+.pillar-title{font-family:var(--font-display);font-size:1.1rem;font-weight:600;color:var(--t1);margin-bottom:8px}
+.pillar-body{font-size:.87rem;font-weight:300;line-height:1.68;color:var(--t2)}
+
+/* STEPS */
+.steps{border:1px solid var(--gold-line);border-radius:2px;overflow:hidden}
+.step{display:grid;grid-template-columns:56px 1fr;background:var(--card);border-bottom:1px solid var(--gold-line);transition:background .2s}
+.step:last-child{border-bottom:none}
+.step:hover{background:var(--card2)}
+.step-n{
+  display:flex;align-items:flex-start;justify-content:center;
+  padding:28px 0;font-size:.65rem;font-weight:700;letter-spacing:.1em;color:var(--gold);
+  border-right:1px solid var(--gold-line);
+}
+.step-body{padding:26px 24px}
+.step-t{font-family:var(--font-display);font-size:1rem;font-weight:600;color:var(--t1);margin-bottom:6px}
+.step-d{font-size:.87rem;font-weight:300;line-height:1.65;color:var(--t2)}
+
+/* WHO */
+.who-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:560px){.who-grid{grid-template-columns:1fr}}
+.who-card{background:var(--card);border:1px solid var(--gold-line);border-radius:2px;padding:24px 20px}
+.who-label{font-size:.58rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--gold-line)}
+.who-label.yes{color:var(--gold)}
+.who-label.no{color:var(--t3)}
+.who-items{list-style:none;display:flex;flex-direction:column;gap:12px}
+.who-item{display:flex;align-items:flex-start;gap:10px;font-size:.86rem;font-weight:300;line-height:1.5;color:var(--t2)}
+.who-dot{flex-shrink:0;margin-top:6px;width:5px;height:5px;border-radius:50%}
+.who-dot.yes{background:var(--gold)}
+.who-dot.no{background:var(--t3)}
+
+/* BADGES */
+.badge-item:hover img{transform:translateY(-3px);filter:drop-shadow(0 10px 28px rgba(200,160,74,.4))}
+/* WAITLIST */
+.waitlist-center{text-align:center}
+.waitlist-wrap{max-width:480px;margin:0 auto}
+.waitlist-form{display:flex;flex-direction:column;gap:12px;margin-bottom:14px}
+.waitlist-input{
+  background:var(--card);border:1px solid var(--gold-line);border-radius:2px;
+  padding:16px 18px;font-family:var(--font-body);font-size:.9rem;font-weight:300;
+  color:var(--t1);outline:none;transition:border-color .2s;-webkit-appearance:none;
+}
+.waitlist-input::placeholder{color:var(--t3)}
+.waitlist-input:focus{border-color:var(--gold-dim)}
+.waitlist-btn{
+  background:var(--gold);color:var(--bg);font-family:var(--font-body);
+  font-size:.74rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  border:none;padding:18px;border-radius:2px;cursor:pointer;transition:background .2s;
+}
+.waitlist-btn:hover{background:var(--gold-light)}
+.waitlist-note{font-size:.68rem;color:var(--t3);letter-spacing:.04em}
+.waitlist-success{
+  display:none;background:var(--card);border:1px solid var(--gold-line);border-radius:2px;padding:28px 24px;
+}
+.ws-title{font-family:var(--font-display);font-size:1.1rem;color:var(--gold);margin-bottom:8px}
+.ws-body{font-size:.86rem;color:var(--t2);font-weight:300;line-height:1.65}
+
+/* FINAL CTA */
+#final-cta{
+  background:var(--bg2);text-align:center;
+  padding:100px 24px 112px;position:relative;overflow:hidden;
+}
+.final-glow{
+  position:absolute;width:600px;height:600px;
+  background:radial-gradient(circle,rgba(200,160,74,.06) 0%,transparent 65%);
+  top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;
+}
+.final-rule{width:30px;height:1px;background:var(--gold);margin:0 auto 24px}
+.final-eye{font-size:.6rem;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);margin-bottom:16px}
+.final-h{font-family:var(--font-display);font-size:clamp(2rem,7vw,3.4rem);font-weight:700;line-height:1.1;color:var(--t1);margin-bottom:16px}
+.final-h em{font-style:italic;color:var(--gold-light)}
+.final-sub{font-family:var(--font-display);font-style:italic;font-size:1rem;color:var(--t2);margin-bottom:44px}
+.final-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  background:var(--gold);color:var(--bg);
+  font-size:.76rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;
+  text-decoration:none;padding:20px 44px;border-radius:2px;margin-bottom:16px;
+  transition:background .2s,transform .15s;
+}
+.final-btn:hover{background:var(--gold-light);transform:translateY(-1px)}
+.final-note{display:block;font-size:.68rem;color:var(--t3);letter-spacing:.08em}
+
+/* FOOTER */
+footer{padding:28px 24px;border-top:1px solid var(--gold-line)}
+.footer-inner{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.footer-logo{font-family:var(--font-display);font-size:.9rem;color:var(--gold);letter-spacing:.06em}
+.footer-links{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}
+.footer-links a{font-size:.68rem;color:var(--t3);text-decoration:none;letter-spacing:.06em;transition:color .2s}
+.footer-links a:hover{color:var(--t2)}
+.footer-copy{font-size:.65rem;color:var(--t3);letter-spacing:.06em}
+
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .7s,transform .7s}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-d1{transition-delay:.1s}
+.reveal-d2{transition-delay:.2s}
+.reveal-d3{transition-delay:.3s}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+@media(min-width:640px){
+  nav{padding:18px 48px}
+  .hero{padding:0 48px}
+  section{padding:104px 48px}
+  .divider{margin:0 48px}
+  footer{padding:32px 48px}
+  .cta-group{flex-wrap:nowrap}
+}
+@media(min-width:960px){
+  nav{padding:20px 72px}
+  .hero{padding:0 72px}
+  section{padding:112px 72px}
+  .divider{margin:0 72px}
+  footer{padding:36px 72px}
+  .footer-inner{flex-direction:row;justify-content:space-between;text-align:left}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">Loftin Method</a>
+    <a href="app.html" class="nav-cta">Start the Method</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-content">
+    <div class="hero-rule"></div>
+    <div class="hero-eye">The Loftin Method</div>
+    <h1>Real fat loss.<br><em>No noise.</em></h1>
+    <p class="hero-tagline">Quiet system. Visible standard.</p>
+    <p class="hero-sub">
+      Built for <strong>men who are done with programs that don't fit real life</strong> — no supplements, no complicated tracking, no gym required. Just a calculated system you follow.
+    </p>
+    <div class="cta-group">
+      <a href="app.html" class="btn-primary">Start the Method →</a>
+      <a href="#philosophy" class="btn-ghost">See How It Works</a>
+    </div>
+  </div>
+  <div class="scroll-hint">
+    <div class="scroll-line"></div>
+    <div class="scroll-label">Scroll</div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PHILOSOPHY -->
+<section id="philosophy" style="background:var(--bg2)">
+  <div class="section-wrap">
+    <div class="s-rule reveal"></div>
+    <div class="s-eye reveal">The Philosophy</div>
+    <h2 class="s-title reveal">Precision without<br><em>complexity.</em></h2>
+    <p class="s-sub reveal">
+      The Loftin Method runs a <strong>calculated deficit</strong> tuned to your exact body, phase, and lifestyle. It knows when you're drinking. It adjusts for restaurants and travel. It does the thinking — you do the work.
+    </p>
+    <div class="pillars reveal">
+      <div class="pillar">
+        <div class="pillar-num">01</div>
+        <div class="pillar-title">Calorie math built for your body</div>
+        <div class="pillar-body">Your daily target is calculated from your weight, height, age, and current phase — not a generic 1,500-calorie template. It recalculates automatically as you progress through five deficit phases.</div>
+      </div>
+      <div class="pillar">
+        <div class="pillar-num">02</div>
+        <div class="pillar-title">Movement as a lever, not a punishment</div>
+        <div class="pillar-body">Daily step targets are calibrated to your exact burn goal. Normal days target 500 calories walking. Drinking days step up to 750. No gym membership required.</div>
+      </div>
+      <div class="pillar">
+        <div class="pillar-num">03</div>
+        <div class="pillar-title">Real food. No substitutes.</div>
+        <div class="pillar-body">Chicken, steak, salmon — portioned precisely for your calorie target and weighed in grams. No protein shakes, no meal bars, no supplements. Food you'd actually want to eat.</div>
+      </div>
+      <div class="pillar">
+        <div class="pillar-num">04</div>
+        <div class="pillar-title">Alcohol is built into the math</div>
+        <div class="pillar-body">Not banned. Not ignored. Every drinking night has a calorie reserve. Meals adjust down. Steps adjust up. You can have a social life and still lose weight — that's the whole point.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- HOW IT WORKS -->
+<section id="how-it-works">
+  <div class="section-wrap">
+    <div class="s-rule reveal"></div>
+    <div class="s-eye reveal">Simple by design</div>
+    <h2 class="s-title reveal">How it works</h2>
+    <p class="s-sub reveal">Four steps. No app store. No subscription. Works on any iPhone, right now.</p>
+    <div class="steps reveal">
+      <div class="step">
+        <div class="step-n">01</div>
+        <div class="step-body">
+          <div class="step-t">Tell the system about you</div>
+          <div class="step-d">Height, weight, age, goal weight. 60 seconds. Every calculation — calories, protein, steps, phases — runs from there.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">02</div>
+        <div class="step-body">
+          <div class="step-t">Get your daily plan</div>
+          <div class="step-d">Exact meals. Exact weights in grams. Exact step target. A complete day built for your body, updated every morning.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">03</div>
+        <div class="step-body">
+          <div class="step-t">Eating out? Handled.</div>
+          <div class="step-d">The system knows your current meal slot, your calorie budget, and your protein rotation. Type your location and get an actual recommendation — not a guess.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">04</div>
+        <div class="step-body">
+          <div class="step-t">Log your weight. Watch it adapt.</div>
+          <div class="step-d">Each weigh-in recalculates your phase. Calories and steps adjust quietly as you get closer to goal. No manual tweaking. No thinking required.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FOR WHO -->
+<section id="for-who" style="background:var(--bg2)">
+  <div class="section-wrap">
+    <div class="s-rule reveal"></div>
+    <div class="s-eye reveal">Who this is for</div>
+    <h2 class="s-title reveal">Built for men who<br><em>follow through.</em></h2>
+    <p class="s-sub reveal">If you want a sustainable system that fits around a real job, a real family, and real weekends — this is it.</p>
+    <div class="who-grid">
+      <div class="who-card reveal">
+        <div class="who-label yes">This is for you if</div>
+        <ul class="who-items">
+          <li class="who-item"><div class="who-dot yes"></div>You're a man 30–50 who's done with fad programs</li>
+          <li class="who-item"><div class="who-dot yes"></div>You want fat loss that survives real life — kids, work, weekends</li>
+          <li class="who-item"><div class="who-dot yes"></div>You're willing to weigh your food and trust the math</li>
+          <li class="who-item"><div class="who-dot yes"></div>You want a system that tells you exactly what to do</li>
+          <li class="who-item"><div class="who-dot yes"></div>You don't need a gym — just your feet and a kitchen scale</li>
+        </ul>
+      </div>
+      <div class="who-card reveal reveal-d1">
+        <div class="who-label no">This isn't for you if</div>
+        <ul class="who-items">
+          <li class="who-item"><div class="who-dot no"></div>You want a quick fix or a 30-day challenge</li>
+          <li class="who-item"><div class="who-dot no"></div>You're not willing to track what you eat</li>
+          <li class="who-item"><div class="who-dot no"></div>You want a supplement stack or meal delivery service</li>
+          <li class="who-item"><div class="who-dot no"></div>You expect results without consistency</li>
+          <li class="who-item"><div class="who-dot no"></div>You need entertainment — this system is quiet</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+<div class="divider"></div>
+
+<!-- WAITLIST -->
+<section id="waitlist" style="background:var(--bg2)">
+  <div class="section-wrap waitlist-center">
+    <div class="s-rule reveal" style="margin:0 auto 20px"></div>
+    <div class="s-eye reveal">Stay in the loop</div>
+    <h2 class="s-title reveal">Get notified when<br><em>we launch.</em></h2>
+    <p class="s-sub reveal" style="margin:0 auto 44px">The Loftin Method is in active development. Leave your email and we'll reach out when new features ship — no newsletters, no spam.</p>
+    <div class="waitlist-wrap reveal">
+      <div id="waitlist-form-wrap">
+        <form class="waitlist-form" onsubmit="submitWaitlist(event)">
+          <input type="text" class="waitlist-input" id="wl-name" placeholder="First name" autocomplete="given-name">
+          <input type="email" class="waitlist-input" id="wl-email" placeholder="Email address" required autocomplete="email">
+          <button type="submit" class="waitlist-btn">Join the Waitlist</button>
+        </form>
+        <p class="waitlist-note">No spam. No subscriptions. Just a heads-up when something ships.</p>
+      </div>
+      <div class="waitlist-success" id="waitlist-success">
+        <div class="ws-title">You're on the list.</div>
+        <div class="ws-body">We'll be in touch when new features ship. In the meantime — the method is live and free to use.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FINAL CTA -->
+<section id="final-cta">
+  <div class="final-glow"></div>
+  <div class="final-rule reveal"></div>
+  <div class="final-eye reveal">Ready to start</div>
+  <h2 class="final-h reveal">The system is<br><em>already built.</em></h2>
+  <p class="final-sub reveal">Quiet system. Visible standard.</p>
+  <a href="app.html" class="final-btn reveal">Start the Method →</a>
+  <span class="final-note reveal">Free to use · No signup required · Works on iPhone</span>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">Loftin Method</div>
+    <div class="footer-links">
+      <a href="terms.html">Terms of Service</a>
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="/cdn-cgi/l/email-protection#bedadfc8d7dafed8d7cad8d1cccad6dbd390dfcece">Contact</a>
+    </div>
+    <div class="footer-copy">© 2026 Fit For Them</div>
+  </div>
+</footer>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+<script>
+// Scroll reveal
+var els=document.querySelectorAll('.reveal');
+var obs=new IntersectionObserver(function(entries){
+  entries.forEach(function(e){
+    if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target);}
+  });
+},{threshold:0.1});
+els.forEach(function(el){obs.observe(el);});
+
+// Waitlist submit
+function submitWaitlist(e){
+  e.preventDefault();
+  var name=document.getElementById('wl-name').value.trim();
+  var email=document.getElementById('wl-email').value.trim();
+  if(!email)return;
+  // Show success immediately — don't make user wait on the network
+  document.getElementById('waitlist-form-wrap').style.display='none';
+  document.getElementById('waitlist-success').style.display='block';
+  // Fire and forget to dedicated waitlist function
+  fetch('/.netlify/functions/waitlist',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({name:name,email:email})
+  }).catch(function(){});
+}
+</script>
+</body>
+</html>

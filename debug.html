@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loftin Method — Debug</title>
+<style>
+body{font-family:monospace;background:#111;color:#ccc;padding:20px;font-size:14px}
+h2{color:#C8A04A}
+.ok{color:#6abf84}
+.err{color:#e74c3c}
+.warn{color:#f39c12}
+pre{background:#1a1a1a;padding:12px;border-radius:8px;overflow-x:auto;white-space:pre-wrap;word-break:break-all}
+button{background:#C8A04A;color:#111;border:none;padding:10px 20px;border-radius:8px;font-size:14px;cursor:pointer;margin:6px 4px}
+</style>
+</head>
+<body>
+<h2>Loftin Method — Data Diagnostic</h2>
+<div id="out"></div>
+<button onclick="runDiag()">Run Diagnostic</button>
+<button onclick="forceSave()">Force Save Now</button>
+<button onclick="forceLoad()">Force Load from Server</button>
+<script>
+var out=document.getElementById('out');
+function log(msg,cls){var d=document.createElement('div');d.className=cls||'';d.textContent=msg;out.appendChild(d);}
+function logPre(label,val){
+  var d=document.createElement('div');
+  d.innerHTML='<strong style="color:#C8A04A">'+label+':</strong>';
+  out.appendChild(d);
+  var p=document.createElement('pre');
+  p.textContent=typeof val==='object'?JSON.stringify(val,null,2):String(val);
+  out.appendChild(p);
+}
+
+function getCookie(name){
+  var m=document.cookie.match(new RegExp('(?:^|;\\s*)'+name+'=([^;]+)'));
+  return m?m[1]:null;
+}
+
+async function runDiag(){
+  out.innerHTML='';
+  log('=== DIAGNOSTIC START ===');
+
+  // 1. Cookie
+  var deviceId=getCookie('fft_device');
+  if(deviceId){log('✅ Device cookie: '+deviceId,'ok');}
+  else{log('❌ No device cookie found','err');}
+
+  // 2. localStorage
+  var keys=['fft_name','fft_plan','fft_workmode','fft_age','fft_log'];
+  var hasLocal=false;
+  keys.forEach(function(k){
+    var v=localStorage.getItem(k);
+    if(v){log('✅ localStorage['+k+']: '+(v.length>80?v.substring(0,80)+'...':v),'ok');hasLocal=true;}
+    else{log('⚠️  localStorage['+k+']: empty','warn');}
+  });
+
+  // 3. Server fetch
+  if(deviceId){
+    log('\nFetching from server...');
+    try{
+      var res=await fetch('/.netlify/functions/loadData',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({deviceId:deviceId})
+      });
+      var data=await res.json();
+      if(data.found){
+        log('✅ Server has data for this device','ok');
+        logPre('Server data keys',Object.keys(data.data));
+        logPre('fft_name on server',data.data.fft_name);
+        logPre('savedAt',data.data.savedAt);
+        var plan=data.data.fft_plan?JSON.parse(data.data.fft_plan):null;
+        if(plan){log('✅ Plan on server: '+plan.cal+' cal, '+plan.phase+' phase','ok');}
+        else{log('❌ No plan data on server','err');}
+      } else {
+        log('❌ Server returned found:false — data never saved or device mismatch','err');
+        logPre('Server response',data);
+      }
+    }catch(e){
+      log('❌ Server fetch failed: '+e.message,'err');
+    }
+  } else {
+    log('⚠️  Skipping server check — no device cookie','warn');
+  }
+
+  log('\n=== DONE ===');
+}
+
+async function forceSave(){
+  out.innerHTML='';
+  var deviceId=getCookie('fft_device');
+  if(!deviceId){log('❌ No device cookie — open app.html first to create one','err');return;}
+  if(!localStorage.getItem('fft_name')){log('❌ No name in localStorage — build your plan in app.html first','err');return;}
+
+  var data={};
+  ['fft_plan','fft_name','fft_workmode','fft_age','fft_log','fft_meal_prefs',
+   'fft_swaps','fft_skipped','fft_milestones','fft_custom'].forEach(function(k){
+    data[k]=localStorage.getItem(k);
+  });
+
+  log('Saving to server...');
+  try{
+    var res=await fetch('/.netlify/functions/saveData',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({deviceId:deviceId,data:data})
+    });
+    var result=await res.json();
+    if(result.ok){log('✅ Saved successfully','ok');}
+    else{log('❌ Save failed','err');logPre('Response',result);}
+  }catch(e){
+    log('❌ Save error: '+e.message,'err');
+  }
+}
+
+async function forceLoad(){
+  out.innerHTML='';
+  var deviceId=getCookie('fft_device');
+  if(!deviceId){log('❌ No device cookie','err');return;}
+
+  log('Loading from server...');
+  try{
+    var res=await fetch('/.netlify/functions/loadData',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({deviceId:deviceId})
+    });
+    var result=await res.json();
+    if(result.found){
+      Object.keys(result.data).forEach(function(k){
+        if(result.data[k]&&k!=='savedAt'){
+          localStorage.setItem(k,result.data[k]);
+        }
+      });
+      log('✅ Data restored to localStorage — reload app.html now','ok');
+      logPre('Restored keys',Object.keys(result.data).filter(function(k){return result.data[k]&&k!=='savedAt';}));
+    }else{
+      log('❌ No data found on server for this device','err');
+    }
+  }catch(e){
+    log('❌ Load error: '+e.message,'err');
+  }
+}
+</script>
+</body>
+</html>

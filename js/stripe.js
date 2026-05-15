@@ -125,6 +125,11 @@ var subStatus='none';// none | trialing | active | past_due | canceled
           try{proteinSwaps=JSON.parse(localStorage.getItem('fft_swaps')||'{}');}catch(e){}
           try{skippedMeals=JSON.parse(localStorage.getItem('fft_skipped')||'{}');}catch(e){}
         }catch(e){}
+        // Start trial clock for existing users who built plans before the trial system existed.
+        // Only set once — gives them a fresh 30-day window from first use of this version.
+        if(!localStorage.getItem('fft_trial_start')){
+          localStorage.setItem('fft_trial_start',Date.now().toString());
+        }
       }
       updateDashGreeting();
       // Route to builder if no plan yet, otherwise dashboard

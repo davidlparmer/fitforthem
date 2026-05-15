@@ -63,8 +63,7 @@ self.addEventListener('activate', function(event) {
 self.addEventListener('fetch', function(event) {
   // Never intercept POST requests or API calls
   if (event.request.method !== 'GET') return;
-  // Never intercept cross-origin requests — this causes CORS errors on staging
-  // and is incorrect SW behavior regardless of environment
+  // Never intercept cross-origin requests — causes CORS errors on staging
   if (!event.request.url.startsWith(self.location.origin)) return;
   if (event.request.url.includes('anthropic.com')) return;
   if (event.request.url.includes('netlify/functions')) return;

@@ -4,6 +4,15 @@
 // Globals used: subStatus, currentPlan, userName, workMode, weightLog
 // ─────────────────────────────────────────────────────────────
 
+// ── PERMANENT FREE ACCESS ─────────────────────────────────────
+// These device IDs bypass all subscription checks permanently.
+// Add more via Why It Works → Settings → Copy Device ID.
+var WHITELISTED_DEVICES = [
+  'fft-mp71n9xx-m9q0hhenf', // David — iPad
+  'fft-mp630h1q-kkpb7y32o', // David — iPhone
+  'fft-mp7a2u5i-f51b1nc9b', // Wife — iPhone
+];
+
 // — startJourney ——————————————————————————————————————
 function startJourney(){
   var n=document.getElementById('welcome-name').value.trim();
@@ -49,7 +58,23 @@ async function checkSubscription(){
 
 // — isSubscribed ——————————————————————————————————————
 function isSubscribed(){
+  if(WHITELISTED_DEVICES.indexOf(getDeviceId())>=0)return true;
   return subStatus==='active'||subStatus==='trialing';
+}
+
+// — isTrialExpired ————————————————————————————————————
+function isTrialExpired(){
+  if(WHITELISTED_DEVICES.indexOf(getDeviceId())>=0)return false;
+  if(isSubscribed())return false;
+  var ts=localStorage.getItem('fft_trial_start');
+  if(!ts)return false;
+  var THIRTY_DAYS=30*24*60*60*1000;
+  return(Date.now()-parseInt(ts))>THIRTY_DAYS;
+}
+
+// — checkTrialAndGate —————————————————————————————————
+function checkTrialAndGate(){
+  if(isTrialExpired())showPaywall();
 }
 
 // — subStatus + IIFE (initApp/bootApp/finishBoot) —————
@@ -226,10 +251,12 @@ var subStatus='none';// none | trialing | active | past_due | canceled
         pullGroupData(function(){
           initApp();
           if(typeof startBackgroundSync==='function')startBackgroundSync();
+          setTimeout(checkTrialAndGate,1500);
         });
       } else {
         initApp();
         if(typeof startBackgroundSync==='function')startBackgroundSync();
+        setTimeout(checkTrialAndGate,1500);
       }
     }
   }

@@ -211,7 +211,6 @@ function generatePlan(){
   if(phase.mode==='gain'){
     phase={name:'maintenance',center:1.0,mode:'deficit',label:'Maintenance',msg:'You\'re at or near your target weight. Eat at your burn rate to stay here.'};
   }
-
   // Bridge reference weight — no bridge for lean gain (use actual weight)
   var br=phase.mode==='gain'?{bridge:0,ref:wLbs}:calcBridgeReference(wLbs,tz.mid);
 
@@ -337,6 +336,11 @@ function generatePlan(){
 
   updateDashboard();
   buildDashDayTabs();
+
+  // Start the 30-day free trial clock on first plan build — only set once, never overwritten
+  if(!localStorage.getItem('fft_trial_start')){
+    localStorage.setItem('fft_trial_start',Date.now().toString());
+  }
 
   document.getElementById('results').classList.remove('hidden');
   setTimeout(function(){document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});},100);

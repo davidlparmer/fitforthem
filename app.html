@@ -1639,11 +1639,7 @@ function tdBase() {
 // Called by updateDashboard() and setDinnerTheme()/clearDinnerTheme().
 
 function buildDinnerThemeUI() {
-  var section = document.getElementById('dinner-theme-section');
-  var optionsEl = document.getElementById('dinner-theme-options');
-  var activeEl = document.getElementById('dinner-theme-active');
-  var clearBtn = document.getElementById('dinner-theme-clear-btn');
-  if (!section || !optionsEl) return;
+  return; // hidden for v1 — re-enable after first paying customers
 
   if (!currentPlan || !currentPlan.cal) { section.style.display = 'none'; return; }
   section.style.display = 'block';

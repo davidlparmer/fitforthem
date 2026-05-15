@@ -207,9 +207,7 @@ function generatePlan(){
 
   // Phase — determine mode first so bridge logic can react
   var phase=getPhase(wLbs,hIn);
-  // v1 launch: surplus/gain lanes hidden from new users.
-  // If formula produces a gain phase, redirect to maintenance.
-  // Existing gain-mode plans are unaffected — this only runs during plan generation.
+  // v1: surplus/gain lanes not available yet. Redirect to maintenance if triggered.
   if(phase.mode==='gain'){
     phase={name:'maintenance',center:1.0,mode:'deficit',label:'Maintenance',msg:'You\'re at or near your target weight. Eat at your burn rate to stay here.'};
   }

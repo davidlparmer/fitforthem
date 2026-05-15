@@ -960,7 +960,16 @@ body.light-mode .progress-feedback{background:var(--s2) !important}
       </div>
       <button onclick="openCustomerPortal()" id="portal-btn" style="background:none;border:1px solid var(--gold-line);color:var(--gold);border-radius:8px;padding:6px 14px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:var(--font-body)">Manage</button>
     </div>
-  </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid var(--gold-line)">
+      <div style="flex:1;min-width:0;margin-right:12px">
+        <div style="font-size:.9rem;font-weight:600;color:var(--t1)">Device ID</div>
+        <div id="device-id-display" style="font-size:.65rem;color:var(--t3);margin-top:2px;font-family:monospace;word-break:break-all;line-height:1.4"></div>
+      </div>
+      <button id="copy-device-btn" onclick="(function(){var m=document.cookie.match(/fft_device=([^;]+)/);var id=m?m[1]:'';var el=document.getElementById('device-id-display');if(el)el.textContent=id||'Not found';if(!id){return;}navigator.clipboard.writeText(id).then(function(){var b=document.getElementById('copy-device-btn');b.textContent='Copied!';setTimeout(function(){b.textContent='Copy';},2000);}).catch(function(){});})();" style="background:none;border:1px solid var(--gold-line);color:var(--gold);border-radius:8px;padding:6px 14px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:var(--font-body);white-space:nowrap;flex-shrink:0">Copy</button>
+    </div>
+
+  </div><!-- end Settings card -->
 
   <!-- USING THE APP -->
   <div class="card">

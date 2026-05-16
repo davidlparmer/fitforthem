@@ -61,6 +61,13 @@ try{skippedMeals=JSON.parse(localStorage.getItem('fft_skipped')||'{}');}catch(e)
 try{mealPrefs=JSON.parse(localStorage.getItem('fft_meal_prefs')||'{}');}catch(e){}
 try{dinnerTheme=localStorage.getItem('fft_dinner_theme')||null;}catch(e){}
 try{
-  var _dd=localStorage.getItem('fft_drinking_days');
-  if(_dd)drinkingDays=JSON.parse(_dd);
+  // Cookie is the most reliable source — survives iOS PWA full termination
+  var _ddCookie=document.cookie.match(/(?:^|;\s*)fft_drinks=([^;]+)/);
+  if(_ddCookie){
+    drinkingDays=JSON.parse(decodeURIComponent(_ddCookie[1]));
+  } else {
+    // Fallback to localStorage if no cookie
+    var _dd=localStorage.getItem('fft_drinking_days');
+    if(_dd)drinkingDays=JSON.parse(_dd);
+  }
 }catch(e){}

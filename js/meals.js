@@ -28,12 +28,22 @@ function calcStreak(){
 
 
 // ── DRINK LEVEL ───────────────────────────────────────────────
-// Single function that sets drinking day state, persists it to
-// localStorage, syncs to server, and refreshes the current view.
-// Replaces direct drinkingDays[i]=value mutations throughout the app.
+// Single function that sets drinking day state and persists it three ways:
+// 1. localStorage — fast restore on resume
+// 2. Cookie — survives iOS PWA full termination (same proven mechanism as device ID)
+// 3. Server via saveAllData — cross-device sync (phone → iPad)
 function setDrinkLevel(dayIdx, level) {
   drinkingDays[dayIdx] = level;
-  try { localStorage.setItem('fft_drinking_days', JSON.stringify(drinkingDays)); } catch(e) {}
+  var dd = JSON.stringify(drinkingDays);
+  // localStorage
+  try { localStorage.setItem('fft_drinking_days', dd); } catch(e) {}
+  // Cookie — 7 day expiry, survives full app kill
+  try {
+    var exp = new Date();
+    exp.setDate(exp.getDate() + 7);
+    document.cookie = 'fft_drinks=' + encodeURIComponent(dd) + ';expires=' + exp.toUTCString() + ';path=/;SameSite=Lax';
+  } catch(e) {}
+  // Server sync
   if (typeof saveAllData === 'function') saveAllData();
   refreshCurrentView(dayIdx);
   updateDashboard();

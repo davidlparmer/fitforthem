@@ -1,7 +1,7 @@
 // Fit For Them — Service Worker
 // Update this version string whenever you deploy a new version
 // The browser will detect the change and refresh the cache automatically
-const CACHE_VERSION = 'fft-v153';
+const CACHE_VERSION = 'fft-v154';
 const CACHE_NAME = CACHE_VERSION;
 
 const STATIC_ASSETS = [
@@ -28,6 +28,7 @@ const STATIC_ASSETS = [
   '/js/fridge.js',
   '/js/history.js',
   '/js/ui.js',
+  '/js/app-handlers.js',
   '/icon-192.png',
   '/icon-512.png',
   '/manifest.json'

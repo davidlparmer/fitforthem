@@ -210,23 +210,14 @@ function buildDayHTML(i,plan,showSwap){
     });
   }
 
-  // Dessert scaling — yogurt, honey, and Biscoff cookies all scale with effectiveScale.
-  // Base anchor: yogurt 280g, honey 30g, cookies 2.
-  // Biscoff Classic: 37.5 cal per cookie (4 cookies = 150 cal).
-  // Cookie count rounds to nearest 0.5 for practicality.
-  // Honey formula: honeyIncrease = (yogurtIncrease/50)*5
-  var BASE_YOGURT_G=280, BASE_HONEY_G=30, BASE_COOKIE_COUNT=2, CAL_PER_COOKIE=37.5;
+  // Dessert: special Biscoff formula — cookies fixed at 2, yogurt and honey scale together
+  // Base anchor: yogurt 280g, honey 30g. Formula: honeyIncrease = (yogurtIncrease/50)*5
+  var BASE_YOGURT_G=280, BASE_HONEY_G=30;
+  var COOKIE_CAL_FIXED=75;
   var isDrinkingNight=isWknd&&isDrinking;
   var dessertItems=day.dessert.i.map(function(item){
-    // Handle 'Biscoff cookies N' — count format, no 'g' suffix
-    var mCookie=item.match(/^(Biscoff cookies)\s+(\d+(?:\.\d+)?)$/i);
-    if(mCookie){
-      var scaledCount=Math.round(BASE_COOKIE_COUNT*effectiveScale*2)/2;// nearest 0.5
-      scaledCount=Math.max(0.5,scaledCount);// minimum 0.5 cookie
-      return 'Biscoff cookies '+scaledCount;
-    }
     var m=item.match(/^(.*?)(\d+)(g)$/);
-    if(!m)return item;
+    if(!m)return item; // handles 'Biscoff cookies 2' — no 'g', passes through unchanged
     var name=m[1].toLowerCase();
     var baseG=parseInt(m[2]);
     if(name.indexOf('yogurt')>=0||name.indexOf('greek')>=0){
@@ -310,22 +301,33 @@ function buildDayHTML(i,plan,showSwap){
   var customOther=dayCustom.filter(function(m){return m.slot!=='first'&&m.slot!=='dinner'&&m.slot!=='dessert';});
 
   function renderCustomMeal(m,slotLabel){
-    // On drinking nights, scale the displayed calorie by drinkScale — same reduction
-    // applied to regular slots. Ingredient display stays as entered (no reliable gram format).
+    // On drinking nights, scale both calories AND ingredients by drinkScale.
+    // Today-only swaps (customMeals) are built-in meals placed via swap — they must
+    // scale exactly like permanent swaps do through the main scaleItems pipeline.
     var displayCal=isDrinking?Math.round(m.cal*drinkScale):m.cal;
     var customBody='';
     if(m.ingredients&&m.ingredients.length){
-      customBody+='<ul>'+m.ingredients.map(function(ing){return '<li>'+ing.item+(ing.amount?' — '+ing.amount:'')+'</li>';}).join('')+'</ul>';
+      // Scale ingredient gram values by effectiveScale if they are built-in slot meals
+      // (identified by having a mealKey). Restaurant meals (source:'restaurant') skip scaling.
+      var isBuiltIn=m.mealKey&&m.source!=='restaurant';
+      var scaledIngredients=m.ingredients.map(function(ing){
+        var item=ing.item||'';
+        if(isBuiltIn&&effectiveScale!==1){
+          // Apply same regex as scaleItems — 'Item Xg' format
+          var gm=item.match(/^(.*?)(\d+)(g)$/);
+          if(gm)item=gm[1]+Math.round(parseInt(gm[2])*effectiveScale)+'g';
+        }
+        return {item:item,amount:ing.amount||''};
+      });
+      customBody+='<ul>'+scaledIngredients.map(function(ing){return '<li>'+ing.item+(ing.amount?' — '+ing.amount:'')+'</li>';}).join('')+'</ul>';
     }
     if(m.tip){customBody+='<div class="coach-note" style="margin-top:8px">'+m.tip+'</div>';}
     if(!customBody){customBody='<p>'+displayCal+' cal</p>';}
-    // Cooking instructions — use stored mealKey if available, otherwise protein fallback
     var mealStr=(m.name||'').toLowerCase()+' '+(m.ingredients||[]).map(function(x){return x.item||'';}).join(' ').toLowerCase();
     var swapCookSteps=typeof getMealInstructions==='function'
       ? getMealInstructions(m.mealKey||null, mealStr)
       : getCookSteps(mealStr);
     if(swapCookSteps){customBody+=swapCookSteps;}
-    // Macro bar — use stored macros if available, otherwise try to calculate
     if(typeof renderMacroBar==='function'){
       var mPro=m.pro||0,mCarb=m.carb||0,mFat=m.fat||0;
       if(!mPro&&!mCarb&&!mFat&&m.ingredients&&m.ingredients.length&&typeof calcMealMacros==='function'){
@@ -1684,11 +1686,37 @@ function removeCustomMealDash(id,dayIdx){
 
 function refreshCurrentView(i){
   if(document.getElementById('page-dashboard').classList.contains('active')){
+    // Preserve which meal cards are currently expanded so drinking/swap changes
+    // don't collapse cards the user has open
+    var openCards=[];
+    var dayEl=document.getElementById('dash-day-'+i);
+    if(dayEl){
+      dayEl.querySelectorAll('.meal-body.open').forEach(function(body){
+        var header=body.previousElementSibling;
+        if(header){openCards.push(header.querySelector('.meal-title')?header.querySelector('.meal-title').textContent.trim():'');}
+      });
+    }
     renderDashDay(i);
-    updateDashboard();// refresh hero card stats (steps, calories) when drink level changes
+    // Restore expanded state by matching meal title
+    if(openCards.length&&dayEl){
+      dayEl=document.getElementById('dash-day-'+i);// re-query after re-render
+      if(dayEl){
+        dayEl.querySelectorAll('.meal-header').forEach(function(header){
+          var titleEl=header.querySelector('.meal-title');
+          if(!titleEl)return;
+          var title=titleEl.textContent.trim();
+          if(openCards.indexOf(title)>=0){
+            var body=header.nextElementSibling;
+            var arrow=header.querySelector('.meal-expand');
+            if(body){body.classList.add('open');}
+            if(arrow){arrow.textContent='▲';}
+          }
+        });
+      }
+    }
+    updateDashboard();
   }
   if(document.getElementById('page-recipes').classList.contains('active')&&typeof renderRecipesPage==='function'){renderRecipesPage();}
-  // Re-render weekly grid if open so drink changes reflect immediately
   var wgOverlay=document.getElementById('weekly-grid-overlay');
   if(wgOverlay&&wgOverlay.style.display!=='none'&&typeof renderWeeklyGrid==='function'){renderWeeklyGrid();}
 }

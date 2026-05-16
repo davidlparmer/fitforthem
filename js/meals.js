@@ -28,22 +28,18 @@ function calcStreak(){
 
 
 // ── DRINK LEVEL ───────────────────────────────────────────────
-// Single function that sets drinking day state and persists it three ways:
-// 1. localStorage — fast restore on resume
-// 2. Cookie — survives iOS PWA full termination (same proven mechanism as device ID)
-// 3. Server via saveAllData — cross-device sync (phone → iPad)
+// Saves drinkingDays inside currentPlan so it persists via the
+// plan's proven save/restore path. This survives full iOS PWA kills
+// because the plan is the first thing restored on every boot.
 function setDrinkLevel(dayIdx, level) {
   drinkingDays[dayIdx] = level;
-  var dd = JSON.stringify(drinkingDays);
-  // localStorage
-  try { localStorage.setItem('fft_drinking_days', dd); } catch(e) {}
-  // Cookie — 7 day expiry, survives full app kill
-  try {
-    var exp = new Date();
-    exp.setDate(exp.getDate() + 7);
-    document.cookie = 'fft_drinks=' + encodeURIComponent(dd) + ';expires=' + exp.toUTCString() + ';path=/;SameSite=Lax';
-  } catch(e) {}
-  // Server sync
+  // Primary: attach to plan — restored with plan on every boot
+  if (typeof currentPlan !== 'undefined' && currentPlan && currentPlan.cal) {
+    currentPlan.drinkingDays = JSON.parse(JSON.stringify(drinkingDays));
+    try { localStorage.setItem('fft_plan', JSON.stringify(currentPlan)); } catch(e) {}
+  }
+  // Fallback: also save separately
+  try { localStorage.setItem('fft_drinking_days', JSON.stringify(drinkingDays)); } catch(e) {}
   if (typeof saveAllData === 'function') saveAllData();
   refreshCurrentView(dayIdx);
   updateDashboard();

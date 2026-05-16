@@ -110,6 +110,10 @@ var subStatus='none';// none | trialing | active | past_due | canceled
         try{
           currentPlan=JSON.parse(savedPlan);
           runPlanMigration();
+          // Restore drinkingDays from plan — most reliable path, plan always comes back
+          if(currentPlan.drinkingDays&&typeof currentPlan.drinkingDays==='object'){
+            drinkingDays=currentPlan.drinkingDays;
+          }
           if(currentPlan.tz&&currentPlan.tz.mid){
             currentPlan.protein=Math.round(currentPlan.tz.mid*0.6);
           }

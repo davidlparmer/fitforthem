@@ -118,6 +118,10 @@ function restoreFromServer(callback){
         if(typeof currentPlan!=='undefined'&&d.fft_plan){
           currentPlan=JSON.parse(d.fft_plan);
           if(typeof runPlanMigration==='function')runPlanMigration();
+          // Restore drinkingDays from plan — plan is the most reliable persistence path
+          if(currentPlan.drinkingDays&&typeof currentPlan.drinkingDays==='object'){
+            drinkingDays=currentPlan.drinkingDays;
+          }
         }
       }catch(e){}
       callback(true);

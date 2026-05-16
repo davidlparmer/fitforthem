@@ -360,7 +360,26 @@ async function searchRestaurant(){
   }catch(err){el.innerHTML='<div class="error-box">⚠️ Something went wrong. Try again.</div>';}
 }
 
-async function searchDrinks(){var q=document.getElementById('drink-input').value.trim();if(!q){alert('Please enter a drink.');return;}var el=document.getElementById('drink-results');el.innerHTML='<div class="loading"><div class="spinner"></div>Looking up "'+q+'"...</div>';try{var data=await askClaude('Calorie data for alcoholic drink: '+q+'. 3 variations. JSON: {"drink":"'+q+'","items":[{"name":"variation","serving":"size","cal":0,"notes":"note"}]}');var html='<div class="section-title">Drink options — budget: ~450 cal</div>';data.items.forEach(function(d){var fits=d.cal<=450;var n=d.cal>0?Math.floor(450/d.cal):0;html+='<div class="drink-card"><div><div class="drink-name">'+d.name+'</div><div class="drink-cal">'+d.cal+' cal · '+d.serving+(d.notes?' · '+d.notes:'')+'</div></div><div style="text-align:right"><div style="font-size:.85rem;font-weight:700;color:'+(fits?'var(--green)':'var(--red)')+'">'+( fits?'✅ '+n+' fit':'⚠️ Over budget')+'</div></div></div>';});el.innerHTML=html;}catch(err){el.innerHTML='<div class="error-box">⚠️ Try again.</div>';}}
+async function searchDrinks(){
+  var q=document.getElementById('drink-input').value.trim();
+  if(!q){alert('Please enter a drink.');return;}
+  var el=document.getElementById('drink-results');
+  el.innerHTML='<div class="loading"><div class="spinner"></div>Looking up "'+q+'"...</div>';
+  // Use the actual drink reserve from dashboard — light/regular/big — not a hardcoded value
+  var todayIdx=new Date().getDay()===0?6:new Date().getDay()-1;
+  var todayLevel=drinkingDays[todayIdx]||'regular';
+  var drinkBudget=DRINK_RESERVES[todayLevel]||450;
+  try{
+    var data=await askClaude('Calorie data for alcoholic drink: '+q+'. 3 variations. JSON: {"drink":"'+q+'","items":[{"name":"variation","serving":"size","cal":0,"notes":"note"}]}');
+    var html='<div class="section-title">Drink options — budget: ~'+drinkBudget+' cal</div>';
+    data.items.forEach(function(d){
+      var fits=d.cal<=drinkBudget;
+      var n=d.cal>0?Math.floor(drinkBudget/d.cal):0;
+      html+='<div class="drink-card"><div><div class="drink-name">'+d.name+'</div><div class="drink-cal">'+d.cal+' cal · '+d.serving+(d.notes?' · '+d.notes:'')+'</div></div><div style="text-align:right"><div style="font-size:.85rem;font-weight:700;color:'+(fits?'var(--green)':'var(--red)')+'">'+( fits?'✅ '+n+' fit':'⚠️ Over budget')+'</div></div></div>';
+    });
+    el.innerHTML=html;
+  }catch(err){el.innerHTML='<div class="error-box">⚠️ Try again.</div>';}
+}
 
 async function searchFood(){var q=document.getElementById('food-input').value.trim();if(!q){alert('Please enter a food.');return;}var el=document.getElementById('food-results');el.innerHTML='<div class="loading"><div class="spinner"></div>Looking up "'+q+'"...</div>';try{var data=await askClaude('USDA nutritional data for: '+q+'. 3 serving sizes. JSON: {"food":"'+q+'","items":[{"name":"preparation","serving":"size","cal":0,"pro":0,"carb":0,"fat":0}]}');var html='<div class="section-title">Nutrition — "'+q+'"</div>';data.items.forEach(function(item,i){html+=renderFoodCard(item,i===0,0,false);});el.innerHTML=html;}catch(err){el.innerHTML='<div class="error-box">⚠️ Try again.</div>';}}
 

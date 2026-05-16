@@ -27,24 +27,6 @@ function calcStreak(){
 }
 
 
-// ── DRINK LEVEL ───────────────────────────────────────────────
-// Saves drinkingDays inside currentPlan so it persists via the
-// plan's proven save/restore path. This survives full iOS PWA kills
-// because the plan is the first thing restored on every boot.
-function setDrinkLevel(dayIdx, level) {
-  drinkingDays[dayIdx] = level;
-  // Primary: attach to plan — restored with plan on every boot
-  if (typeof currentPlan !== 'undefined' && currentPlan && currentPlan.cal) {
-    currentPlan.drinkingDays = JSON.parse(JSON.stringify(drinkingDays));
-    try { localStorage.setItem('fft_plan', JSON.stringify(currentPlan)); } catch(e) {}
-  }
-  // Fallback: also save separately
-  try { localStorage.setItem('fft_drinking_days', JSON.stringify(drinkingDays)); } catch(e) {}
-  if (typeof saveAllData === 'function') saveAllData();
-  refreshCurrentView(dayIdx);
-  updateDashboard();
-}
-
 // Format ingredient with optional store unit conversion in parentheses
 function eggsGtoCount(grams){
   var count=Math.max(1,Math.round(grams/50));
@@ -132,10 +114,10 @@ function buildDayHTML(i,plan,showSwap){
     html+='<div style="background:var(--s1);border-radius:12px;padding:16px 18px;margin-bottom:16px;border:1px solid var(--gold-line)">'+
       '<div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;font-family:var(--font-body)">Tonight\'s Decision</div>'+
       '<div class="tog-row" style="margin-bottom:'+(isDrinking?'12':'0')+'px">'+
-        '<div class="tog'+(!isDrinking?' active':'')+'" onclick="setDrinkLevel('+i+',false)" style="flex:1;padding:10px;font-size:.68rem">Not Drinking</div>'+
-        '<div class="tog'+(drinkLevel==='light'?' active':'')+'" onclick="setDrinkLevel('+i+',\'light\')" style="flex:1;padding:10px;font-size:.68rem">Light Night</div>'+
-        '<div class="tog'+(drinkLevel==='regular'?' active':'')+'" onclick="setDrinkLevel('+i+',\'regular\')" style="flex:1;padding:10px;font-size:.68rem">Regular</div>'+
-        '<div class="tog'+(drinkLevel==='big'?' active':'')+'" onclick="setDrinkLevel('+i+',\'big\')" style="flex:1;padding:10px;font-size:.68rem">Big Night</div>'+
+        '<div class="tog'+(!isDrinking?' active':'')+'" onclick="drinkingDays['+i+']=false;refreshCurrentView('+i+');updateDashboard()" style="flex:1;padding:10px;font-size:.68rem">Not Drinking</div>'+
+        '<div class="tog'+(drinkLevel==='light'?' active':'')+'" onclick="drinkingDays['+i+']='+"'light'"+';refreshCurrentView('+i+');updateDashboard()" style="flex:1;padding:10px;font-size:.68rem">Light Night</div>'+
+        '<div class="tog'+(drinkLevel==='regular'?' active':'')+'" onclick="drinkingDays['+i+']='+"'regular'"+';refreshCurrentView('+i+');updateDashboard()" style="flex:1;padding:10px;font-size:.68rem">Regular</div>'+
+        '<div class="tog'+(drinkLevel==='big'?' active':'')+'" onclick="drinkingDays['+i+']='+"'big'"+';refreshCurrentView('+i+');updateDashboard()" style="flex:1;padding:10px;font-size:.68rem">Big Night</div>'+
       '</div>'+
       (isDrinking?'<div style="font-size:.75rem;color:var(--t2);line-height:1.6;letter-spacing:.01em;font-style:italic">Meals adjusted · Steps increased · Drink budget: <strong style="color:var(--gold-light);font-style:normal">~'+drinkReserve+' cal</strong></div>':'')+
     '</div>';
@@ -228,14 +210,23 @@ function buildDayHTML(i,plan,showSwap){
     });
   }
 
-  // Dessert: special Biscoff formula — cookies fixed at 2, yogurt and honey scale together
-  // Base anchor: yogurt 280g, honey 30g. Formula: honeyIncrease = (yogurtIncrease/50)*5
-  var BASE_YOGURT_G=280, BASE_HONEY_G=30;
-  var COOKIE_CAL_FIXED=75;
+  // Dessert scaling — yogurt, honey, and Biscoff cookies all scale with effectiveScale.
+  // Base anchor: yogurt 280g, honey 30g, cookies 2.
+  // Biscoff Classic: 37.5 cal per cookie (4 cookies = 150 cal).
+  // Cookie count rounds to nearest 0.5 for practicality.
+  // Honey formula: honeyIncrease = (yogurtIncrease/50)*5
+  var BASE_YOGURT_G=280, BASE_HONEY_G=30, BASE_COOKIE_COUNT=2, CAL_PER_COOKIE=37.5;
   var isDrinkingNight=isWknd&&isDrinking;
   var dessertItems=day.dessert.i.map(function(item){
+    // Handle 'Biscoff cookies N' — count format, no 'g' suffix
+    var mCookie=item.match(/^(Biscoff cookies)\s+(\d+(?:\.\d+)?)$/i);
+    if(mCookie){
+      var scaledCount=Math.round(BASE_COOKIE_COUNT*effectiveScale*2)/2;// nearest 0.5
+      scaledCount=Math.max(0.5,scaledCount);// minimum 0.5 cookie
+      return 'Biscoff cookies '+scaledCount;
+    }
     var m=item.match(/^(.*?)(\d+)(g)$/);
-    if(!m)return item; // handles 'Biscoff cookies 2' — no 'g', passes through unchanged
+    if(!m)return item;
     var name=m[1].toLowerCase();
     var baseG=parseInt(m[2]);
     if(name.indexOf('yogurt')>=0||name.indexOf('greek')>=0){

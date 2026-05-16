@@ -172,10 +172,8 @@ function showPage(id){
 
 
 
-function getDeviceId(){
-  var m=document.cookie.match(/(?:^|;\s*)fft_device=([^;]+)/);
-  return m?m[1]:'';
-}
+// getDeviceId() is defined in sync.js — reads cookie, creates one if missing.
+// sync.js loads before ui.js so it is always available.
 
 
 

@@ -60,3 +60,7 @@ try{proteinSwaps=JSON.parse(localStorage.getItem('fft_swaps')||'{}');}catch(e){}
 try{skippedMeals=JSON.parse(localStorage.getItem('fft_skipped')||'{}');}catch(e){}
 try{mealPrefs=JSON.parse(localStorage.getItem('fft_meal_prefs')||'{}');}catch(e){}
 try{dinnerTheme=localStorage.getItem('fft_dinner_theme')||null;}catch(e){}
+try{
+  var _dd=localStorage.getItem('fft_drinking_days');
+  if(_dd)drinkingDays=JSON.parse(_dd);
+}catch(e){}

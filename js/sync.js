@@ -36,6 +36,7 @@ function buildSavePayload(){
       fft_saved_meals:localStorage.getItem('fft_saved_meals'),
       fft_group_id:localStorage.getItem('fft_group_id'),
       fft_dinner_theme:localStorage.getItem('fft_dinner_theme'),
+      fft_drinking_days:localStorage.getItem('fft_drinking_days'),
     }
   };
 }
@@ -106,6 +107,13 @@ function restoreFromServer(callback){
       try{if(typeof workMode!=='undefined'&&d.fft_workmode)workMode=d.fft_workmode;}catch(e){}
       // Rehydrate dinnerTheme in-memory — handles both set and cleared state
       try{if(typeof dinnerTheme!=='undefined'){dinnerTheme=d.fft_dinner_theme||null;}}catch(e){}
+      // Restore drinking days — phone is source of truth, always overwrite
+      try{
+        if(d.fft_drinking_days){
+          drinkingDays=JSON.parse(d.fft_drinking_days);
+          localStorage.setItem('fft_drinking_days',d.fft_drinking_days);
+        }
+      }catch(e){}
       try{
         if(typeof currentPlan!=='undefined'&&d.fft_plan){
           currentPlan=JSON.parse(d.fft_plan);

@@ -51,36 +51,13 @@ window.closeRestaurantSlotPicker=function(){
 function addRestaurantMealToDay(slot){window.addRestaurantMealToDay(slot);}
 function closeRestaurantSlotPicker(){window.closeRestaurantSlotPicker();}
 
-var S={work:'office',walkType:'flat',speed:2.5,incline:3,wakeTime:'06:00',bedTime:'22:00',age:35};
-var workMode='office';
-var drinkingDays={4:false,5:false,6:false};// false | 'light' | 'regular' | 'big'
-var DRINK_RESERVES={light:200,regular:450,big:700};
-var currentPlan={};
-var weightLog=[];
-var eoMealType='dinner';
-var eoDrinking=false;
-var groceryList={};
-var shopDays=7;
-var storeMode='protein';
-var chartRange=7;
-var groceryUnits='store';// 'g' or 'store' (lbs for proteins/produce, oz for dairy)
-var userName='';
-var currentDayIdx=new Date().getDay()===0?6:new Date().getDay()-1;
-var recipeDayIdx=new Date().getDay()===0?6:new Date().getDay()-1;
-var customMeals=[];
-var proteinSwaps={};
-var skippedMeals={};// {dayIdx: ['first','dinner','dessert']} — meals skipped for a day
-var mealPrefs={};// {dayIdx: {slot: {mealKey, items, cal}}} — permanent meal swaps by day+slot
-var dinnerTheme=null;// family key (e.g. 'taco-bowl') from DINNER_THEME_FAMILIES, or null if no family is active. Stored in fft_dinner_theme. NOT a meal key.
-const GROCERY_PPW=32,EATOUT_PPM=22,MPD=1;
+// ── GLOBAL STATE ─────────────────────────────────────────────
+// All global state declarations (currentPlan, weightLog, customMeals,
+// mealPrefs, drinkingDays, etc.) have been moved to state.js,
+// which loads immediately after migrate.js so globals exist
+// before any other module references them.
 
 
-try{weightLog=JSON.parse(localStorage.getItem('fft_log')||'[]');}catch(e){}
-try{customMeals=JSON.parse(localStorage.getItem('fft_custom')||'[]');}catch(e){}
-try{proteinSwaps=JSON.parse(localStorage.getItem('fft_swaps')||'{}');}catch(e){}
-try{skippedMeals=JSON.parse(localStorage.getItem('fft_skipped')||'{}');}catch(e){}
-try{mealPrefs=JSON.parse(localStorage.getItem('fft_meal_prefs')||'{}');}catch(e){}
-try{dinnerTheme=localStorage.getItem('fft_dinner_theme')||null;}catch(e){}
 
 
 
@@ -172,8 +149,10 @@ function showPage(id){
 
 
 
-// getDeviceId() is defined in sync.js — reads cookie, creates one if missing.
-// sync.js loads before ui.js so it is always available.
+function getDeviceId(){
+  var m=document.cookie.match(/(?:^|;\s*)fft_device=([^;]+)/);
+  return m?m[1]:'';
+}
 
 
 

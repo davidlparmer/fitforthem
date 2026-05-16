@@ -301,19 +301,13 @@ function buildDayHTML(i,plan,showSwap){
   var customOther=dayCustom.filter(function(m){return m.slot!=='first'&&m.slot!=='dinner'&&m.slot!=='dessert';});
 
   function renderCustomMeal(m,slotLabel){
-    // On drinking nights, scale both calories AND ingredients by drinkScale.
-    // Today-only swaps (customMeals) are built-in meals placed via swap — they must
-    // scale exactly like permanent swaps do through the main scaleItems pipeline.
     var displayCal=isDrinking?Math.round(m.cal*drinkScale):m.cal;
     var customBody='';
     if(m.ingredients&&m.ingredients.length){
-      // Scale ingredient gram values by effectiveScale if they are built-in slot meals
-      // (identified by having a mealKey). Restaurant meals (source:'restaurant') skip scaling.
       var isBuiltIn=m.mealKey&&m.source!=='restaurant';
       var scaledIngredients=m.ingredients.map(function(ing){
         var item=ing.item||'';
         if(isBuiltIn&&effectiveScale!==1){
-          // Apply same regex as scaleItems — 'Item Xg' format
           var gm=item.match(/^(.*?)(\d+)(g)$/);
           if(gm)item=gm[1]+Math.round(parseInt(gm[2])*effectiveScale)+'g';
         }
@@ -400,7 +394,24 @@ function buildDayHTML(i,plan,showSwap){
   if(dinnerSkipped){
     html+='<div style="padding:12px 15px;background:var(--cream);border-radius:12px;margin-bottom:10px;border:1px dashed var(--border);display:flex;justify-content:space-between;align-items:center"><span style="font-size:.84rem;color:var(--muted)">Main Meal skipped today</span><button onclick="restoreMeal('+i+',\'dinner\')" style="background:none;border:1px solid var(--warm);color:var(--warm);border-radius:8px;padding:5px 12px;font-size:.75rem;cursor:pointer;font-weight:600">Restore</button></div>';
   } else if(customDinner){
-    html+=renderCustomMeal(customDinner,'Main Meal');
+    // Restaurant meal over-budget warning — dinner slot only.
+    // If drinking tonight and the restaurant meal exceeds the drink-adjusted dinner budget,
+    // show an inline warning on the collapsed card. No scaling — just information.
+    var isRestaurantMeal=customDinner.notes&&customDinner.notes.indexOf('Eating out')===0;
+    var overBudgetWarning='';
+    if(isRestaurantMeal&&isDrinking&&customDinner.cal>dinnerCal){
+      var overBy=customDinner.cal-dinnerCal;
+      overBudgetWarning='<div style="margin:0 0 8px 0;padding:10px 14px;background:rgba(192,57,43,.12);border:1px solid rgba(192,57,43,.35);border-radius:10px;font-size:.78rem;color:var(--t1);line-height:1.5">'+
+        'Over budget with drinks by '+overBy+' calories. Keep it or find a lighter option.'+
+        '<div style="display:flex;gap:8px;margin-top:8px">'+
+          '<button onclick="(function(){var w=this.closest(\'[data-warn]\');if(w)w.style.display=\'none\';})()" '+
+            'style="background:none;border:1px solid var(--gold-line);color:var(--gold);border-radius:6px;padding:5px 12px;font-size:.72rem;font-weight:600;cursor:pointer;font-family:var(--font-body)">Keep it</button>'+
+          '<button onclick="showPage(\'eatout\')" '+
+            'style="background:none;border:1px solid var(--gold-line);color:var(--gold);border-radius:6px;padding:5px 12px;font-size:.72rem;font-weight:600;cursor:pointer;font-family:var(--font-body)">Find a lighter option</button>'+
+        '</div>'+
+      '</div>';
+    }
+    html+=overBudgetWarning+renderCustomMeal(customDinner,'Main Meal');
   } else {
     var hasDinnerSwap=Object.keys(window.ingredientSwaps||{}).some(function(k){return k.startsWith('fft_ingswap_'+i+'_dinner_');});
     var dinnerCustomBadge=hasDinnerSwap?'<span class="badge custom" style="margin-left:6px">Custom</span>':'';
@@ -1686,8 +1697,6 @@ function removeCustomMealDash(id,dayIdx){
 
 function refreshCurrentView(i){
   if(document.getElementById('page-dashboard').classList.contains('active')){
-    // Preserve which meal cards are currently expanded so drinking/swap changes
-    // don't collapse cards the user has open
     var openTitles=[];
     var dayEl=document.getElementById('dash-day-content');
     if(dayEl){
@@ -1698,7 +1707,6 @@ function refreshCurrentView(i){
       });
     }
     renderDashDay(i);
-    // Restore expanded state by matching meal title
     if(openTitles.length){
       dayEl=document.getElementById('dash-day-content');
       if(dayEl){

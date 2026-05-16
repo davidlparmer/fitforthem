@@ -1688,28 +1688,28 @@ function refreshCurrentView(i){
   if(document.getElementById('page-dashboard').classList.contains('active')){
     // Preserve which meal cards are currently expanded so drinking/swap changes
     // don't collapse cards the user has open
-    var openCards=[];
-    var dayEl=document.getElementById('dash-day-'+i);
+    var openTitles=[];
+    var dayEl=document.getElementById('dash-day-content');
     if(dayEl){
       dayEl.querySelectorAll('.meal-body.open').forEach(function(body){
         var header=body.previousElementSibling;
-        if(header){openCards.push(header.querySelector('.meal-title')?header.querySelector('.meal-title').textContent.trim():'');}
+        var titleEl=header?header.querySelector('.meal-title'):null;
+        if(titleEl)openTitles.push(titleEl.textContent.trim());
       });
     }
     renderDashDay(i);
     // Restore expanded state by matching meal title
-    if(openCards.length&&dayEl){
-      dayEl=document.getElementById('dash-day-'+i);// re-query after re-render
+    if(openTitles.length){
+      dayEl=document.getElementById('dash-day-content');
       if(dayEl){
         dayEl.querySelectorAll('.meal-header').forEach(function(header){
           var titleEl=header.querySelector('.meal-title');
           if(!titleEl)return;
-          var title=titleEl.textContent.trim();
-          if(openCards.indexOf(title)>=0){
+          if(openTitles.indexOf(titleEl.textContent.trim())>=0){
             var body=header.nextElementSibling;
             var arrow=header.querySelector('.meal-expand');
-            if(body){body.classList.add('open');}
-            if(arrow){arrow.textContent='▲';}
+            if(body)body.classList.add('open');
+            if(arrow)arrow.textContent='▲';
           }
         });
       }

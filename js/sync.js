@@ -36,7 +36,8 @@ function buildSavePayload(){
       fft_saved_meals:localStorage.getItem('fft_saved_meals'),
       fft_group_id:localStorage.getItem('fft_group_id'),
       fft_dinner_theme:localStorage.getItem('fft_dinner_theme'),
-      fft_drinking_days:localStorage.getItem('fft_drinking_days'),
+      // iPad is read-only for drinking days — never overwrite the phone's value in the group
+      fft_drinking_days: window.FFT_IS_IPAD ? undefined : localStorage.getItem('fft_drinking_days'),
     }
   };
 }

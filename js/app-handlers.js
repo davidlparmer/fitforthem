@@ -78,8 +78,8 @@ function renderWeeklyGrid() {
     var dayPlan = plan[idx] || {};
     var activeDrink = drinkingDays && drinkingDays[idx];
     var staticDrink = dayPlan.drinks;
-    var _dlabels = { light: 'Light', regular: 'Regular', big: 'Big Night' };
-    var drinkText = activeDrink ? '🍹 ' + (_dlabels[activeDrink] || '') : staticDrink ? '🍹' : '';
+    var _dlabels = { light: 'Light Night', regular: 'Regular', big: 'Big Night' };
+    var drinkText = activeDrink ? (_dlabels[activeDrink] || '') : staticDrink ? 'Drinks' : '';
     var drinkColor = activeDrink ? 'var(--gold)' : 'var(--t3)';
     headHTML += '<th style="'+thBase()+'text-align:center;color:var(--gold-light);font-size:.78rem;font-weight:700">' +
       day +

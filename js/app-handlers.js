@@ -129,14 +129,6 @@ function renderWeeklyGrid() {
   var planCal = currentPlan && currentPlan.cal ? currentPlan.cal : 0;
   if (!planCal) return;
 
-  // ── TODAY'S COLUMN INDEX ─────────────────────────────────────
-  // Grid: Mon=0 … Sun=6. JS getDay(): Sun=0, Mon=1 … Sat=6.
-  var todayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
-
-  // Gold border colour used for today's rectangle
-  var TODAY_GOLD = 'rgba(184,150,60,.6)';
-  var TODAY_BG   = 'background:rgba(184,150,60,.05);';
-
   // ── PLAN NAME ────────────────────────────────────────────────
   var displayName = (typeof userName !== 'undefined' && userName)
     ? userName
@@ -185,8 +177,6 @@ function renderWeeklyGrid() {
   ];
 
   // ── HEADER ROW ──────────────────────────────────────────────
-  // Today's header gets NO border — the rectangle starts at the top of
-  // the First Meal cell, not at the day name.
   var headHTML = '<tr>';
   headHTML += '<th style="' + thBase() + 'width:90px;text-align:left;color:var(--t3);' +
     'font-size:.65rem;letter-spacing:.1em;text-transform:uppercase">Meal</th>';
@@ -212,10 +202,7 @@ function renderWeeklyGrid() {
   // ── BODY ROWS ───────────────────────────────────────────────
   var bodyHTML = '';
   slots.forEach(function(slot, sIdx) {
-    var isMain     = slot.key === 'dinner';
-    var isFirstRow = sIdx === 0;                  // First Meal — top of rectangle
-    var isLastRow  = sIdx === slots.length - 1;   // Final Meal — bottom of rectangle
-
+    var isMain = slot.key === 'dinner';
     var rowBg = sIdx % 2 === 0
       ? 'background:rgba(255,255,255,.02)'
       : 'background:rgba(0,0,0,.08)';
@@ -226,7 +213,6 @@ function renderWeeklyGrid() {
       'vertical-align:top;padding-top:14px">' + slot.label + '</td>';
 
     days.forEach(function(day, dIdx) {
-      var isToday = dIdx === todayIdx;
       var dayPlan = plan[dIdx] || {};
       var permPref = !isMain && mealPrefs && mealPrefs[dIdx] && mealPrefs[dIdx][slot.key];
       var slotData;
@@ -259,23 +245,7 @@ function renderWeeklyGrid() {
           'letter-spacing:.06em;text-transform:uppercase;opacity:.8">Dinner Family</div>';
       }
 
-      // ── TODAY'S RECTANGLE BORDER ───────────────────────────
-      // Left and right run the full height of all three meal rows.
-      // Top border only on First Meal, bottom border only on Final Meal.
-      // Inner horizontal lines are suppressed (border-top/bottom:none on inner rows)
-      // so no lines appear between First→Main or Main→Final within the rectangle.
-      // These declarations come after tdBase() in the style string so they win.
-      var todayCellStyle = '';
-      if (isToday) {
-        todayCellStyle =
-          'border-left:2px solid ' + TODAY_GOLD + ';' +
-          'border-right:2px solid ' + TODAY_GOLD + ';' +
-          (isFirstRow ? 'border-top:2px solid ' + TODAY_GOLD + ';' : 'border-top:none;') +
-          (isLastRow  ? 'border-bottom:2px solid ' + TODAY_GOLD + ';' : 'border-bottom:none;') +
-          TODAY_BG;
-      }
-
-      var cellStyle = tdBase() + rowBg + todayCellStyle + ';vertical-align:top';
+      var cellStyle = tdBase() + rowBg + ';vertical-align:top';
       var innerStyle = 'padding:10px 8px;border-radius:8px;min-height:80px';
 
       if (isMain) {

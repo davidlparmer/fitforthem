@@ -1,7 +1,6 @@
 // ─────────────────────────────────────────────────────────────
 // app-handlers.js — Loftin Method App-Level UI Handlers
 // Weekly grid (iPad landscape), Recipes page, Dinner theme UI.
-// Previously lived as an inline <script> in app.html.
 // Load order: last — after all other modules.
 // ─────────────────────────────────────────────────────────────
 
@@ -27,8 +26,6 @@ function isLandscape() {
 }
 
 // ── PORTRAIT GUARD ────────────────────────────────────────────
-// When iPad is in portrait, show a full-screen "rotate" message.
-// Created once, toggled with display.
 function _showPortraitGuard() {
   var guard = document.getElementById('ipad-portrait-guard');
   if (!guard) {
@@ -79,9 +76,92 @@ function closeWeeklyGrid() {
   document.body.style.overflow = '';
 }
 
+// ── INGREDIENT SCALING HELPER ─────────────────────────────────
+// Mirrors the essential scaling logic from buildDayHTML (meals.js).
+// Applied per-day using the precomputed effectiveScale for that column.
+//
+// Handles:
+//   - Standard gram scaling (Chicken 200g → Chicken 242g)
+//   - Whole eggs gram → count conversion (Eggs 150g → 3 eggs)
+//   - Biscoff cookies: nearest 0.5 (same as dashboard)
+//   - Honey cap: 42g max (dinner condiment)
+//   - Soy sauce cap: 36g max (dinner condiment)
+function _scaleGridIngredients(items, effectiveScale) {
+  return items.map(function(item) {
+    // Biscoff cookies — count format, scale to nearest 0.5
+    var mCookie = item.match(/^(Biscoff cookies)\s+(\d+(?:\.\d+)?)$/i);
+    if (mCookie) {
+      var baseCount = parseFloat(mCookie[2]);
+      var scaledCount = Math.round(baseCount * effectiveScale * 2) / 2;
+      return 'Biscoff cookies ' + Math.max(0.5, scaledCount);
+    }
+    // Standard gram format: 'Name Xg' or 'Name Xg rest'
+    var m = item.match(/^(.*?)(\d+)(g)$/);
+    if (!m) return item; // no gram amount — return as-is (e.g. 'Salt to taste')
+    var name = m[1].toLowerCase().trim();
+    var scaledG = Math.round(parseInt(m[2]) * effectiveScale);
+    // Whole eggs → convert scaled grams to count display
+    var isWholeEgg = (name === 'eggs' || name === 'egg' ||
+                      name === 'whole eggs' || name === 'whole egg');
+    var isEggWhite = name.indexOf('white') >= 0;
+    if (isWholeEgg && !isEggWhite && typeof eggsGtoCount === 'function') {
+      return eggsGtoCount(scaledG);
+    }
+    // Condiment caps
+    if (name.indexOf('honey') >= 0 && scaledG > 42) scaledG = 42;
+    if (name.indexOf('soy')   >= 0 && scaledG > 36) scaledG = 36;
+    return m[1] + scaledG + 'g';
+  });
+}
+
 function renderWeeklyGrid() {
   var plan = getActivePlan();
   if (!plan || !plan.length) return;
+
+  var planCal = currentPlan && currentPlan.cal ? currentPlan.cal : 0;
+  if (!planCal) return;
+
+  // ── PRECOMPUTE effectiveScale PER DAY ────────────────────────
+  // Mirrors buildDayHTML exactly:
+  //   scale      = planCal / baseTotal  (user target ÷ template)
+  //   drinkScale = (planCal - reserve) / planCal  (drink nights only)
+  //   effectiveScale = scale * drinkScale
+  //
+  // baseTotal uses the resolved meal cals (prefs + dinner rotation applied)
+  // so the scale matches what the dashboard actually shows that day.
+  var dayScales = plan.map(function(dayPlan, dIdx) {
+    // First — use pref cal if a permanent swap is set
+    var firstC = (mealPrefs && mealPrefs[dIdx] && mealPrefs[dIdx].first)
+      ? (mealPrefs[dIdx].first.cal || 0)
+      : ((dayPlan.first && dayPlan.first.c) || 0);
+
+    // Dessert — same
+    var dessertC = (mealPrefs && mealPrefs[dIdx] && mealPrefs[dIdx].dessert)
+      ? (mealPrefs[dIdx].dessert.cal || 0)
+      : ((dayPlan.dessert && dayPlan.dessert.c) || 0);
+
+    // Dinner — use resolved dinner (theme / custom / pref / template)
+    var dinnerC = (dayPlan.dinner && dayPlan.dinner.c) || 0;
+    if (typeof getResolvedDinner === 'function') {
+      var rd = getResolvedDinner(dIdx);
+      if (rd && rd.c) dinnerC = rd.c;
+    }
+
+    var baseTotal = firstC + dinnerC + dessertC;
+    var scale = baseTotal > 0 ? planCal / baseTotal : 1;
+
+    // Drink scaling — weekends only
+    var isWknd = dIdx >= 4;
+    var drinkLevel = drinkingDays && drinkingDays[dIdx];
+    var isDrinking = isWknd && drinkLevel && drinkLevel !== false;
+    var drinkReserve = 0;
+    if (isDrinking && typeof DRINK_RESERVES !== 'undefined') {
+      drinkReserve = DRINK_RESERVES[drinkLevel] || 0;
+    }
+    var drinkScale = isDrinking ? (planCal - drinkReserve) / planCal : 1;
+
+    return scale * drinkScale;
+  });
 
   var days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
   var slots = [
@@ -91,21 +171,27 @@ function renderWeeklyGrid() {
   ];
 
   var sex = (currentPlan && currentPlan.sex) ? currentPlan.sex : 'male';
-  document.getElementById('wg-plan-name').textContent = sex === 'female' ? 'Her Weekly Meal Plan' : 'Weekly Meal Plan';
+  document.getElementById('wg-plan-name').textContent =
+    sex === 'female' ? 'Her Weekly Meal Plan' : 'Weekly Meal Plan';
 
   // ── HEADER ROW ──────────────────────────────────────────────
   var headHTML = '<tr>';
-  headHTML += '<th style="'+thBase()+'width:90px;text-align:left;color:var(--t3);font-size:.65rem;letter-spacing:.1em;text-transform:uppercase">Meal</th>';
+  headHTML += '<th style="' + thBase() + 'width:90px;text-align:left;color:var(--t3);' +
+    'font-size:.65rem;letter-spacing:.1em;text-transform:uppercase">Meal</th>';
   days.forEach(function(day, idx) {
     var dayPlan = plan[idx] || {};
     var activeDrink = drinkingDays && drinkingDays[idx];
     var staticDrink = dayPlan.drinks;
     var _dlabels = { light: 'Light Night', regular: 'Regular', big: 'Big Night' };
-    var drinkText = activeDrink ? (_dlabels[activeDrink] || '') : staticDrink ? 'Drinks' : '';
+    var drinkText = activeDrink
+      ? (_dlabels[activeDrink] || '')
+      : (staticDrink ? 'Drinks' : '');
     var drinkColor = activeDrink ? 'var(--gold)' : 'var(--t3)';
-    headHTML += '<th style="'+thBase()+'text-align:center;color:var(--gold-light);font-size:.78rem;font-weight:700">' +
+    headHTML += '<th style="' + thBase() + 'text-align:center;color:var(--gold-light);' +
+      'font-size:.78rem;font-weight:700">' +
       day +
-      '<div style="font-size:.6rem;color:' + drinkColor + ';margin-top:3px;font-weight:500;min-height:14px">' + drinkText + '</div>' +
+      '<div style="font-size:.6rem;color:' + drinkColor + ';margin-top:3px;' +
+        'font-weight:500;min-height:14px">' + drinkText + '</div>' +
     '</th>';
   });
   headHTML += '</tr>';
@@ -115,16 +201,22 @@ function renderWeeklyGrid() {
   var bodyHTML = '';
   slots.forEach(function(slot, sIdx) {
     var isMain = slot.key === 'dinner';
-    var rowBg = sIdx % 2 === 0 ? 'background:rgba(255,255,255,.02)' : 'background:rgba(0,0,0,.08)';
+    var rowBg = sIdx % 2 === 0
+      ? 'background:rgba(255,255,255,.02)'
+      : 'background:rgba(0,0,0,.08)';
     bodyHTML += '<tr>';
 
-    bodyHTML += '<td style="'+tdBase()+rowBg+';color:var(--gold);font-size:.72rem;font-weight:700;font-family:var(--font-body);letter-spacing:.04em;vertical-align:top;padding-top:14px">' + slot.label + '</td>';
+    // Row label
+    bodyHTML += '<td style="' + tdBase() + rowBg + ';color:var(--gold);font-size:.72rem;' +
+      'font-weight:700;font-family:var(--font-body);letter-spacing:.04em;' +
+      'vertical-align:top;padding-top:14px">' + slot.label + '</td>';
 
     days.forEach(function(day, dIdx) {
       var dayPlan = plan[dIdx] || {};
       var permPref = !isMain && mealPrefs && mealPrefs[dIdx] && mealPrefs[dIdx][slot.key];
       var slotData;
       var isThemed = false;
+
       if (isMain && typeof getResolvedDinner === 'function') {
         var rd = getResolvedDinner(dIdx);
         slotData = rd ? { i: rd.i, c: rd.c } : (dayPlan[slot.key] || {});
@@ -135,24 +227,25 @@ function renderWeeklyGrid() {
         slotData = dayPlan[slot.key] || {};
       }
 
-      var ingredients = slotData.i || [];
+      // Scale ingredients using this day's effectiveScale
+      var rawIngredients = slotData.i || [];
+      var scaledIngredients = _scaleGridIngredients(rawIngredients, dayScales[dIdx]);
+
       var isSwapped = !!permPref && !isMain;
-      var cellContent = ingredients.map(function(ing) {
-        var eggM = ing.match(/^(Whole\s+)?Eggs?\s*(\d+)(g)$/i);
-        var isEggWhite = /white/i.test(ing);
-        var displayIng = (eggM && !isEggWhite) ? eggsGtoCount(parseInt(eggM[2])) : ing;
-        return '<div style="font-size:.72rem;color:var(--t1);padding:1px 0;line-height:1.4">' + displayIng + '</div>';
+      var cellContent = scaledIngredients.map(function(ing) {
+        return '<div style="font-size:.72rem;color:var(--t1);padding:1px 0;line-height:1.4">' +
+          ing + '</div>';
       }).join('');
+
       if (isSwapped) {
-        cellContent += '<div style="font-size:.55rem;color:var(--gold);margin-top:4px;letter-spacing:.06em;text-transform:uppercase;opacity:.7">Custom</div>';
+        cellContent += '<div style="font-size:.55rem;color:var(--gold);margin-top:4px;' +
+          'letter-spacing:.06em;text-transform:uppercase;opacity:.7">Custom</div>';
       }
       if (isThemed) {
-        cellContent += '<div style="font-size:.55rem;color:var(--gold);margin-top:4px;letter-spacing:.06em;text-transform:uppercase;opacity:.8">Dinner Family</div>';
+        cellContent += '<div style="font-size:.55rem;color:var(--gold);margin-top:4px;' +
+          'letter-spacing:.06em;text-transform:uppercase;opacity:.8">Dinner Family</div>';
       }
-      var cellDrink = drinkingDays && drinkingDays[dIdx];
-      if (cellDrink) {
-        cellContent += '<div style="font-size:.55rem;color:var(--gold);margin-top:4px;letter-spacing:.04em;opacity:.8">Scaled on dashboard</div>';
-      }
+      // "Scaled on dashboard" label removed — grid now shows actual scaled amounts
 
       var cellStyle = tdBase() + rowBg + ';vertical-align:top';
       var innerStyle = 'padding:10px 8px;border-radius:8px;min-height:80px';
@@ -163,7 +256,8 @@ function renderWeeklyGrid() {
         bodyHTML += '<td style="' + cellStyle + '" onclick="showMealSwap(' + dIdx + ',\'dinner\')">' +
           '<div style="' + innerStyle + '" class="wg-dinner-cell">' +
           cellContent +
-          '<div style="font-size:.58rem;color:var(--t3);margin-top:6px;letter-spacing:.06em;text-transform:uppercase">Tap to swap</div>' +
+          '<div style="font-size:.58rem;color:var(--t3);margin-top:6px;' +
+            'letter-spacing:.06em;text-transform:uppercase">Tap to swap</div>' +
           '</div></td>';
       } else {
         bodyHTML += '<td style="' + cellStyle + '">' +
@@ -187,18 +281,17 @@ function renderRecipesPage() {
   if (!el) return;
 
   if (!currentPlan || !currentPlan.cal) {
-    el.innerHTML = '<div style="font-size:.85rem;color:var(--t2);padding:8px 0">Build your plan first to see your personalized recipes.</div>';
+    el.innerHTML = '<div style="font-size:.85rem;color:var(--t2);padding:8px 0">' +
+      'Build your plan first to see your personalized recipes.</div>';
     return;
   }
 
   var plan = getActivePlan();
   var calTargets = getSlotCalorieTargets(currentPlan);
-
   var slots = ['first','dinner','dessert'];
-  var slotLabels = {first:'First Meals', dinner:'Main Meal Recipes', dessert:'Final Meal Recipes'};
-  var slotCardClass = {first:'', dinner:'alt', dessert:'dessert'};
-
-  var seen = {first:{}, dinner:{}, dessert:{}};
+  var slotLabels = { first:'First Meals', dinner:'Main Meal Recipes', dessert:'Final Meal Recipes' };
+  var slotCardClass = { first:'', dinner:'alt', dessert:'dessert' };
+  var seen = { first:{}, dinner:{}, dessert:{} };
 
   function scaleIngredients(items, templateCal, slot) {
     var targetCal = calTargets[slot] || templateCal || 1;
@@ -215,8 +308,7 @@ function renderRecipesPage() {
       var meal = day[slot];
       if (!meal || !meal.k || seen[slot][meal.k]) return;
       seen[slot][meal.k] = {
-        name: meal.n,
-        k: meal.k,
+        name: meal.n, k: meal.k,
         i: scaleIngredients(meal.i, meal.c, slot),
         cal: Math.round(calTargets[slot] || meal.c)
       };
@@ -224,7 +316,6 @@ function renderRecipesPage() {
   });
 
   if (typeof mealPrefs !== 'undefined' && mealPrefs) {
-    var lane = (currentPlan && currentPlan.lane) ? currentPlan.lane : 'men_deficit';
     Object.keys(mealPrefs).forEach(function(dayIdx) {
       var dayPrefs = mealPrefs[dayIdx];
       if (!dayPrefs) return;
@@ -232,8 +323,7 @@ function renderRecipesPage() {
         var pref = dayPrefs[slot];
         if (!pref || !pref.key || seen[slot][pref.key]) return;
         seen[slot][pref.key] = {
-          name: pref.name || pref.key,
-          k: pref.key,
+          name: pref.name || pref.key, k: pref.key,
           i: scaleIngredients(pref.items, pref.cal, slot),
           cal: Math.round(calTargets[slot] || pref.cal),
           isPref: true
@@ -243,15 +333,13 @@ function renderRecipesPage() {
   }
 
   var html = '';
-
   slots.forEach(function(slot) {
     var meals = Object.values(seen[slot]);
     if (!meals.length) return;
     html += '<div class="recipe-section"><h3>' + slotLabels[slot] + '</h3>';
     meals.forEach(function(meal) {
       var instructions = typeof getMealInstructions === 'function'
-        ? getMealInstructions(meal.k, meal.i[0] || '')
-        : '';
+        ? getMealInstructions(meal.k, meal.i[0] || '') : '';
       var ingList = meal.i.map(function(ing) {
         var eggM = ing.match(/^(Whole\s+)?Eggs?\s*(\d+)(g)$/i);
         var isEggWhite = /white/i.test(ing);
@@ -261,13 +349,15 @@ function renderRecipesPage() {
         return '<li>' + ing + '</li>';
       }).join('');
       var prefBadge = meal.isPref
-        ? ' <span style="font-size:.58rem;font-weight:700;color:var(--gold);letter-spacing:.08em;text-transform:uppercase;font-family:var(--font-body);opacity:.8">Your Default</span>'
+        ? ' <span style="font-size:.58rem;font-weight:700;color:var(--gold);' +
+          'letter-spacing:.08em;text-transform:uppercase;font-family:var(--font-body);' +
+          'opacity:.8">Your Default</span>'
         : '';
-
       html += '<div class="meal-card ' + slotCardClass[slot] + '">' +
         '<div class="meal-header" onclick="toggleMeal(this)">' +
           '<div><div class="meal-title">' + meal.name + prefBadge + '</div>' +
-          '<div class="meal-subtitle">~' + meal.cal.toLocaleString() + ' cal · your plan</div></div>' +
+          '<div class="meal-subtitle">~' + meal.cal.toLocaleString() +
+            ' cal · your plan</div></div>' +
           '<span class="meal-expand">▼</span>' +
         '</div>' +
         '<div class="meal-body"><ul>' + ingList + '</ul>' + instructions + '</div>' +
@@ -275,7 +365,6 @@ function renderRecipesPage() {
     });
     html += '</div>';
   });
-
   el.innerHTML = html;
 }
 
@@ -284,7 +373,8 @@ function thBase() {
   return 'padding:10px 8px;border-bottom:1px solid var(--gold-line);';
 }
 function tdBase() {
-  return 'padding:6px 8px;border-bottom:1px solid rgba(184,150,60,.08);border-right:1px solid rgba(184,150,60,.06);';
+  return 'padding:6px 8px;border-bottom:1px solid rgba(184,150,60,.08);' +
+         'border-right:1px solid rgba(184,150,60,.06);';
 }
 
 
@@ -294,11 +384,11 @@ function buildDinnerThemeUI() {
 }
 
 
-// ── BOOT ──────────────────────────────────────────────────────
+// ── BOOT ─────────────────────────────────────────────────────
 window.FFT_IS_IPAD = isIpad();
 
 if (window.FFT_IS_IPAD) {
-  // Orientation changes — show grid in landscape, portrait guard in portrait
+  // Orientation — grid in landscape, portrait guard in portrait
   if (screen.orientation && screen.orientation.addEventListener) {
     screen.orientation.addEventListener('change', checkWeeklyGrid);
   }
@@ -313,11 +403,8 @@ if (window.FFT_IS_IPAD) {
     setTimeout(checkWeeklyGrid, 300);
   });
 
-  // ── VISIBILITY CHANGE LISTENER ──────────────────────────────
-  // iOS pauses JavaScript when the screen sleeps or the app is backgrounded.
-  // setInterval alone won't reliably update the grid when the user wakes the
-  // screen. This listener fires immediately when the app becomes visible again,
-  // pulling fresh group data and re-rendering the grid without a kill/reopen.
+  // Pull fresh group data whenever screen wakes or app foregrounds.
+  // iOS pauses setInterval during screen sleep — this catches the gap.
   document.addEventListener('visibilitychange', function() {
     if (!document.hidden && typeof pullGroupData === 'function') {
       pullGroupData(function() {});

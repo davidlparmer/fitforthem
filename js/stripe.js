@@ -279,10 +279,12 @@ var subStatus='none';
         // pullGroupData (iPad path) has already set currentPlan, mealPrefs,
         // drinkingDays in memory. Just open the grid.
         checkWeeklyGrid();
-        // Poll every 5 minutes — pullGroupData handles the re-render internally
+        // Poll every 30 seconds — covers the case where both devices are active
+        // and the user changes a drink level on the phone without sleeping the iPad.
+        // pullGroupData handles the re-render internally via _refreshWeeklyGridIfOpen.
         setInterval(function(){
           pullGroupData(function(){});
-        }, 5*60*1000);
+        }, 30*1000);
       });
       return; // ← critical: never fall through to phone boot below
     }

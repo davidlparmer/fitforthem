@@ -93,10 +93,64 @@ function mergeData(primary, secondary) {
   merged.fft_summary_dismissed = primary.fft_summary_dismissed || secondary.fft_summary_dismissed || '';
   merged.fft_milestones = primary.fft_milestones || secondary.fft_milestones || '';
 
-  // Drinking days — phone always wins. iPad is read-only for this field.
-  // primary = existing group data, secondary = incoming device data (phone).
-  // Phone's value wins; fall back to group's existing value if phone sends nothing.
+  // Drinking days — incoming device (phone) always wins.
+  // Only the phone sets drinking days. iPad is read-only for this field.
+  // Use secondary (incoming) if present, otherwise fall back to primary (group).
   merged.fft_drinking_days = secondary.fft_drinking_days || primary.fft_drinking_days || '';
+
+  return merged;
+}
+
+// ── Sync Merge Logic ──────────────────────────────────────────
+// Used during background sync — NOT during claim.
+//
+// The phone is the authoritative source of truth for all plan data.
+// When the phone removes a swap, changes a meal pref, or updates custom meals,
+// that change must overwrite the group slot — not get merged away by old group data.
+//
+// Only the weight log needs a true merge (both devices log weight independently).
+// Saved meals use a union so entries added on any device are preserved.
+//
+// Compare with mergeData() which is used during claim, where two devices are
+// combining their histories and neither is definitively "more current."
+function mergeSyncData(group, incoming) {
+  const merged = { ...group }; // start with existing group as base
+
+  // Phone wins unconditionally for all plan and preference fields.
+  // This ensures removals (clearing a swap, deleting a custom meal) propagate correctly.
+  const phoneOwned = [
+    'fft_plan', 'fft_name', 'fft_workmode', 'fft_age',
+    'fft_meal_prefs', 'fft_swaps', 'fft_skipped', 'fft_milestones',
+    'fft_custom', 'fft_summary_dismissed', 'fft_dinner_theme', 'fft_drinking_days'
+  ];
+  phoneOwned.forEach(function(k) {
+    if (incoming[k] !== undefined && incoming[k] !== null) {
+      merged[k] = incoming[k];
+    }
+  });
+
+  // Weight log — true merge. Both devices could have entries.
+  // Deduplicate by date, keep the most recently timestamped entry per day.
+  try {
+    const gLog = JSON.parse(group.fft_log || '[]');
+    const iLog = JSON.parse(incoming.fft_log || '[]');
+    const byDate = {};
+    [...gLog, ...iLog].forEach(function(e) {
+      if (!byDate[e.d] || (e.t || 0) > (byDate[e.d].t || 0)) byDate[e.d] = e;
+    });
+    merged.fft_log = JSON.stringify(
+      Object.values(byDate).sort(function(a, b) { return b.d.localeCompare(a.d); })
+    );
+  } catch(e) {}
+
+  // Saved meals — keep whichever set is larger (union-friendly).
+  try {
+    const gMeals = JSON.parse(group.fft_saved_meals || '[]');
+    const iMeals = JSON.parse(incoming.fft_saved_meals || '[]');
+    if (iMeals.length >= gMeals.length) {
+      merged.fft_saved_meals = incoming.fft_saved_meals;
+    }
+  } catch(e) {}
 
   return merged;
 }
@@ -203,40 +257,30 @@ exports.handler = async function(event) {
     // ── ACTION: sync ────────────────────────────────────────
     // Devices call this periodically to push their latest data
     // to the group slot and pull any newer data from it.
-    //
-    // The iPad is read-only — it sends no data, only pulls.
-    // The phone pushes data and receives the merged group result.
     if (action === 'sync') {
       const safeId = sanitize(deviceId);
       if (!safeId) return { statusCode: 400, headers: HEADERS, body: JSON.stringify({ error: 'Invalid deviceId' }) };
 
-      // Resolve groupId — check device slot first, then accept client-provided value.
-      //
-      // WHY: saveData (the regular save function) writes the device slot with fft_group_id
-      // as a data field, not as the top-level groupId key that claim writes. So after any
-      // normal save, the device slot loses its top-level groupId. Accepting it from the
-      // client request (where it lives in localStorage) makes sync reliable regardless of
-      // what saveData last wrote to the device slot.
+      // Get the device's current data to find its groupId
       const deviceData = await store.get(safeId, { type: 'json' });
-      const groupId = (deviceData && deviceData.groupId) || sanitize(body.groupId);
-
-      if (!groupId) {
+      if (!deviceData || !deviceData.groupId) {
         // Not in a group — nothing to sync
         return { statusCode: 200, headers: HEADERS, body: JSON.stringify({ ok: false, reason: 'not-in-group' }) };
       }
 
+      const groupId = deviceData.groupId;
       const groupData = await store.get(groupId, { type: 'json' }) || {};
 
       // Merge device data into group — weight log always merges, plan uses newer version
       const { data: incomingData } = body;
       if (incomingData) {
-        // Build updated group data from incoming device data
-        const updatedGroup = mergeData(groupData, incomingData);
+        // Build updated group data from incoming device data.
+        // Phone wins for plan/preference fields — use mergeSyncData, not mergeData.
+        const updatedGroup = mergeSyncData(groupData, incomingData);
         updatedGroup.savedAt = new Date().toISOString();
         await store.setJSON(groupId, updatedGroup);
 
-        // Also update device slot, preserving groupId as top-level field so future
-        // syncs can find it even if saveData doesn't write it.
+        // Also update device slot
         const updatedDevice = { ...incomingData, groupId, savedAt: new Date().toISOString() };
         await store.setJSON(safeId, updatedDevice);
 
@@ -247,7 +291,7 @@ exports.handler = async function(event) {
         };
       }
 
-      // No incoming data — pull only. Return current group data unchanged.
+      // No incoming data — just return current group data (pull only)
       return {
         statusCode: 200,
         headers: HEADERS,

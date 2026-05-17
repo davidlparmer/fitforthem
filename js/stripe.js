@@ -13,6 +13,42 @@ var WHITELISTED_DEVICES = [
   'fft-mp7a2u5i-f51b1nc9b', // Wife — iPhone
 ];
 
+// ── iPAD LINK SCREEN ─────────────────────────────────────────
+// Called from the iPad link screen when the user submits a code.
+// On success, stores fft_group_id and reloads so the grid shows.
+async function iPadClaimLink(){
+  var input=document.getElementById('ipad-link-input');
+  var status=document.getElementById('ipad-link-status');
+  if(!input||!status)return;
+  var code=input.value.replace(/[^0-9]/g,'');
+  if(code.length!==6){status.textContent='Please enter the full 6-digit code.';return;}
+  status.innerHTML='<span style="color:var(--gold)">Linking — this takes a moment…</span>';
+  try{
+    var res=await fetch('/.netlify/functions/linkDevice',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'claim',deviceId:getDeviceId(),code:code})
+    });
+    var data=await res.json();
+    if(!data.ok){status.textContent=data.reason||'Something went wrong. Try again.';return;}
+    // Store group ID — this is what the boot check uses
+    if(data.groupId){
+      try{localStorage.setItem('fft_group_id',data.groupId);}catch(e){}
+    }
+    // Write plan data from phone to this iPad's localStorage
+    var d=data.data||{};
+    var keys=['fft_plan','fft_name','fft_workmode','fft_age','fft_log',
+              'fft_meal_prefs','fft_swaps','fft_skipped','fft_milestones',
+              'fft_custom','fft_summary_dismissed','fft_saved_meals','fft_drinking_days'];
+    keys.forEach(function(k){if(d[k]){try{localStorage.setItem(k,d[k]);}catch(e){}}}); 
+    status.innerHTML='<span style="color:var(--gold)">Linked. Loading your plan…</span>';
+    // Reload so the full boot sequence runs and shows the weekly grid
+    setTimeout(function(){window.location.reload();},800);
+  }catch(err){
+    status.textContent='Connection error. Check your network and try again.';
+  }
+}
+
 // — startJourney ——————————————————————————————————————
 function startJourney(){
   var n=document.getElementById('welcome-name').value.trim();
@@ -110,10 +146,6 @@ var subStatus='none';// none | trialing | active | past_due | canceled
         try{
           currentPlan=JSON.parse(savedPlan);
           runPlanMigration();
-          // Restore drinkingDays from plan — most reliable path, plan always comes back
-          if(currentPlan.drinkingDays&&typeof currentPlan.drinkingDays==='object'){
-            drinkingDays=currentPlan.drinkingDays;
-          }
           if(currentPlan.tz&&currentPlan.tz.mid){
             currentPlan.protein=Math.round(currentPlan.tz.mid*0.6);
           }
@@ -246,10 +278,23 @@ var subStatus='none';// none | trialing | active | past_due | canceled
   }
 
   function finishBoot(){
-    // ── PAYWALL BYPASSED FOR BETA TESTING ──────────────────────
-    // To re-enable Stripe: restore the original finishBoot logic below
-    // and update startJourney to check fft_sub_status again.
-    // ───────────────────────────────────────────────────────────
+    hideRestoreLoader();
+
+    // ── iPAD BOOT ─────────────────────────────────────────────
+    // If this is an iPad and not yet linked to a phone, show only
+    // the link screen. No dashboard, no nav, no paywall.
+    if(window.FFT_IS_IPAD){
+      var groupId=localStorage.getItem('fft_group_id');
+      if(!groupId){
+        // Not linked — show link screen only
+        var ipadScreen=document.getElementById('ipad-link-screen');
+        if(ipadScreen)ipadScreen.style.display='flex';
+        return; // stop normal boot
+      }
+      // Linked — Step 4 will handle the weekly grid view (coming next)
+      // For now fall through to normal boot so data loads correctly
+    }
+    // ── NORMAL BOOT ───────────────────────────────────────────
     hideRestoreLoader();
     var hasName=!!localStorage.getItem('fft_name');
     document.getElementById('welcome-screen').style.display=hasName?'none':'flex';

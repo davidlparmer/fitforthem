@@ -13,9 +13,14 @@ var WHITELISTED_DEVICES = [
   'fft-mp7a2u5i-f51b1nc9b', // Wife — iPhone
 ];
 
+// ── PERMANENT FREE ACCESS ─────────────────────────────────────
+var WHITELISTED_DEVICES = [
+  'fft-mp71n9xx-m9q0hhenf', // David — iPad
+  'fft-mp630h1q-kkpb7y32o', // David — iPhone
+  'fft-mp7a2u5i-f51b1nc9b', // Wife — iPhone
+];
+
 // ── iPAD LINK SCREEN ─────────────────────────────────────────
-// Called from the iPad link screen when the user submits a code.
-// On success, stores fft_group_id and reloads so the grid shows.
 async function iPadClaimLink(){
   var input=document.getElementById('ipad-link-input');
   var status=document.getElementById('ipad-link-status');
@@ -31,25 +36,33 @@ async function iPadClaimLink(){
     });
     var data=await res.json();
     if(!data.ok){status.textContent=data.reason||'Something went wrong. Try again.';return;}
-    // Store group ID — this is what the boot check uses
-    if(data.groupId){
-      try{localStorage.setItem('fft_group_id',data.groupId);}catch(e){}
-    }
-    // Write plan data from phone to this iPad's localStorage
+    if(data.groupId){try{localStorage.setItem('fft_group_id',data.groupId);}catch(e){}}
     var d=data.data||{};
     var keys=['fft_plan','fft_name','fft_workmode','fft_age','fft_log',
               'fft_meal_prefs','fft_swaps','fft_skipped','fft_milestones',
               'fft_custom','fft_summary_dismissed','fft_saved_meals','fft_drinking_days'];
     keys.forEach(function(k){if(d[k]){try{localStorage.setItem(k,d[k]);}catch(e){}}}); 
     status.innerHTML='<span style="color:var(--gold)">Linked. Loading your plan…</span>';
-    // Reload so the full boot sequence runs and shows the weekly grid
     setTimeout(function(){window.location.reload();},800);
   }catch(err){
     status.textContent='Connection error. Check your network and try again.';
   }
 }
 
-// — startJourney ——————————————————————————————————————
+// ── TRIAL FUNCTIONS ───────────────────────────────────────────
+function isSubscribed(){
+  if(WHITELISTED_DEVICES.indexOf(getDeviceId())>=0)return true;
+  return subStatus==='active'||subStatus==='trialing';
+}
+function isTrialExpired(){
+  if(WHITELISTED_DEVICES.indexOf(getDeviceId())>=0)return false;
+  if(isSubscribed())return false;
+  var ts=localStorage.getItem('fft_trial_start');
+  if(!ts)return false;
+  var THIRTY_DAYS=30*24*60*60*1000;
+  return(Date.now()-parseInt(ts))>THIRTY_DAYS;
+}
+function checkTrialAndGate(){if(isTrialExpired())showPaywall();}
 function startJourney(){
   var n=document.getElementById('welcome-name').value.trim();
   if(!n){document.getElementById('welcome-name').focus();return;}
@@ -92,24 +105,7 @@ async function checkSubscription(){
   }
 }
 
-// — isSubscribed ——————————————————————————————————————
-function isSubscribed(){
-  if(WHITELISTED_DEVICES.indexOf(getDeviceId())>=0)return true;
-  return subStatus==='active'||subStatus==='trialing';
-}
-
-// — isTrialExpired ————————————————————————————————————
-function isTrialExpired(){
-  if(WHITELISTED_DEVICES.indexOf(getDeviceId())>=0)return false;
-  if(isSubscribed())return false;
-  var ts=localStorage.getItem('fft_trial_start');
-  if(!ts)return false;
-  var THIRTY_DAYS=30*24*60*60*1000;
-  return(Date.now()-parseInt(ts))>THIRTY_DAYS;
-}
-
-// — checkTrialAndGate —————————————————————————————————
-function checkTrialAndGate(){
+// isSubscribed, isTrialExpired, checkTrialAndGate defined above
   if(isTrialExpired())showPaywall();
 }
 
@@ -161,8 +157,18 @@ var subStatus='none';// none | trialing | active | past_due | canceled
           try{proteinSwaps=JSON.parse(localStorage.getItem('fft_swaps')||'{}');}catch(e){}
           try{skippedMeals=JSON.parse(localStorage.getItem('fft_skipped')||'{}');}catch(e){}
         }catch(e){}
-        // Start trial clock for existing users who built plans before the trial system existed.
-        // Only set once — gives them a fresh 30-day window from first use of this version.
+        // Restore drinkingDays — cookie first (survives iOS kill), then plan
+        // Server restore is handled by restoreFromServer (iPad only)
+        try{
+          var _ddC=document.cookie.match(/(?:^|;\s*)fft_drinks=([^;]+)/);
+          if(_ddC){
+            drinkingDays=JSON.parse(decodeURIComponent(_ddC[1]));
+          } else if(!window.FFT_IS_IPAD){
+            var _ddL=localStorage.getItem('fft_drinking_days');
+            if(_ddL)drinkingDays=JSON.parse(_ddL);
+          }
+        }catch(e){}
+        // Start trial clock for existing users
         if(!localStorage.getItem('fft_trial_start')){
           localStorage.setItem('fft_trial_start',Date.now().toString());
         }
@@ -279,20 +285,15 @@ var subStatus='none';// none | trialing | active | past_due | canceled
 
   function finishBoot(){
     hideRestoreLoader();
-
     // ── iPAD BOOT ─────────────────────────────────────────────
-    // If this is an iPad and not yet linked to a phone, show only
-    // the link screen. No dashboard, no nav, no paywall.
     if(window.FFT_IS_IPAD){
       var groupId=localStorage.getItem('fft_group_id');
       if(!groupId){
-        // Not linked — show link screen only
         var ipadScreen=document.getElementById('ipad-link-screen');
         if(ipadScreen)ipadScreen.style.display='flex';
-        return; // stop normal boot
+        return;
       }
-      // Linked — Step 4 will handle the weekly grid view (coming next)
-      // For now fall through to normal boot so data loads correctly
+      // Linked — fall through to normal boot for now (Step 4 adds weekly grid)
     }
     // ── NORMAL BOOT ───────────────────────────────────────────
     hideRestoreLoader();

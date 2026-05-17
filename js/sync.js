@@ -108,9 +108,11 @@ function restoreFromServer(callback){
       try{if(typeof workMode!=='undefined'&&d.fft_workmode)workMode=d.fft_workmode;}catch(e){}
       // Rehydrate dinnerTheme in-memory — handles both set and cleared state
       try{if(typeof dinnerTheme!=='undefined'){dinnerTheme=d.fft_dinner_theme||null;}}catch(e){}
-      // Restore drinking days — phone is source of truth, always overwrite
+      // Restore drinking days from server — iPad only.
+      // On phone, the cookie is more reliable than the server (beacon may not complete before kill).
+      // On iPad, server is the only source of truth (phone writes there, iPad reads).
       try{
-        if(d.fft_drinking_days){
+        if(d.fft_drinking_days && window.FFT_IS_IPAD){
           drinkingDays=JSON.parse(d.fft_drinking_days);
           localStorage.setItem('fft_drinking_days',d.fft_drinking_days);
         }
@@ -119,8 +121,8 @@ function restoreFromServer(callback){
         if(typeof currentPlan!=='undefined'&&d.fft_plan){
           currentPlan=JSON.parse(d.fft_plan);
           if(typeof runPlanMigration==='function')runPlanMigration();
-          // Restore drinkingDays from plan — plan is the most reliable persistence path
-          if(currentPlan.drinkingDays&&typeof currentPlan.drinkingDays==='object'){
+          // Only restore drinkingDays from plan on iPad — phone trusts its cookie
+          if(window.FFT_IS_IPAD&&currentPlan.drinkingDays&&typeof currentPlan.drinkingDays==='object'){
             drinkingDays=currentPlan.drinkingDays;
           }
         }

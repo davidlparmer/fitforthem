@@ -31,23 +31,26 @@ exports.handler = async function(event, context) {
       token: process.env.NETLIFY_TOKEN
     });
 
-    // Preserve groupId as a top-level field alongside the data fields.
+    // Read the existing slot before overwriting so we can preserve groupId.
     //
-    // WHY: The linkDevice sync action identifies a device's group by looking for
-    // a top-level `groupId` field in the device slot. Previously this field was
-    // written by `claim` but then immediately erased on the next saveAllData call
-    // because saveData only spread `data` (which contains `fft_group_id` as a
-    // prefixed key, not `groupId` at the top level). Every subsequent _doGroupSync
-    // would get `not-in-group` and silently fail.
+    // WHY: claim writes groupId as a top-level field on the device slot.
+    // The linkDevice sync action uses that field to find the group.
+    // But the client payload only carries fft_group_id (a prefixed data field),
+    // and only when localStorage already has it — which isn't guaranteed mid-session.
+    // So every saveData call was silently erasing groupId, making _doGroupSync
+    // return not-in-group immediately after the first save following a link.
     //
-    // Fix: mirror fft_group_id → groupId so the slot always has the top-level
-    // field no matter how many times saveAllData runs.
+    // Fix: read the existing slot and carry groupId forward unconditionally.
+    // The extra read is fast (same datacenter) and only happens when saveData runs.
+    const existing = await store.get(safeId, { type: 'json' }) || {};
+    const groupId = data.fft_group_id || existing.groupId;
+
     const slotToWrite = {
       ...data,
       savedAt: new Date().toISOString()
     };
-    if (data.fft_group_id) {
-      slotToWrite.groupId = data.fft_group_id;
+    if (groupId) {
+      slotToWrite.groupId = groupId;
     }
 
     await store.setJSON(safeId, slotToWrite);

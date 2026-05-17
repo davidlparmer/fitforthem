@@ -13,13 +13,6 @@ var WHITELISTED_DEVICES = [
   'fft-mp7a2u5i-f51b1nc9b', // Wife — iPhone
 ];
 
-// ── PERMANENT FREE ACCESS ─────────────────────────────────────
-var WHITELISTED_DEVICES = [
-  'fft-mp71n9xx-m9q0hhenf', // David — iPad
-  'fft-mp630h1q-kkpb7y32o', // David — iPhone
-  'fft-mp7a2u5i-f51b1nc9b', // Wife — iPhone
-];
-
 // ── iPAD LINK SCREEN ─────────────────────────────────────────
 async function iPadClaimLink(){
   var input=document.getElementById('ipad-link-input');
@@ -304,10 +297,14 @@ var subStatus='none';// none | trialing | active | past_due | canceled
     document.getElementById('welcome-screen').style.display=hasName?'none':'flex';
     hidePaywall();
     if(hasName){
-      // Pull latest group data before rendering — ensures weight log is current
+      // Pull latest group data before rendering — ensures weight log and
+      // drinking days are current before the dashboard and weekly grid draw.
       if(typeof pullGroupData==='function' && localStorage.getItem('fft_group_id')){
         pullGroupData(function(){
           initApp();
+          // Re-check weekly grid orientation now that drinkingDays is fresh
+          // from the group pull. Fixes iPad showing stale drink level on load.
+          if(typeof checkWeeklyGrid==='function') checkWeeklyGrid();
           if(typeof startBackgroundSync==='function')startBackgroundSync();
           setTimeout(checkTrialAndGate,1500);
         });
@@ -386,4 +383,3 @@ async function openCustomerPortal(){
     if(btn){btn.disabled=false;btn.textContent='Manage';}
   }
 }
-

@@ -58,6 +58,19 @@ function saveAllData(){
   }
 }
 
+// ── WEEKLY GRID REFRESH HELPER ────────────────────────────────
+// Re-renders the weekly grid if it is currently open.
+// Called after drinkingDays is updated via group sync so the
+// iPad always shows the latest drink level without manual reload.
+function _refreshWeeklyGridIfOpen() {
+  try {
+    var overlay = document.getElementById('weekly-grid-overlay');
+    if (overlay && overlay.style.display !== 'none' && typeof renderWeeklyGrid === 'function') {
+      renderWeeklyGrid();
+    }
+  } catch(e) {}
+}
+
 function restoreFromServer(callback){
   var deviceId=getDeviceId();
   if(!deviceId){callback(false);return;}
@@ -185,11 +198,14 @@ function pullGroupData(callback) {
         }
       }
     } catch(e) {}
-    // Restore drinking days — phone is source of truth, iPad mirrors it
+    // Restore drinking days — phone is source of truth, iPad mirrors it.
+    // After updating, re-render the weekly grid if it is open so the
+    // correct drink level shows immediately without a manual reload.
     try {
       if (d.fft_drinking_days) {
         drinkingDays = JSON.parse(d.fft_drinking_days);
         localStorage.setItem('fft_drinking_days', d.fft_drinking_days);
+        _refreshWeeklyGridIfOpen();
       }
     } catch(e) {}
     if(callback)callback(true);
@@ -275,7 +291,10 @@ function _doGroupSync() {
         }
       }
     } catch(e) {}
-    // Sync drinking days — phone is always source of truth
+
+    // Sync drinking days — phone is always source of truth.
+    // After updating, re-render the weekly grid if it is open so the
+    // correct drink level shows immediately without a manual reload.
     try {
       if (d.fft_drinking_days) {
         var incoming = JSON.parse(d.fft_drinking_days);
@@ -287,6 +306,8 @@ function _doGroupSync() {
           if (typeof updateDashboard === 'function') updateDashboard();
           if (typeof renderDashDay === 'function') renderDashDay(currentDayIdx);
         }
+        // Re-render weekly grid if open (iPad landscape)
+        _refreshWeeklyGridIfOpen();
       }
     } catch(e) {}
   })
@@ -295,4 +316,3 @@ function _doGroupSync() {
 
 // ─────────────────────────────────────────────────────────────
 // ─────────────────────────────────────────────────────────────
-

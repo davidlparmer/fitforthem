@@ -130,11 +130,11 @@ function renderWeeklyGrid() {
         cellContent += '<div style="font-size:.55rem;color:var(--gold);margin-top:4px;letter-spacing:.06em;text-transform:uppercase;opacity:.7">Custom</div>';
       }
       if (isThemed) {
-        cellContent += '<div style="font-size:.55rem;color:var(--gold);margin-top:4px;letter-spacing:.06em;text-transform:uppercase;opacity:.8">🍲 Dinner Family</div>';
+        cellContent += '<div style="font-size:.55rem;color:var(--gold);margin-top:4px;letter-spacing:.06em;text-transform:uppercase;opacity:.8">Dinner Family</div>';
       }
       var cellDrink = drinkingDays && drinkingDays[dIdx];
       if (cellDrink) {
-        cellContent += '<div style="font-size:.55rem;color:var(--gold);margin-top:4px;letter-spacing:.04em;opacity:.8">🍹 Scaled on dashboard</div>';
+        cellContent += '<div style="font-size:.55rem;color:var(--gold);margin-top:4px;letter-spacing:.04em;opacity:.8">Scaled on dashboard</div>';
       }
 
       var cellStyle = tdBase() + rowBg + ';vertical-align:top';

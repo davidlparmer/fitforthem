@@ -71,7 +71,6 @@ function openWeeklyGrid() {
   overlay.style.display = 'block';
   document.body.style.overflow = 'hidden';
 
-  // ── iPAD: clean up phone-only UI ────────────────────────────
   if (window.FFT_IS_IPAD) {
     var closeBtn = overlay.querySelector('button[onclick*="closeWeeklyGrid"]');
     if (closeBtn) {
@@ -131,14 +130,12 @@ function renderWeeklyGrid() {
   if (!planCal) return;
 
   // ── TODAY'S COLUMN INDEX ─────────────────────────────────────
-  // Grid uses Mon=0 … Sun=6. JS getDay() returns Sun=0 … Sat=6.
+  // Grid: Mon=0 … Sun=6. JS getDay(): Sun=0, Mon=1 … Sat=6.
   var todayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
 
-  // Border style applied to every cell in today's column —
-  // left + right side, runs continuously top-to-bottom through all rows.
-  var TODAY_BORDER = 'border-left:2px solid rgba(184,150,60,.55);' +
-                     'border-right:2px solid rgba(184,150,60,.55);';
-  var TODAY_BG     = 'background:rgba(184,150,60,.05);';
+  // Gold border colour used for today's rectangle
+  var TODAY_GOLD = 'rgba(184,150,60,.6)';
+  var TODAY_BG   = 'background:rgba(184,150,60,.05);';
 
   // ── PLAN NAME ────────────────────────────────────────────────
   var displayName = (typeof userName !== 'undefined' && userName)
@@ -188,12 +185,13 @@ function renderWeeklyGrid() {
   ];
 
   // ── HEADER ROW ──────────────────────────────────────────────
+  // Today's header gets NO border — the rectangle starts at the top of
+  // the First Meal cell, not at the day name.
   var headHTML = '<tr>';
   headHTML += '<th style="' + thBase() + 'width:90px;text-align:left;color:var(--t3);' +
     'font-size:.65rem;letter-spacing:.1em;text-transform:uppercase">Meal</th>';
   days.forEach(function(day, idx) {
     var dayPlan = plan[idx] || {};
-    var isToday = idx === todayIdx;
     var activeDrink = drinkingDays && drinkingDays[idx];
     var staticDrink = dayPlan.drinks;
     var _dlabels = { light: 'Light Night', regular: 'Regular', big: 'Big Night' };
@@ -201,9 +199,7 @@ function renderWeeklyGrid() {
       ? (_dlabels[activeDrink] || '')
       : (staticDrink ? 'Drinks' : '');
     var drinkColor = activeDrink ? 'var(--gold)' : 'var(--t3)';
-    // Today's header gets thicker side borders + subtle background
-    var todayStyle = isToday ? TODAY_BORDER + TODAY_BG : '';
-    headHTML += '<th style="' + thBase() + todayStyle +
+    headHTML += '<th style="' + thBase() +
       'text-align:center;color:var(--gold-light);font-size:.78rem;font-weight:700">' +
       day +
       '<div style="font-size:.6rem;color:' + drinkColor + ';margin-top:3px;' +
@@ -216,7 +212,10 @@ function renderWeeklyGrid() {
   // ── BODY ROWS ───────────────────────────────────────────────
   var bodyHTML = '';
   slots.forEach(function(slot, sIdx) {
-    var isMain = slot.key === 'dinner';
+    var isMain     = slot.key === 'dinner';
+    var isFirstRow = sIdx === 0;                  // First Meal — top of rectangle
+    var isLastRow  = sIdx === slots.length - 1;   // Final Meal — bottom of rectangle
+
     var rowBg = sIdx % 2 === 0
       ? 'background:rgba(255,255,255,.02)'
       : 'background:rgba(0,0,0,.08)';
@@ -251,7 +250,6 @@ function renderWeeklyGrid() {
         return '<div style="font-size:.72rem;color:var(--t1);padding:1px 0;line-height:1.4">' +
           ing + '</div>';
       }).join('');
-
       if (isSwapped) {
         cellContent += '<div style="font-size:.55rem;color:var(--gold);margin-top:4px;' +
           'letter-spacing:.06em;text-transform:uppercase;opacity:.7">Custom</div>';
@@ -261,8 +259,22 @@ function renderWeeklyGrid() {
           'letter-spacing:.06em;text-transform:uppercase;opacity:.8">Dinner Family</div>';
       }
 
-      // Today's column: thicker gold side borders + subtle warm background
-      var todayCellStyle = isToday ? TODAY_BORDER + TODAY_BG : '';
+      // ── TODAY'S RECTANGLE BORDER ───────────────────────────
+      // Left and right run the full height of all three meal rows.
+      // Top border only on First Meal, bottom border only on Final Meal.
+      // Inner horizontal lines are suppressed (border-top/bottom:none on inner rows)
+      // so no lines appear between First→Main or Main→Final within the rectangle.
+      // These declarations come after tdBase() in the style string so they win.
+      var todayCellStyle = '';
+      if (isToday) {
+        todayCellStyle =
+          'border-left:2px solid ' + TODAY_GOLD + ';' +
+          'border-right:2px solid ' + TODAY_GOLD + ';' +
+          (isFirstRow ? 'border-top:2px solid ' + TODAY_GOLD + ';' : 'border-top:none;') +
+          (isLastRow  ? 'border-bottom:2px solid ' + TODAY_GOLD + ';' : 'border-bottom:none;') +
+          TODAY_BG;
+      }
+
       var cellStyle = tdBase() + rowBg + todayCellStyle + ';vertical-align:top';
       var innerStyle = 'padding:10px 8px;border-radius:8px;min-height:80px';
 

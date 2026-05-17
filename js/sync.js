@@ -42,6 +42,27 @@ function buildSavePayload(){
   };
 }
 
+// ── IMMEDIATE GROUP PUSH ──────────────────────────────────────
+// saveAllData writes to the phone's personal device slot (fast, beacon).
+// But the GROUP SLOT — what the iPad reads — is only updated by _doGroupSync,
+// which normally runs every 5 minutes. That means the iPad could see stale
+// data for up to 5 minutes after a phone change (drink level, meal swap, etc.).
+//
+// Fix: whenever the phone saves, schedule an immediate group sync push.
+// Debounced at 2 seconds so rapid toggles (e.g. flipping drink levels) only
+// produce one network request, not one per tap.
+//
+// iPad never calls this — it is read-only and only pulls.
+var _groupSyncDebounceTimer = null;
+function _scheduleGroupSync() {
+  if (window.FFT_IS_IPAD) return; // iPad never pushes
+  if (!localStorage.getItem('fft_group_id')) return; // not in a group
+  clearTimeout(_groupSyncDebounceTimer);
+  _groupSyncDebounceTimer = setTimeout(function() {
+    _doGroupSync();
+  }, 2000);
+}
+
 function saveAllData(){
   if(!localStorage.getItem('fft_name'))return;
   var payload=JSON.stringify(buildSavePayload());
@@ -56,6 +77,9 @@ function saveAllData(){
       body:payload
     }).catch(function(){});
   }
+  // Push changes to the group slot immediately so linked devices
+  // (the iPad) see updates within ~2 seconds instead of up to 5 minutes.
+  _scheduleGroupSync();
 }
 
 // ── WEEKLY GRID REFRESH HELPER ────────────────────────────────

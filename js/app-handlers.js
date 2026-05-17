@@ -67,8 +67,29 @@ function checkWeeklyGrid() {
 function openWeeklyGrid() {
   if (!currentPlan || !currentPlan.cal) return;
   renderWeeklyGrid();
-  document.getElementById('weekly-grid-overlay').style.display = 'block';
+  var overlay = document.getElementById('weekly-grid-overlay');
+  overlay.style.display = 'block';
   document.body.style.overflow = 'hidden';
+
+  // ── iPAD DISPLAY CLEANUP ─────────────────────────────────
+  // Run once per open to hide phone-only UI elements that live
+  // in the static app.html and can't be removed at build time.
+  if (window.FFT_IS_IPAD) {
+    // Item 5: Hide instruction text lines.
+    // Walk all text nodes inside the overlay and hide any element
+    // whose content matches the phone-only instructions.
+    var walker = document.createTreeWalker(
+      overlay, NodeFilter.SHOW_TEXT, null, false
+    );
+    var node;
+    while ((node = walker.nextNode())) {
+      var txt = node.textContent.toUpperCase().replace(/\s+/g, ' ').trim();
+      if (txt.indexOf('TAP ANY MAIN MEAL') >= 0 ||
+          txt.indexOf('ROTATE TO PORTRAIT') >= 0) {
+        if (node.parentElement) node.parentElement.style.display = 'none';
+      }
+    }
+  }
 }
 
 function closeWeeklyGrid() {
@@ -79,13 +100,6 @@ function closeWeeklyGrid() {
 // ── INGREDIENT SCALING HELPER ─────────────────────────────────
 // Mirrors the essential scaling logic from buildDayHTML (meals.js).
 // Applied per-day using the precomputed effectiveScale for that column.
-//
-// Handles:
-//   - Standard gram scaling (Chicken 200g → Chicken 242g)
-//   - Whole eggs gram → count conversion (Eggs 150g → 3 eggs)
-//   - Biscoff cookies: nearest 0.5 (same as dashboard)
-//   - Honey cap: 42g max (dinner condiment)
-//   - Soy sauce cap: 36g max (dinner condiment)
 function _scaleGridIngredients(items, effectiveScale) {
   return items.map(function(item) {
     // Biscoff cookies — count format, scale to nearest 0.5
@@ -95,12 +109,12 @@ function _scaleGridIngredients(items, effectiveScale) {
       var scaledCount = Math.round(baseCount * effectiveScale * 2) / 2;
       return 'Biscoff cookies ' + Math.max(0.5, scaledCount);
     }
-    // Standard gram format: 'Name Xg' or 'Name Xg rest'
+    // Standard gram format
     var m = item.match(/^(.*?)(\d+)(g)$/);
-    if (!m) return item; // no gram amount — return as-is (e.g. 'Salt to taste')
+    if (!m) return item;
     var name = m[1].toLowerCase().trim();
     var scaledG = Math.round(parseInt(m[2]) * effectiveScale);
-    // Whole eggs → convert scaled grams to count display
+    // Whole eggs → count display
     var isWholeEgg = (name === 'eggs' || name === 'egg' ||
                       name === 'whole eggs' || name === 'whole egg');
     var isEggWhite = name.indexOf('white') >= 0;
@@ -121,36 +135,38 @@ function renderWeeklyGrid() {
   var planCal = currentPlan && currentPlan.cal ? currentPlan.cal : 0;
   if (!planCal) return;
 
+  // ── PLAN NAME — centered, personalised ──────────────────────
+  // Item 4: "[Name]'s Weekly Meal Plan", centered.
+  var displayName = (typeof userName !== 'undefined' && userName)
+    ? userName
+    : (localStorage.getItem('fft_name') || '');
+  var planTitle = displayName
+    ? displayName + '\u2019s Weekly Meal Plan'
+    : 'Weekly Meal Plan';
+  var planNameEl = document.getElementById('wg-plan-name');
+  if (planNameEl) {
+    planNameEl.textContent = planTitle;
+    // Center the header text — overrides any left-align from static HTML
+    planNameEl.style.textAlign = 'center';
+    planNameEl.style.width = '100%';
+  }
+
   // ── PRECOMPUTE effectiveScale PER DAY ────────────────────────
-  // Mirrors buildDayHTML exactly:
-  //   scale      = planCal / baseTotal  (user target ÷ template)
-  //   drinkScale = (planCal - reserve) / planCal  (drink nights only)
-  //   effectiveScale = scale * drinkScale
-  //
-  // baseTotal uses the resolved meal cals (prefs + dinner rotation applied)
-  // so the scale matches what the dashboard actually shows that day.
   var dayScales = plan.map(function(dayPlan, dIdx) {
-    // First — use pref cal if a permanent swap is set
     var firstC = (mealPrefs && mealPrefs[dIdx] && mealPrefs[dIdx].first)
       ? (mealPrefs[dIdx].first.cal || 0)
       : ((dayPlan.first && dayPlan.first.c) || 0);
-
-    // Dessert — same
     var dessertC = (mealPrefs && mealPrefs[dIdx] && mealPrefs[dIdx].dessert)
       ? (mealPrefs[dIdx].dessert.cal || 0)
       : ((dayPlan.dessert && dayPlan.dessert.c) || 0);
-
-    // Dinner — use resolved dinner (theme / custom / pref / template)
     var dinnerC = (dayPlan.dinner && dayPlan.dinner.c) || 0;
     if (typeof getResolvedDinner === 'function') {
       var rd = getResolvedDinner(dIdx);
       if (rd && rd.c) dinnerC = rd.c;
     }
-
     var baseTotal = firstC + dinnerC + dessertC;
     var scale = baseTotal > 0 ? planCal / baseTotal : 1;
 
-    // Drink scaling — weekends only
     var isWknd = dIdx >= 4;
     var drinkLevel = drinkingDays && drinkingDays[dIdx];
     var isDrinking = isWknd && drinkLevel && drinkLevel !== false;
@@ -159,7 +175,6 @@ function renderWeeklyGrid() {
       drinkReserve = DRINK_RESERVES[drinkLevel] || 0;
     }
     var drinkScale = isDrinking ? (planCal - drinkReserve) / planCal : 1;
-
     return scale * drinkScale;
   });
 
@@ -169,10 +184,6 @@ function renderWeeklyGrid() {
     { key: 'dinner',  label: 'Main Meal'  },
     { key: 'dessert', label: 'Final Meal' }
   ];
-
-  var sex = (currentPlan && currentPlan.sex) ? currentPlan.sex : 'male';
-  document.getElementById('wg-plan-name').textContent =
-    sex === 'female' ? 'Her Weekly Meal Plan' : 'Weekly Meal Plan';
 
   // ── HEADER ROW ──────────────────────────────────────────────
   var headHTML = '<tr>';
@@ -206,7 +217,6 @@ function renderWeeklyGrid() {
       : 'background:rgba(0,0,0,.08)';
     bodyHTML += '<tr>';
 
-    // Row label
     bodyHTML += '<td style="' + tdBase() + rowBg + ';color:var(--gold);font-size:.72rem;' +
       'font-weight:700;font-family:var(--font-body);letter-spacing:.04em;' +
       'vertical-align:top;padding-top:14px">' + slot.label + '</td>';
@@ -227,7 +237,6 @@ function renderWeeklyGrid() {
         slotData = dayPlan[slot.key] || {};
       }
 
-      // Scale ingredients using this day's effectiveScale
       var rawIngredients = slotData.i || [];
       var scaledIngredients = _scaleGridIngredients(rawIngredients, dayScales[dIdx]);
 
@@ -245,20 +254,28 @@ function renderWeeklyGrid() {
         cellContent += '<div style="font-size:.55rem;color:var(--gold);margin-top:4px;' +
           'letter-spacing:.06em;text-transform:uppercase;opacity:.8">Dinner Family</div>';
       }
-      // "Scaled on dashboard" label removed — grid now shows actual scaled amounts
 
       var cellStyle = tdBase() + rowBg + ';vertical-align:top';
       var innerStyle = 'padding:10px 8px;border-radius:8px;min-height:80px';
 
       if (isMain) {
-        cellStyle += ';cursor:pointer';
-        innerStyle += ';border:1px solid transparent;transition:border-color .15s';
-        bodyHTML += '<td style="' + cellStyle + '" onclick="showMealSwap(' + dIdx + ',\'dinner\')">' +
-          '<div style="' + innerStyle + '" class="wg-dinner-cell">' +
-          cellContent +
-          '<div style="font-size:.58rem;color:var(--t3);margin-top:6px;' +
-            'letter-spacing:.06em;text-transform:uppercase">Tap to swap</div>' +
-          '</div></td>';
+        // ── Item 2: iPad dinner cells are display-only ────────
+        // iPhone swaps meals — iPad just reflects the result.
+        // No onclick, no cursor pointer, no "Tap to swap" label.
+        if (window.FFT_IS_IPAD) {
+          bodyHTML += '<td style="' + cellStyle + '">' +
+            '<div style="' + innerStyle + '">' + cellContent + '</div>' +
+            '</td>';
+        } else {
+          cellStyle += ';cursor:pointer';
+          innerStyle += ';border:1px solid transparent;transition:border-color .15s';
+          bodyHTML += '<td style="' + cellStyle + '" onclick="showMealSwap(' + dIdx + ',\'dinner\')">' +
+            '<div style="' + innerStyle + '" class="wg-dinner-cell">' +
+            cellContent +
+            '<div style="font-size:.58rem;color:var(--t3);margin-top:6px;' +
+              'letter-spacing:.06em;text-transform:uppercase">Tap to swap</div>' +
+            '</div></td>';
+        }
       } else {
         bodyHTML += '<td style="' + cellStyle + '">' +
           '<div style="' + innerStyle + '">' + cellContent + '</div>' +
@@ -388,7 +405,6 @@ function buildDinnerThemeUI() {
 window.FFT_IS_IPAD = isIpad();
 
 if (window.FFT_IS_IPAD) {
-  // Orientation — grid in landscape, portrait guard in portrait
   if (screen.orientation && screen.orientation.addEventListener) {
     screen.orientation.addEventListener('change', checkWeeklyGrid);
   }
@@ -397,14 +413,9 @@ if (window.FFT_IS_IPAD) {
     clearTimeout(window._wgResizeTimer);
     window._wgResizeTimer = setTimeout(checkWeeklyGrid, 150);
   });
-
-  // Initial check on load
   window.addEventListener('load', function() {
     setTimeout(checkWeeklyGrid, 300);
   });
-
-  // Pull fresh group data whenever screen wakes or app foregrounds.
-  // iOS pauses setInterval during screen sleep — this catches the gap.
   document.addEventListener('visibilitychange', function() {
     if (!document.hidden && typeof pullGroupData === 'function') {
       pullGroupData(function() {});

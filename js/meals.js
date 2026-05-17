@@ -318,9 +318,10 @@ function buildDayHTML(i,plan,showSwap){
     if(m.tip){customBody+='<div class="coach-note" style="margin-top:8px">'+m.tip+'</div>';}
     if(!customBody){customBody='<p>'+displayCal+' cal</p>';}
     var mealStr=(m.name||'').toLowerCase()+' '+(m.ingredients||[]).map(function(x){return x.item||'';}).join(' ').toLowerCase();
-    var swapCookSteps=typeof getMealInstructions==='function'
+    var isRestaurant=m.notes&&m.notes.indexOf('Eating out')===0;
+    var swapCookSteps=(!isRestaurant&&typeof getMealInstructions==='function')
       ? getMealInstructions(m.mealKey||null, mealStr)
-      : getCookSteps(mealStr);
+      : '';
     if(swapCookSteps){customBody+=swapCookSteps;}
     if(typeof renderMacroBar==='function'){
       var mPro=m.pro||0,mCarb=m.carb||0,mFat=m.fat||0;

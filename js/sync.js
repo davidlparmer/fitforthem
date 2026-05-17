@@ -212,6 +212,13 @@ function pullGroupData(callback) {
       try {
         if (d.fft_meal_prefs) mealPrefs = JSON.parse(d.fft_meal_prefs);
       } catch(e) {}
+      // These globals are read by getResolvedDinner() to resolve today-only swaps,
+      // dinner theme rotation, and protein/skipped state. Without them in memory,
+      // getResolvedDinner() falls through to the template on every call.
+      try { if (d.fft_custom) customMeals = JSON.parse(d.fft_custom); } catch(e) {}
+      try { if (typeof dinnerTheme !== 'undefined') dinnerTheme = d.fft_dinner_theme || null; } catch(e) {}
+      try { if (d.fft_swaps) proteinSwaps = JSON.parse(d.fft_swaps); } catch(e) {}
+      try { if (d.fft_skipped) skippedMeals = JSON.parse(d.fft_skipped); } catch(e) {}
 
       // Drinking days — memory + storage
       try {

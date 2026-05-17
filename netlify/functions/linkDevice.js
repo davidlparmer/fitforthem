@@ -93,6 +93,11 @@ function mergeData(primary, secondary) {
   merged.fft_summary_dismissed = primary.fft_summary_dismissed || secondary.fft_summary_dismissed || '';
   merged.fft_milestones = primary.fft_milestones || secondary.fft_milestones || '';
 
+  // Drinking days — incoming device (phone) always wins.
+  // Only the phone sets drinking days. iPad is read-only for this field.
+  // Use secondary (incoming) if present, otherwise fall back to primary (group).
+  merged.fft_drinking_days = secondary.fft_drinking_days || primary.fft_drinking_days || '';
+
   return merged;
 }
 

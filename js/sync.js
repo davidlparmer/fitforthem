@@ -182,6 +182,13 @@ function pullGroupData(callback) {
         }
       }
     } catch(e) {}
+    // Restore drinking days — phone is source of truth, iPad mirrors it
+    try {
+      if (d.fft_drinking_days) {
+        drinkingDays = JSON.parse(d.fft_drinking_days);
+        localStorage.setItem('fft_drinking_days', d.fft_drinking_days);
+      }
+    } catch(e) {}
     if(callback)callback(true);
   })
   .catch(function() { if(callback)callback(false); });
@@ -262,6 +269,20 @@ function _doGroupSync() {
         if (serverCustom.length > localCustom.length) {
           customMeals = serverCustom;
           localStorage.setItem('fft_custom', JSON.stringify(serverCustom));
+        }
+      }
+    } catch(e) {}
+    // Sync drinking days — phone is always source of truth
+    try {
+      if (d.fft_drinking_days) {
+        var incoming = JSON.parse(d.fft_drinking_days);
+        drinkingDays = incoming;
+        localStorage.setItem('fft_drinking_days', d.fft_drinking_days);
+        // Re-render dashboard if visible so drink changes show immediately
+        if (document.getElementById('page-dashboard') &&
+            document.getElementById('page-dashboard').classList.contains('active')) {
+          if (typeof updateDashboard === 'function') updateDashboard();
+          if (typeof renderDashDay === 'function') renderDashDay(currentDayIdx);
         }
       }
     } catch(e) {}

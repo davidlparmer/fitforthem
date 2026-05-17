@@ -106,8 +106,6 @@ async function checkSubscription(){
 }
 
 // isSubscribed, isTrialExpired, checkTrialAndGate defined above
-  if(isTrialExpired())showPaywall();
-}
 
 // — subStatus + IIFE (initApp/bootApp/finishBoot) —————
 var subStatus='none';// none | trialing | active | past_due | canceled

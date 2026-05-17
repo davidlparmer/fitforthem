@@ -9,6 +9,11 @@
 //             swap-options.js (DINNER_THEME_FAMILIES, SWAP_OPTIONS)
 // ─────────────────────────────────────────────────────────────
 
+// ── DEVICE FLAG ───────────────────────────────────────────────
+// Set once at boot. All iPad-specific logic checks window.FFT_IS_IPAD.
+// Avoids calling isIpad() repeatedly and gives a single place to override.
+window.FFT_IS_IPAD = false; // default — overwritten below after isIpad() is defined
+
 // ── WEEKLY GRID — iPad landscape overlay ──────────────────────
 
 var _wgSwapDayIdx = null;
@@ -368,7 +373,10 @@ function buildDinnerThemeUI() {
 }
 
 // ── ORIENTATION LISTENER ─────────────────────────────────────
-if (isIpad()) {
+// Set the boot flag now that isIpad() is defined
+window.FFT_IS_IPAD = isIpad();
+
+if (window.FFT_IS_IPAD) {
   // Modern API
   if (screen.orientation && screen.orientation.addEventListener) {
     screen.orientation.addEventListener('change', checkWeeklyGrid);

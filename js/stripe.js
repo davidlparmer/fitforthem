@@ -240,26 +240,31 @@ var subStatus='none';// none | trialing | active | past_due | canceled
 
   async function bootApp(){
     if(!returningFromStripe){
-      var cached=localStorage.getItem('fft_sub_status');
-      if(cached==='active'||cached==='trialing'){
-        // Trust localStorage — server check runs in background only
-        subStatus=cached;
-        checkSubscription().then(function(s){
-          if(s==='active'||s==='trialing'){localStorage.setItem('fft_sub_status',s);}
-        }).catch(function(){});
+      // Whitelisted devices skip subscription check entirely — always free
+      if(WHITELISTED_DEVICES.indexOf(getDeviceId())>=0){
+        subStatus='active';
       } else {
-        // No cached status — check server with 3s timeout
-        try{
-          var serverStatus=await Promise.race([
-            checkSubscription(),
-            timeout(3000).then(function(){return 'none';})
-          ]);
-          subStatus=serverStatus||'none';
-          if(subStatus==='active'||subStatus==='trialing'){
-            localStorage.setItem('fft_sub_status',subStatus);
+        var cached=localStorage.getItem('fft_sub_status');
+        if(cached==='active'||cached==='trialing'){
+          // Trust localStorage — server check runs in background only
+          subStatus=cached;
+          checkSubscription().then(function(s){
+            if(s==='active'||s==='trialing'){localStorage.setItem('fft_sub_status',s);}
+          }).catch(function(){});
+        } else {
+          // No cached status — check server with 3s timeout
+          try{
+            var serverStatus=await Promise.race([
+              checkSubscription(),
+              timeout(3000).then(function(){return 'none';})
+            ]);
+            subStatus=serverStatus||'none';
+            if(subStatus==='active'||subStatus==='trialing'){
+              localStorage.setItem('fft_sub_status',subStatus);
+            }
+          }catch(e){
+            subStatus='none';
           }
-        }catch(e){
-          subStatus='none';
         }
       }
     }

@@ -146,9 +146,14 @@ function restoreFromServer(callback){
     }
   }).catch(function(){callback(false);});
 }
+
 // ── BACKGROUND GROUP SYNC ────────────────────────────────────
 // Runs every 5 minutes while app is active.
-// Pushes current device data to group slot and pulls any newer data.
+//
+// PHONE: pushes current data to group slot, pulls merged result.
+// IPAD:  read-only — never writes to server, only pulls from group slot.
+//        Passing groupId from localStorage ensures the server can find
+//        the group even if the device slot was overwritten by saveData.
 var _bgSyncInterval = null;
 var _bgSyncRunning = false;
 
@@ -160,7 +165,9 @@ function startBackgroundSync() {
 }
 
 // Pull-only sync — used on boot to get latest data from group
-// without pushing (avoids overwriting newer phone data with stale computer data)
+// without pushing (avoids overwriting newer phone data with stale device data).
+// groupId is passed explicitly so the server can find the group even if the
+// device slot was overwritten by saveData without the top-level groupId field.
 function pullGroupData(callback) {
   var deviceId = getDeviceId();
   var groupId = localStorage.getItem('fft_group_id');
@@ -168,7 +175,7 @@ function pullGroupData(callback) {
   fetch('/.netlify/functions/linkDevice', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'sync', deviceId: deviceId })
+    body: JSON.stringify({ action: 'sync', deviceId: deviceId, groupId: groupId })
   })
   .then(function(res) { return res.json(); })
   .then(function(result) {
@@ -223,16 +230,27 @@ function _doGroupSync() {
   if (!deviceId) return;
   if (!localStorage.getItem('fft_name')) return; // not initialized yet
 
+  // ── iPAD: read-only — never push data to the group ───────────
+  // iPad is a display-only device (weekly grid next to the stove).
+  // It must never overwrite phone data in the group slot.
+  // All it needs is a pull of the latest group state.
+  if (window.FFT_IS_IPAD) {
+    pullGroupData(function() {});
+    return;
+  }
+
+  // ── PHONE: push current data, pull merged result ──────────────
   _bgSyncRunning = true;
 
+  var groupId = localStorage.getItem('fft_group_id');
   var payload = buildSavePayload();
-  payload.action = 'sync';
-  payload.data = payload.data; // already set by buildSavePayload
 
   fetch('/.netlify/functions/linkDevice', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'sync', deviceId: deviceId, data: payload.data })
+    // groupId passed explicitly — server uses it as fallback if device slot
+    // was overwritten by saveData without the top-level groupId field.
+    body: JSON.stringify({ action: 'sync', deviceId: deviceId, groupId: groupId, data: payload.data })
   })
   .then(function(res) { return res.json(); })
   .then(function(result) {
@@ -247,7 +265,6 @@ function _doGroupSync() {
       if (d.fft_log) {
         var serverLog = JSON.parse(d.fft_log);
         var localLog = weightLog || [];
-        // Merge by date, keep all unique entries
         var byDate = {};
         localLog.concat(serverLog).forEach(function(e) {
           if (!byDate[e.d] || e.t > (byDate[e.d].t || 0)) byDate[e.d] = e;
@@ -255,11 +272,9 @@ function _doGroupSync() {
         var merged = Object.values(byDate).sort(function(a, b) {
           return b.d.localeCompare(a.d);
         });
-        // Only update if server has entries we don't
         if (merged.length > localLog.length || JSON.stringify(merged) !== JSON.stringify(localLog)) {
           weightLog = merged;
           localStorage.setItem('fft_log', JSON.stringify(merged));
-          // Re-render dashboard if visible
           if (document.getElementById('page-dashboard') &&
               document.getElementById('page-dashboard').classList.contains('active')) {
             if (typeof updateDashboard === 'function') updateDashboard();
@@ -293,20 +308,17 @@ function _doGroupSync() {
     } catch(e) {}
 
     // Sync drinking days — phone is always source of truth.
-    // After updating, re-render the weekly grid if it is open so the
-    // correct drink level shows immediately without a manual reload.
+    // After updating, re-render dashboard and weekly grid if open.
     try {
       if (d.fft_drinking_days) {
         var incoming = JSON.parse(d.fft_drinking_days);
         drinkingDays = incoming;
         localStorage.setItem('fft_drinking_days', d.fft_drinking_days);
-        // Re-render dashboard if visible so drink changes show immediately
         if (document.getElementById('page-dashboard') &&
             document.getElementById('page-dashboard').classList.contains('active')) {
           if (typeof updateDashboard === 'function') updateDashboard();
           if (typeof renderDashDay === 'function') renderDashDay(currentDayIdx);
         }
-        // Re-render weekly grid if open (iPad landscape)
         _refreshWeeklyGridIfOpen();
       }
     } catch(e) {}

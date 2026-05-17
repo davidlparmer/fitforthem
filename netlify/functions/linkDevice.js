@@ -93,9 +93,9 @@ function mergeData(primary, secondary) {
   merged.fft_summary_dismissed = primary.fft_summary_dismissed || secondary.fft_summary_dismissed || '';
   merged.fft_milestones = primary.fft_milestones || secondary.fft_milestones || '';
 
-  // Drinking days — incoming device (phone) always wins.
-  // Only the phone sets drinking days. iPad is read-only for this field.
-  // Use secondary (incoming) if present, otherwise fall back to primary (group).
+  // Drinking days — phone always wins. iPad is read-only for this field.
+  // primary = existing group data, secondary = incoming device data (phone).
+  // Phone's value wins; fall back to group's existing value if phone sends nothing.
   merged.fft_drinking_days = secondary.fft_drinking_days || primary.fft_drinking_days || '';
 
   return merged;
@@ -203,18 +203,28 @@ exports.handler = async function(event) {
     // ── ACTION: sync ────────────────────────────────────────
     // Devices call this periodically to push their latest data
     // to the group slot and pull any newer data from it.
+    //
+    // The iPad is read-only — it sends no data, only pulls.
+    // The phone pushes data and receives the merged group result.
     if (action === 'sync') {
       const safeId = sanitize(deviceId);
       if (!safeId) return { statusCode: 400, headers: HEADERS, body: JSON.stringify({ error: 'Invalid deviceId' }) };
 
-      // Get the device's current data to find its groupId
+      // Resolve groupId — check device slot first, then accept client-provided value.
+      //
+      // WHY: saveData (the regular save function) writes the device slot with fft_group_id
+      // as a data field, not as the top-level groupId key that claim writes. So after any
+      // normal save, the device slot loses its top-level groupId. Accepting it from the
+      // client request (where it lives in localStorage) makes sync reliable regardless of
+      // what saveData last wrote to the device slot.
       const deviceData = await store.get(safeId, { type: 'json' });
-      if (!deviceData || !deviceData.groupId) {
+      const groupId = (deviceData && deviceData.groupId) || sanitize(body.groupId);
+
+      if (!groupId) {
         // Not in a group — nothing to sync
         return { statusCode: 200, headers: HEADERS, body: JSON.stringify({ ok: false, reason: 'not-in-group' }) };
       }
 
-      const groupId = deviceData.groupId;
       const groupData = await store.get(groupId, { type: 'json' }) || {};
 
       // Merge device data into group — weight log always merges, plan uses newer version
@@ -225,7 +235,8 @@ exports.handler = async function(event) {
         updatedGroup.savedAt = new Date().toISOString();
         await store.setJSON(groupId, updatedGroup);
 
-        // Also update device slot
+        // Also update device slot, preserving groupId as top-level field so future
+        // syncs can find it even if saveData doesn't write it.
         const updatedDevice = { ...incomingData, groupId, savedAt: new Date().toISOString() };
         await store.setJSON(safeId, updatedDevice);
 
@@ -236,7 +247,7 @@ exports.handler = async function(event) {
         };
       }
 
-      // No incoming data — just return current group data (pull only)
+      // No incoming data — pull only. Return current group data unchanged.
       return {
         statusCode: 200,
         headers: HEADERS,

@@ -63,12 +63,9 @@ function startJourney(){
   localStorage.setItem('fft_name',n);
   saveAllData();
   document.getElementById('welcome-screen').style.display='none';
-  // ── PAYWALL BYPASSED FOR BETA TESTING ──────────────────────
-  // Go straight to app — no subscription check
   document.getElementById('main-nav').style.display='flex';
   updateDashGreeting();
   showPage('builder');
-  // ───────────────────────────────────────────────────────────
 }
 
 // — showPaywall ———————————————————————————————————————
@@ -93,15 +90,12 @@ async function checkSubscription(){
     subStatus=data.status||'none';
     return subStatus;
   }catch(e){
-    // On network error, fail open — don't block existing users
     return 'active';
   }
 }
 
-// isSubscribed, isTrialExpired, checkTrialAndGate defined above
-
 // — subStatus + IIFE (initApp/bootApp/finishBoot) —————
-var subStatus='none';// none | trialing | active | past_due | canceled
+var subStatus='none';
 (function(){
   function initApp(){
     var savedName=localStorage.getItem('fft_name');
@@ -115,7 +109,6 @@ var subStatus='none';// none | trialing | active | past_due | canceled
         document.querySelectorAll('[id^="wm-"]').forEach(function(b){b.classList.remove('active');});
         wmEl.classList.add('active');
       }
-      // Also update the coach note to match the restored mode
       var wmNoteEl=document.getElementById('workmode-note');
       if(wmNoteEl){
         var wmNotes={
@@ -148,8 +141,6 @@ var subStatus='none';// none | trialing | active | past_due | canceled
           try{proteinSwaps=JSON.parse(localStorage.getItem('fft_swaps')||'{}');}catch(e){}
           try{skippedMeals=JSON.parse(localStorage.getItem('fft_skipped')||'{}');}catch(e){}
         }catch(e){}
-        // Restore drinkingDays — cookie first (survives iOS kill), then plan
-        // Server restore is handled by restoreFromServer (iPad only)
         try{
           var _ddC=document.cookie.match(/(?:^|;\s*)fft_drinks=([^;]+)/);
           if(_ddC){
@@ -159,13 +150,11 @@ var subStatus='none';// none | trialing | active | past_due | canceled
             if(_ddL)drinkingDays=JSON.parse(_ddL);
           }
         }catch(e){}
-        // Start trial clock for existing users
         if(!localStorage.getItem('fft_trial_start')){
           localStorage.setItem('fft_trial_start',Date.now().toString());
         }
       }
       updateDashGreeting();
-      // Route to builder if no plan yet, otherwise dashboard
       var targetPage=savedPlan?'dashboard':'builder';
       showPage(targetPage);
       if(currentPlan.cal){
@@ -176,18 +165,11 @@ var subStatus='none';// none | trialing | active | past_due | canceled
       initLightMode();
     }
     document.getElementById('log-d').value=new Date().toISOString().split('T')[0];
-    // Save backup to Cache API every time app loads successfully
     if(localStorage.getItem('fft_name'))saveAllData();
   }
 
-  // Always try to restore from server first — localStorage may be wiped on iOS PWA
-  // If server has data, it overwrites any stale localStorage
-  // If server has no data (new user), fall through to localStorage
   var cookieMatch=document.cookie.match(/(?:^|;\s*)fft_device=([^;]+)/);
 
-  // Check subscription status then init
-  // Fail open on errors so existing users are never blocked by a network issue
-  // Promise that resolves after ms milliseconds
   function timeout(ms){return new Promise(function(r){setTimeout(r,ms);});}
 
   function showRestoreLoader(){
@@ -211,8 +193,6 @@ var subStatus='none';// none | trialing | active | past_due | canceled
   }
 
   function hideRestoreLoader(){
-    // finishBoot handles welcome-screen visibility — just reset card content
-    // so if it re-shows (new user), it has the correct form HTML
     var el=document.getElementById('welcome-screen');
     if(!el)return;
     var card=el.querySelector('.welcome-card');
@@ -231,19 +211,16 @@ var subStatus='none';// none | trialing | active | past_due | canceled
 
   async function bootApp(){
     if(!returningFromStripe){
-      // Whitelisted devices skip subscription check entirely — always free
       if(WHITELISTED_DEVICES.indexOf(getDeviceId())>=0){
         subStatus='active';
       } else {
         var cached=localStorage.getItem('fft_sub_status');
         if(cached==='active'||cached==='trialing'){
-          // Trust localStorage — server check runs in background only
           subStatus=cached;
           checkSubscription().then(function(s){
             if(s==='active'||s==='trialing'){localStorage.setItem('fft_sub_status',s);}
           }).catch(function(){});
         } else {
-          // No cached status — check server with 3s timeout
           try{
             var serverStatus=await Promise.race([
               checkSubscription(),
@@ -260,8 +237,6 @@ var subStatus='none';// none | trialing | active | past_due | canceled
       }
     }
 
-    // restoreFromServer with 4s timeout so boot never hangs.
-    // Returning users see a spinner; new users see the welcome form immediately.
     if(cookieMatch){
       showRestoreLoader();
       var restored=false;
@@ -281,30 +256,45 @@ var subStatus='none';// none | trialing | active | past_due | canceled
 
   function finishBoot(){
     hideRestoreLoader();
+
     // ── iPAD BOOT ─────────────────────────────────────────────
     if(window.FFT_IS_IPAD){
       var groupId=localStorage.getItem('fft_group_id');
       if(!groupId){
+        // Not linked — show link screen and stop
         var ipadScreen=document.getElementById('ipad-link-screen');
         if(ipadScreen)ipadScreen.style.display='flex';
         return;
       }
-      // Linked — fall through to normal boot for now (Step 4 adds weekly grid)
+
+      // ── LINKED iPAD: clean read-only boot ───────────────────
+      // iPad never runs initApp(), updateDashboard(), or saveAllData().
+      // It has exactly one job: pull the phone's data from the group slot
+      // and show the weekly grid. Nothing else happens on this device.
+      document.getElementById('welcome-screen').style.display='none';
+      var nav=document.getElementById('main-nav');
+      if(nav)nav.style.display='none';
+
+      pullGroupData(function(){
+        // pullGroupData (iPad path) has already set currentPlan, mealPrefs,
+        // drinkingDays in memory. Just open the grid.
+        checkWeeklyGrid();
+        // Poll every 5 minutes — pullGroupData handles the re-render internally
+        setInterval(function(){
+          pullGroupData(function(){});
+        }, 5*60*1000);
+      });
+      return; // ← critical: never fall through to phone boot below
     }
-    // ── NORMAL BOOT ───────────────────────────────────────────
-    hideRestoreLoader();
+
+    // ── PHONE BOOT ────────────────────────────────────────────
     var hasName=!!localStorage.getItem('fft_name');
     document.getElementById('welcome-screen').style.display=hasName?'none':'flex';
     hidePaywall();
     if(hasName){
-      // Pull latest group data before rendering — ensures weight log and
-      // drinking days are current before the dashboard and weekly grid draw.
       if(typeof pullGroupData==='function' && localStorage.getItem('fft_group_id')){
         pullGroupData(function(){
           initApp();
-          // Re-check weekly grid orientation now that drinkingDays is fresh
-          // from the group pull. Fixes iPad showing stale drink level on load.
-          if(typeof checkWeeklyGrid==='function') checkWeeklyGrid();
           if(typeof startBackgroundSync==='function')startBackgroundSync();
           setTimeout(checkTrialAndGate,1500);
         });
@@ -316,14 +306,12 @@ var subStatus='none';// none | trialing | active | past_due | canceled
     }
   }
 
-  // Handle return from Stripe FIRST — before any status checks
   var returningFromStripe=false;
   (function(){
     var params=new URLSearchParams(window.location.search);
     if(params.get('subscribed')==='true'){
       returningFromStripe=true;
       history.replaceState({},'',window.location.pathname);
-      // Write to localStorage immediately
       localStorage.setItem('fft_sub_status','trialing');
       subStatus='trialing';
     }

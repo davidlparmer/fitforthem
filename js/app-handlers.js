@@ -71,13 +71,21 @@ function openWeeklyGrid() {
   overlay.style.display = 'block';
   document.body.style.overflow = 'hidden';
 
-  // ── iPAD DISPLAY CLEANUP ─────────────────────────────────
-  // Run once per open to hide phone-only UI elements that live
-  // in the static app.html and can't be removed at build time.
+  // ── iPAD: clean up phone-only UI ────────────────────────────
   if (window.FFT_IS_IPAD) {
-    // Item 5: Hide instruction text lines.
-    // Walk all text nodes inside the overlay and hide any element
-    // whose content matches the phone-only instructions.
+    // Item 3: Hide the Close button — iPad has no dashboard to return to.
+    // Item 1: After hiding it, switch the header from space-between → center
+    //         so the plan name is genuinely centered in the bar.
+    var closeBtn = overlay.querySelector('button[onclick*="closeWeeklyGrid"]');
+    if (closeBtn) {
+      closeBtn.style.display = 'none';
+      // closeBtn.parentElement is the flex header bar
+      var headerBar = closeBtn.parentElement;
+      if (headerBar) headerBar.style.justifyContent = 'center';
+    }
+
+    // Item 5: Hide instruction text via text-node matching.
+    // Already working from previous round — kept here for resilience.
     var walker = document.createTreeWalker(
       overlay, NodeFilter.SHOW_TEXT, null, false
     );
@@ -136,7 +144,6 @@ function renderWeeklyGrid() {
   if (!planCal) return;
 
   // ── PLAN NAME — centered, personalised ──────────────────────
-  // Item 4: "[Name]'s Weekly Meal Plan", centered.
   var displayName = (typeof userName !== 'undefined' && userName)
     ? userName
     : (localStorage.getItem('fft_name') || '');
@@ -146,7 +153,6 @@ function renderWeeklyGrid() {
   var planNameEl = document.getElementById('wg-plan-name');
   if (planNameEl) {
     planNameEl.textContent = planTitle;
-    // Center the header text — overrides any left-align from static HTML
     planNameEl.style.textAlign = 'center';
     planNameEl.style.width = '100%';
   }
@@ -166,7 +172,6 @@ function renderWeeklyGrid() {
     }
     var baseTotal = firstC + dinnerC + dessertC;
     var scale = baseTotal > 0 ? planCal / baseTotal : 1;
-
     var isWknd = dIdx >= 4;
     var drinkLevel = drinkingDays && drinkingDays[dIdx];
     var isDrinking = isWknd && drinkLevel && drinkLevel !== false;
@@ -259,9 +264,7 @@ function renderWeeklyGrid() {
       var innerStyle = 'padding:10px 8px;border-radius:8px;min-height:80px';
 
       if (isMain) {
-        // ── Item 2: iPad dinner cells are display-only ────────
-        // iPhone swaps meals — iPad just reflects the result.
-        // No onclick, no cursor pointer, no "Tap to swap" label.
+        // iPad: display-only — no swap tap, no cursor, no label
         if (window.FFT_IS_IPAD) {
           bodyHTML += '<td style="' + cellStyle + '">' +
             '<div style="' + innerStyle + '">' + cellContent + '</div>' +

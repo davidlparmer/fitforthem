@@ -73,19 +73,12 @@ function openWeeklyGrid() {
 
   // ── iPAD: clean up phone-only UI ────────────────────────────
   if (window.FFT_IS_IPAD) {
-    // Item 3: Hide the Close button — iPad has no dashboard to return to.
-    // Item 1: After hiding it, switch the header from space-between → center
-    //         so the plan name is genuinely centered in the bar.
     var closeBtn = overlay.querySelector('button[onclick*="closeWeeklyGrid"]');
     if (closeBtn) {
       closeBtn.style.display = 'none';
-      // closeBtn.parentElement is the flex header bar
       var headerBar = closeBtn.parentElement;
       if (headerBar) headerBar.style.justifyContent = 'center';
     }
-
-    // Item 5: Hide instruction text via text-node matching.
-    // Already working from previous round — kept here for resilience.
     var walker = document.createTreeWalker(
       overlay, NodeFilter.SHOW_TEXT, null, false
     );
@@ -106,30 +99,24 @@ function closeWeeklyGrid() {
 }
 
 // ── INGREDIENT SCALING HELPER ─────────────────────────────────
-// Mirrors the essential scaling logic from buildDayHTML (meals.js).
-// Applied per-day using the precomputed effectiveScale for that column.
 function _scaleGridIngredients(items, effectiveScale) {
   return items.map(function(item) {
-    // Biscoff cookies — count format, scale to nearest 0.5
     var mCookie = item.match(/^(Biscoff cookies)\s+(\d+(?:\.\d+)?)$/i);
     if (mCookie) {
       var baseCount = parseFloat(mCookie[2]);
       var scaledCount = Math.round(baseCount * effectiveScale * 2) / 2;
       return 'Biscoff cookies ' + Math.max(0.5, scaledCount);
     }
-    // Standard gram format
     var m = item.match(/^(.*?)(\d+)(g)$/);
     if (!m) return item;
     var name = m[1].toLowerCase().trim();
     var scaledG = Math.round(parseInt(m[2]) * effectiveScale);
-    // Whole eggs → count display
     var isWholeEgg = (name === 'eggs' || name === 'egg' ||
                       name === 'whole eggs' || name === 'whole egg');
     var isEggWhite = name.indexOf('white') >= 0;
     if (isWholeEgg && !isEggWhite && typeof eggsGtoCount === 'function') {
       return eggsGtoCount(scaledG);
     }
-    // Condiment caps
     if (name.indexOf('honey') >= 0 && scaledG > 42) scaledG = 42;
     if (name.indexOf('soy')   >= 0 && scaledG > 36) scaledG = 36;
     return m[1] + scaledG + 'g';
@@ -143,7 +130,17 @@ function renderWeeklyGrid() {
   var planCal = currentPlan && currentPlan.cal ? currentPlan.cal : 0;
   if (!planCal) return;
 
-  // ── PLAN NAME — centered, personalised ──────────────────────
+  // ── TODAY'S COLUMN INDEX ─────────────────────────────────────
+  // Grid uses Mon=0 … Sun=6. JS getDay() returns Sun=0 … Sat=6.
+  var todayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+
+  // Border style applied to every cell in today's column —
+  // left + right side, runs continuously top-to-bottom through all rows.
+  var TODAY_BORDER = 'border-left:2px solid rgba(184,150,60,.55);' +
+                     'border-right:2px solid rgba(184,150,60,.55);';
+  var TODAY_BG     = 'background:rgba(184,150,60,.05);';
+
+  // ── PLAN NAME ────────────────────────────────────────────────
   var displayName = (typeof userName !== 'undefined' && userName)
     ? userName
     : (localStorage.getItem('fft_name') || '');
@@ -196,6 +193,7 @@ function renderWeeklyGrid() {
     'font-size:.65rem;letter-spacing:.1em;text-transform:uppercase">Meal</th>';
   days.forEach(function(day, idx) {
     var dayPlan = plan[idx] || {};
+    var isToday = idx === todayIdx;
     var activeDrink = drinkingDays && drinkingDays[idx];
     var staticDrink = dayPlan.drinks;
     var _dlabels = { light: 'Light Night', regular: 'Regular', big: 'Big Night' };
@@ -203,8 +201,10 @@ function renderWeeklyGrid() {
       ? (_dlabels[activeDrink] || '')
       : (staticDrink ? 'Drinks' : '');
     var drinkColor = activeDrink ? 'var(--gold)' : 'var(--t3)';
-    headHTML += '<th style="' + thBase() + 'text-align:center;color:var(--gold-light);' +
-      'font-size:.78rem;font-weight:700">' +
+    // Today's header gets thicker side borders + subtle background
+    var todayStyle = isToday ? TODAY_BORDER + TODAY_BG : '';
+    headHTML += '<th style="' + thBase() + todayStyle +
+      'text-align:center;color:var(--gold-light);font-size:.78rem;font-weight:700">' +
       day +
       '<div style="font-size:.6rem;color:' + drinkColor + ';margin-top:3px;' +
         'font-weight:500;min-height:14px">' + drinkText + '</div>' +
@@ -227,6 +227,7 @@ function renderWeeklyGrid() {
       'vertical-align:top;padding-top:14px">' + slot.label + '</td>';
 
     days.forEach(function(day, dIdx) {
+      var isToday = dIdx === todayIdx;
       var dayPlan = plan[dIdx] || {};
       var permPref = !isMain && mealPrefs && mealPrefs[dIdx] && mealPrefs[dIdx][slot.key];
       var slotData;
@@ -260,11 +261,12 @@ function renderWeeklyGrid() {
           'letter-spacing:.06em;text-transform:uppercase;opacity:.8">Dinner Family</div>';
       }
 
-      var cellStyle = tdBase() + rowBg + ';vertical-align:top';
+      // Today's column: thicker gold side borders + subtle warm background
+      var todayCellStyle = isToday ? TODAY_BORDER + TODAY_BG : '';
+      var cellStyle = tdBase() + rowBg + todayCellStyle + ';vertical-align:top';
       var innerStyle = 'padding:10px 8px;border-radius:8px;min-height:80px';
 
       if (isMain) {
-        // iPad: display-only — no swap tap, no cursor, no label
         if (window.FFT_IS_IPAD) {
           bodyHTML += '<td style="' + cellStyle + '">' +
             '<div style="' + innerStyle + '">' + cellContent + '</div>' +

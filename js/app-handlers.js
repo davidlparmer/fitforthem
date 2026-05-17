@@ -3,26 +3,18 @@
 // Weekly grid (iPad landscape), Recipes page, Dinner theme UI.
 // Previously lived as an inline <script> in app.html.
 // Load order: last — after all other modules.
-// Depends on: engine.js (getActivePlan, getSlotCalorieTargets)
-//             meals.js (getResolvedDinner, getMealInstructions, eggsGtoCount)
-//             state.js (currentPlan, mealPrefs, drinkingDays, dinnerTheme)
-//             swap-options.js (DINNER_THEME_FAMILIES, SWAP_OPTIONS)
 // ─────────────────────────────────────────────────────────────
 
 // ── DEVICE FLAG ───────────────────────────────────────────────
-// Set once at boot. All iPad-specific logic checks window.FFT_IS_IPAD.
-// Avoids calling isIpad() repeatedly and gives a single place to override.
-window.FFT_IS_IPAD = false; // default — overwritten below after isIpad() is defined
+window.FFT_IS_IPAD = false; // overwritten below after isIpad() is defined
 
 // ── WEEKLY GRID — iPad landscape overlay ──────────────────────
 
 var _wgSwapDayIdx = null;
 
 function isIpad() {
-  // Covers modern iPadOS (reports as Mac in some browsers) and classic iPad UA
   var ua = navigator.userAgent;
   if (/iPad/.test(ua)) return true;
-  // iPadOS 13+ with desktop UA — detect via touch + large screen
   if (/Macintosh/.test(ua) && navigator.maxTouchPoints && navigator.maxTouchPoints > 1) return true;
   return false;
 }
@@ -31,21 +23,52 @@ function isLandscape() {
   if (screen.orientation && screen.orientation.type) {
     return screen.orientation.type.indexOf('landscape') >= 0;
   }
-  // Fallback for older iOS
   return window.innerWidth > window.innerHeight;
+}
+
+// ── PORTRAIT GUARD ────────────────────────────────────────────
+// When iPad is in portrait, show a full-screen "rotate" message.
+// Created once, toggled with display.
+function _showPortraitGuard() {
+  var guard = document.getElementById('ipad-portrait-guard');
+  if (!guard) {
+    guard = document.createElement('div');
+    guard.id = 'ipad-portrait-guard';
+    guard.style.cssText = [
+      'position:fixed;top:0;left:0;width:100%;height:100%',
+      'display:flex;flex-direction:column;align-items:center;justify-content:center',
+      'background:var(--bg,#111)',
+      'z-index:10000'
+    ].join(';');
+    guard.innerHTML =
+      '<div style="font-size:3rem;margin-bottom:20px;opacity:.7">&#8635;</div>' +
+      '<div style="font-size:1rem;font-weight:700;color:var(--gold-light,#d4b86a);' +
+        'letter-spacing:.12em;text-transform:uppercase;font-family:var(--font-body,' +
+        '\'IBM Plex Sans\',sans-serif);margin-bottom:10px">Rotate to Landscape</div>' +
+      '<div style="font-size:.82rem;color:var(--t2,#888)">Loftin Method weekly meal planner</div>';
+    document.body.appendChild(guard);
+  }
+  guard.style.display = 'flex';
+}
+
+function _hidePortraitGuard() {
+  var guard = document.getElementById('ipad-portrait-guard');
+  if (guard) guard.style.display = 'none';
 }
 
 function checkWeeklyGrid() {
   if (!isIpad()) return;
   if (isLandscape()) {
+    _hidePortraitGuard();
     openWeeklyGrid();
   } else {
     closeWeeklyGrid();
+    _showPortraitGuard();
   }
 }
 
 function openWeeklyGrid() {
-  if (!currentPlan || !currentPlan.cal) return; // no plan built yet — don't show
+  if (!currentPlan || !currentPlan.cal) return;
   renderWeeklyGrid();
   document.getElementById('weekly-grid-overlay').style.display = 'block';
   document.body.style.overflow = 'hidden';
@@ -67,7 +90,6 @@ function renderWeeklyGrid() {
     { key: 'dessert', label: 'Final Meal' }
   ];
 
-  // Plan name header
   var sex = (currentPlan && currentPlan.sex) ? currentPlan.sex : 'male';
   document.getElementById('wg-plan-name').textContent = sex === 'female' ? 'Her Weekly Meal Plan' : 'Weekly Meal Plan';
 
@@ -96,14 +118,10 @@ function renderWeeklyGrid() {
     var rowBg = sIdx % 2 === 0 ? 'background:rgba(255,255,255,.02)' : 'background:rgba(0,0,0,.08)';
     bodyHTML += '<tr>';
 
-    // Row label cell
     bodyHTML += '<td style="'+tdBase()+rowBg+';color:var(--gold);font-size:.72rem;font-weight:700;font-family:var(--font-body);letter-spacing:.04em;vertical-align:top;padding-top:14px">' + slot.label + '</td>';
 
-    // Day cells
     days.forEach(function(day, dIdx) {
       var dayPlan = plan[dIdx] || {};
-
-      // Resolve slot data — dinner uses shared getResolvedDinner() for full priority chain
       var permPref = !isMain && mealPrefs && mealPrefs[dIdx] && mealPrefs[dIdx][slot.key];
       var slotData;
       var isThemed = false;
@@ -125,7 +143,6 @@ function renderWeeklyGrid() {
         var displayIng = (eggM && !isEggWhite) ? eggsGtoCount(parseInt(eggM[2])) : ing;
         return '<div style="font-size:.72rem;color:var(--t1);padding:1px 0;line-height:1.4">' + displayIng + '</div>';
       }).join('');
-      // Subtle indicator when a permanent swap is active
       if (isSwapped) {
         cellContent += '<div style="font-size:.55rem;color:var(--gold);margin-top:4px;letter-spacing:.06em;text-transform:uppercase;opacity:.7">Custom</div>';
       }
@@ -141,7 +158,6 @@ function renderWeeklyGrid() {
       var innerStyle = 'padding:10px 8px;border-radius:8px;min-height:80px';
 
       if (isMain) {
-        // Tappable — Main Meal swap
         cellStyle += ';cursor:pointer';
         innerStyle += ';border:1px solid transparent;transition:border-color .15s';
         bodyHTML += '<td style="' + cellStyle + '" onclick="showMealSwap(' + dIdx + ',\'dinner\')">' +
@@ -161,15 +177,10 @@ function renderWeeklyGrid() {
   document.getElementById('weekly-grid-body').innerHTML = bodyHTML;
 }
 
-// Weekly grid dinner swap routes through showMealSwap() in meals.js
-// _wgDinnerOverrides retained as empty stub — no longer used
 var _wgDinnerOverrides = {};
 
 
 // ── RECIPES PAGE ─────────────────────────────────────────────
-// Lane-aware, scale-aware reference view of the user's actual weekly meals.
-// Deduplicates by swap key so each unique recipe appears once per slot.
-// Scales ingredient amounts to the user's personal calorie targets.
 
 function renderRecipesPage() {
   var el = document.getElementById('recipes-content');
@@ -183,15 +194,12 @@ function renderRecipesPage() {
   var plan = getActivePlan();
   var calTargets = getSlotCalorieTargets(currentPlan);
 
-  // Collect unique meals per slot across the 7-day plan
-  // Key: slot → map of swap-key → {name, k, i, cal}
   var slots = ['first','dinner','dessert'];
   var slotLabels = {first:'First Meals', dinner:'Main Meal Recipes', dessert:'Final Meal Recipes'};
   var slotCardClass = {first:'', dinner:'alt', dessert:'dessert'};
 
   var seen = {first:{}, dinner:{}, dessert:{}};
 
-  // Helper: scale ingredient gram amounts to user's slot calorie target
   function scaleIngredients(items, templateCal, slot) {
     var targetCal = calTargets[slot] || templateCal || 1;
     var scale = templateCal > 0 ? targetCal / templateCal : 1;
@@ -202,7 +210,6 @@ function renderRecipesPage() {
     });
   }
 
-  // Pass 1: collect unique meals from the 7-day template plan
   plan.forEach(function(day) {
     slots.forEach(function(slot) {
       var meal = day[slot];
@@ -216,10 +223,6 @@ function renderRecipesPage() {
     });
   });
 
-  // Pass 2: augment with permanent mealPrefs (recurring day defaults).
-  // These reflect what the user actually cooks on that day every week —
-  // not transient today-only swaps, not dinner family day-rotation variants.
-  // Only add meals not already in the seen set for that slot.
   if (typeof mealPrefs !== 'undefined' && mealPrefs) {
     var lane = (currentPlan && currentPlan.lane) ? currentPlan.lane : 'men_deficit';
     Object.keys(mealPrefs).forEach(function(dayIdx) {
@@ -228,14 +231,12 @@ function renderRecipesPage() {
       slots.forEach(function(slot) {
         var pref = dayPrefs[slot];
         if (!pref || !pref.key || seen[slot][pref.key]) return;
-        // pref.items are already serialized ingredient strings at base cal
-        // pref.cal is the base cal from SWAP_OPTIONS at time of swap
         seen[slot][pref.key] = {
           name: pref.name || pref.key,
           k: pref.key,
           i: scaleIngredients(pref.items, pref.cal, slot),
           cal: Math.round(calTargets[slot] || pref.cal),
-          isPref: true // marker: came from permanent pref, not template
+          isPref: true
         };
       });
     });
@@ -287,109 +288,39 @@ function tdBase() {
 }
 
 
-// ── DINNER THEME UI ─────────────────────────────────────────
-// Builds the weekly dinner theme selector on the dashboard.
-// Iterates DINNER_THEME_FAMILIES — skips families where lane is null or uiVisible:false.
-// Called by updateDashboard() and setDinnerTheme()/clearDinnerTheme().
-
+// ── DINNER THEME UI ──────────────────────────────────────────
 function buildDinnerThemeUI() {
-  return; // hidden for v1 — re-enable after first paying customers
-
-  if (!currentPlan || !currentPlan.cal) { section.style.display = 'none'; return; }
-  section.style.display = 'block';
-
-  var lane = (currentPlan && currentPlan.lane) ? currentPlan.lane : 'men_deficit';
-
-  // Active theme display
-  var activeName = '';
-  if (dinnerTheme && typeof DINNER_THEME_FAMILIES !== 'undefined' && DINNER_THEME_FAMILIES[dinnerTheme]) {
-    activeName = DINNER_THEME_FAMILIES[dinnerTheme].name;
-  }
-  if (activeName) {
-    activeEl.style.display = 'block';
-    activeEl.textContent = activeName;
-    clearBtn.style.display = 'block';
-  } else {
-    activeEl.style.display = 'none';
-    clearBtn.style.display = 'none';
-  }
-
-  // Build family option list — only uiVisible:true families valid for this lane
-  if (typeof DINNER_THEME_FAMILIES === 'undefined') {
-    optionsEl.innerHTML = '<div style="font-size:.78rem;color:var(--t3);font-style:italic">Dinner families not loaded.</div>';
-    return;
-  }
-
-  var html = '';
-  var anyVisible = false;
-  Object.keys(DINNER_THEME_FAMILIES).forEach(function(familyKey) {
-    var family = DINNER_THEME_FAMILIES[familyKey];
-    if (!family.uiVisible) return;
-    var variants = family.lanes[lane];
-    if (!variants) return; // null = not valid for this lane
-
-    anyVisible = true;
-    var isActive = dinnerTheme === familyKey;
-
-    // Find a representative image from the first variant in this lane
-    var repImg = family.img;
-    if (typeof SWAP_OPTIONS !== 'undefined') {
-      var laneOpts = (SWAP_OPTIONS[lane] || SWAP_OPTIONS['men_deficit']).dinner || [];
-      var firstVariant = laneOpts.filter(function(o) { return o.key === variants[0]; })[0];
-      if (firstVariant) repImg = firstVariant.img;
-    }
-
-    // Show variant names as a preview line
-    var variantNames = '';
-    if (typeof SWAP_OPTIONS !== 'undefined') {
-      var laneOpts2 = (SWAP_OPTIONS[lane] || SWAP_OPTIONS['men_deficit']).dinner || [];
-      variantNames = variants.map(function(vk) {
-        var v = laneOpts2.filter(function(o) { return o.key === vk; })[0];
-        return v ? v.name : vk;
-      }).join(' · ');
-    }
-
-    html += '<button onclick="setDinnerTheme(\'' + familyKey + '\')" style="' +
-      'display:flex;align-items:center;gap:12px;width:100%;text-align:left;' +
-      'padding:11px 14px;border-radius:10px;cursor:pointer;font-family:var(--font-body);' +
-      'background:' + (isActive ? 'rgba(184,150,60,.12)' : 'var(--s2)') + ';' +
-      'border:1px solid ' + (isActive ? 'rgba(184,150,60,.55)' : 'var(--gold-line)') + ';' +
-      'transition:all .2s">' +
-      '<img src="' + repImg + '" style="width:40px;height:40px;object-fit:cover;border-radius:8px;flex-shrink:0">' +
-      '<div style="flex:1;min-width:0">' +
-        '<div style="font-size:.88rem;font-weight:700;color:' + (isActive ? 'var(--gold-light)' : 'var(--t1)') + ';font-family:var(--font-display)">' +
-          family.name +
-          (isActive ? ' <span style="font-size:.6rem;font-weight:700;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;font-family:var(--font-body)">Active</span>' : '') +
-        '</div>' +
-        '<div style="font-size:.68rem;color:var(--t2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + variantNames + '</div>' +
-      '</div>' +
-    '</button>';
-  });
-
-  if (!anyVisible) {
-    html = '<div style="font-size:.78rem;color:var(--t3);font-style:italic">No dinner families available for your current plan.</div>';
-  }
-  optionsEl.innerHTML = html;
+  return; // hidden for v1
 }
 
-// ── ORIENTATION LISTENER ─────────────────────────────────────
-// Set the boot flag now that isIpad() is defined
+
+// ── BOOT ──────────────────────────────────────────────────────
 window.FFT_IS_IPAD = isIpad();
 
 if (window.FFT_IS_IPAD) {
-  // Modern API
+  // Orientation changes — show grid in landscape, portrait guard in portrait
   if (screen.orientation && screen.orientation.addEventListener) {
     screen.orientation.addEventListener('change', checkWeeklyGrid);
   }
-  // Legacy iOS fallback
   window.addEventListener('orientationchange', checkWeeklyGrid);
   window.addEventListener('resize', function() {
-    // Debounce resize — resize fires during rotation animation
     clearTimeout(window._wgResizeTimer);
     window._wgResizeTimer = setTimeout(checkWeeklyGrid, 150);
   });
-  // Check on load in case iPad is already in landscape
+
+  // Initial check on load
   window.addEventListener('load', function() {
     setTimeout(checkWeeklyGrid, 300);
+  });
+
+  // ── VISIBILITY CHANGE LISTENER ──────────────────────────────
+  // iOS pauses JavaScript when the screen sleeps or the app is backgrounded.
+  // setInterval alone won't reliably update the grid when the user wakes the
+  // screen. This listener fires immediately when the app becomes visible again,
+  // pulling fresh group data and re-rendering the grid without a kill/reopen.
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && typeof pullGroupData === 'function') {
+      pullGroupData(function() {});
+    }
   });
 }

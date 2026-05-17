@@ -27,6 +27,23 @@ function calcStreak(){
 }
 
 
+// ── DRINK LEVEL ───────────────────────────────────────────────
+// Saves to cookie (survives iOS kill), localStorage, and server.
+// All drink toggles call this — never mutate drinkingDays directly.
+function setDrinkLevel(dayIdx, level) {
+  drinkingDays[dayIdx] = level;
+  var dd = JSON.stringify(drinkingDays);
+  try { localStorage.setItem('fft_drinking_days', dd); } catch(e) {}
+  try {
+    var exp = new Date();
+    exp.setDate(exp.getDate() + 7);
+    document.cookie = 'fft_drinks=' + encodeURIComponent(dd) + ';expires=' + exp.toUTCString() + ';path=/;SameSite=Lax';
+  } catch(e) {}
+  if (typeof saveAllData === 'function') saveAllData();
+  refreshCurrentView(dayIdx);
+  updateDashboard();
+}
+
 // Format ingredient with optional store unit conversion in parentheses
 function eggsGtoCount(grams){
   var count=Math.max(1,Math.round(grams/50));
@@ -114,10 +131,10 @@ function buildDayHTML(i,plan,showSwap){
     html+='<div style="background:var(--s1);border-radius:12px;padding:16px 18px;margin-bottom:16px;border:1px solid var(--gold-line)">'+
       '<div style="font-size:.58rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;font-family:var(--font-body)">Tonight\'s Decision</div>'+
       '<div class="tog-row" style="margin-bottom:'+(isDrinking?'12':'0')+'px">'+
-        '<div class="tog'+(!isDrinking?' active':'')+'" onclick="drinkingDays['+i+']=false;refreshCurrentView('+i+');updateDashboard()" style="flex:1;padding:10px;font-size:.68rem">Not Drinking</div>'+
-        '<div class="tog'+(drinkLevel==='light'?' active':'')+'" onclick="drinkingDays['+i+']='+"'light'"+';refreshCurrentView('+i+');updateDashboard()" style="flex:1;padding:10px;font-size:.68rem">Light Night</div>'+
-        '<div class="tog'+(drinkLevel==='regular'?' active':'')+'" onclick="drinkingDays['+i+']='+"'regular'"+';refreshCurrentView('+i+');updateDashboard()" style="flex:1;padding:10px;font-size:.68rem">Regular</div>'+
-        '<div class="tog'+(drinkLevel==='big'?' active':'')+'" onclick="drinkingDays['+i+']='+"'big'"+';refreshCurrentView('+i+');updateDashboard()" style="flex:1;padding:10px;font-size:.68rem">Big Night</div>'+
+        '<div class="tog'+(!isDrinking?' active':'')+'" onclick="setDrinkLevel('+i+',false)" style="flex:1;padding:10px;font-size:.68rem">Not Drinking</div>'+
+        '<div class="tog'+(drinkLevel==='light'?' active':'')+'" onclick="setDrinkLevel('+i+',\'light\')" style="flex:1;padding:10px;font-size:.68rem">Light Night</div>'+
+        '<div class="tog'+(drinkLevel==='regular'?' active':'')+'" onclick="setDrinkLevel('+i+',\'regular\')" style="flex:1;padding:10px;font-size:.68rem">Regular</div>'+
+        '<div class="tog'+(drinkLevel==='big'?' active':'')+'" onclick="setDrinkLevel('+i+',\'big\')" style="flex:1;padding:10px;font-size:.68rem">Big Night</div>'+
       '</div>'+
       (isDrinking?'<div style="font-size:.75rem;color:var(--t2);line-height:1.6;letter-spacing:.01em;font-style:italic">Meals adjusted · Steps increased · Drink budget: <strong style="color:var(--gold-light);font-style:normal">~'+drinkReserve+' cal</strong></div>':'')+
     '</div>';
@@ -210,14 +227,17 @@ function buildDayHTML(i,plan,showSwap){
     });
   }
 
-  // Dessert: special Biscoff formula — cookies fixed at 2, yogurt and honey scale together
-  // Base anchor: yogurt 280g, honey 30g. Formula: honeyIncrease = (yogurtIncrease/50)*5
-  var BASE_YOGURT_G=280, BASE_HONEY_G=30;
-  var COOKIE_CAL_FIXED=75;
+  var BASE_YOGURT_G=280, BASE_HONEY_G=30, BASE_COOKIE_COUNT=2, CAL_PER_COOKIE=37.5;
   var isDrinkingNight=isWknd&&isDrinking;
   var dessertItems=day.dessert.i.map(function(item){
+    var mCookie=item.match(/^(Biscoff cookies)\s+(\d+(?:\.\d+)?)$/i);
+    if(mCookie){
+      var scaledCount=Math.round(BASE_COOKIE_COUNT*effectiveScale*2)/2;
+      scaledCount=Math.max(0.5,scaledCount);
+      return 'Biscoff cookies '+scaledCount;
+    }
     var m=item.match(/^(.*?)(\d+)(g)$/);
-    if(!m)return item; // handles 'Biscoff cookies 2' — no 'g', passes through unchanged
+    if(!m)return item;
     var name=m[1].toLowerCase();
     var baseG=parseInt(m[2]);
     if(name.indexOf('yogurt')>=0||name.indexOf('greek')>=0){
@@ -229,7 +249,7 @@ function buildDayHTML(i,plan,showSwap){
       var yogurtIncrease=scaledYogurtG-BASE_YOGURT_G;
       var honeyIncrease=Math.round((yogurtIncrease/50)*5);
       var honeyG=BASE_HONEY_G+honeyIncrease;
-      if(isDrinkingNight){honeyG=25;}// drinking night fixed reduction
+      if(isDrinkingNight){honeyG=25;}
       return m[1]+honeyG+'g';
     }
     return item;
@@ -320,8 +340,7 @@ function buildDayHTML(i,plan,showSwap){
     var mealStr=(m.name||'').toLowerCase()+' '+(m.ingredients||[]).map(function(x){return x.item||'';}).join(' ').toLowerCase();
     var isRestaurant=m.notes&&m.notes.indexOf('Eating out')===0;
     var swapCookSteps=(!isRestaurant&&typeof getMealInstructions==='function')
-      ? getMealInstructions(m.mealKey||null, mealStr)
-      : '';
+      ?getMealInstructions(m.mealKey||null,mealStr):'';
     if(swapCookSteps){customBody+=swapCookSteps;}
     if(typeof renderMacroBar==='function'){
       var mPro=m.pro||0,mCarb=m.carb||0,mFat=m.fat||0;
@@ -395,9 +414,6 @@ function buildDayHTML(i,plan,showSwap){
   if(dinnerSkipped){
     html+='<div style="padding:12px 15px;background:var(--cream);border-radius:12px;margin-bottom:10px;border:1px dashed var(--border);display:flex;justify-content:space-between;align-items:center"><span style="font-size:.84rem;color:var(--muted)">Main Meal skipped today</span><button onclick="restoreMeal('+i+',\'dinner\')" style="background:none;border:1px solid var(--warm);color:var(--warm);border-radius:8px;padding:5px 12px;font-size:.75rem;cursor:pointer;font-weight:600">Restore</button></div>';
   } else if(customDinner){
-    // Restaurant meal over-budget warning — dinner slot only.
-    // If drinking tonight and the restaurant meal exceeds the drink-adjusted dinner budget,
-    // show an inline warning on the collapsed card. No scaling — just information.
     var isRestaurantMeal=customDinner.notes&&customDinner.notes.indexOf('Eating out')===0;
     var overBudgetWarning='';
     if(isRestaurantMeal&&isDrinking&&customDinner.cal>dinnerCal){
@@ -405,7 +421,7 @@ function buildDayHTML(i,plan,showSwap){
       overBudgetWarning='<div style="margin:0 0 8px 0;padding:10px 14px;background:rgba(192,57,43,.12);border:1px solid rgba(192,57,43,.35);border-radius:10px;font-size:.78rem;color:var(--t1);line-height:1.5">'+
         'Over budget with drinks by '+overBy+' calories. Keep it or find a lighter option.'+
         '<div style="display:flex;gap:8px;margin-top:8px">'+
-          '<button onclick="(function(){var w=this.closest(\'[data-warn]\');if(w)w.style.display=\'none\';})()" '+
+          '<button onclick="this.closest(\'div\').parentNode.removeChild(this.closest(\'div\'))" '+
             'style="background:none;border:1px solid var(--gold-line);color:var(--gold);border-radius:6px;padding:5px 12px;font-size:.72rem;font-weight:600;cursor:pointer;font-family:var(--font-body)">Keep it</button>'+
           '<button onclick="showPage(\'eatout\')" '+
             'style="background:none;border:1px solid var(--gold-line);color:var(--gold);border-radius:6px;padding:5px 12px;font-size:.72rem;font-weight:600;cursor:pointer;font-family:var(--font-body)">Find a lighter option</button>'+

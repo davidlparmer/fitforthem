@@ -43,11 +43,11 @@ function buildSavePayload(){
 }
 
 // ── IMMEDIATE GROUP PUSH ──────────────────────────────────────
-// saveAllData writes to the phone's personal device slot only (fast, beacon).
+// saveAllData writes to the phone's personal device slot (fast, beacon).
 // The GROUP SLOT — what the iPad reads — is updated by _doGroupSync.
-// To ensure the iPad sees changes quickly (drink level, meal swaps, etc.),
-// schedule a group push 2 seconds after any save. Debounced so rapid
-// toggles produce one request, not one per tap. iPad never calls this.
+// Schedule an immediate push after any save so linked devices see
+// changes within ~2 seconds. Debounced so rapid toggles send one request.
+// iPad never calls this path.
 var _groupSyncDebounceTimer = null;
 function _scheduleGroupSync() {
   if (window.FFT_IS_IPAD) return;
@@ -72,8 +72,7 @@ function saveAllData(){
       body:payload
     }).catch(function(){});
   }
-  // Push changes to group slot immediately so the iPad sees updates
-  // within ~2 seconds instead of waiting for the 5-minute interval.
+  // Push changes to group slot so the iPad sees updates quickly.
   _scheduleGroupSync();
 }
 
@@ -86,6 +85,20 @@ function _refreshWeeklyGridIfOpen() {
     var overlay = document.getElementById('weekly-grid-overlay');
     if (overlay && overlay.style.display !== 'none' && typeof renderWeeklyGrid === 'function') {
       renderWeeklyGrid();
+    }
+  } catch(e) {}
+}
+
+// ── CACHE groupId FROM SERVER RESPONSE ───────────────────────
+// The phone generates the link code but doesn't receive groupId during
+// that flow — only the iPad gets it on claim. So the phone's localStorage
+// may not have fft_group_id until restoreFromServer runs at next boot.
+// Calling this after every successful sync keeps it current mid-session,
+// ensuring _doGroupSync always has a groupId to pass to the server.
+function _cacheGroupId(d) {
+  try {
+    if (d && d.groupId && !localStorage.getItem('fft_group_id')) {
+      localStorage.setItem('fft_group_id', d.groupId);
     }
   } catch(e) {}
 }
@@ -114,20 +127,15 @@ function restoreFromServer(callback){
           else{localStorage.removeItem('fft_dinner_theme');}
         }
       }catch(e){}
-      // Restore groupId → fft_group_id in localStorage.
-      //
-      // WHY: The phone generates the link code but never gets fft_group_id written to its
-      // own localStorage — only the iPad does during claim. Without it, the phone passes
-      // groupId: null to _doGroupSync and the server returns not-in-group. The device slot
-      // DOES have groupId (written by claim), so we pull it out here and persist it so all
-      // future sync calls can pass it as an explicit fallback.
+      // Restore groupId to localStorage.
+      // The device slot has groupId written by claim AND now preserved by saveData.
+      // Cache it here so _doGroupSync can always pass it as an explicit body fallback.
       try{
         if(d.groupId && !localStorage.getItem('fft_group_id')){
           localStorage.setItem('fft_group_id', d.groupId);
         }
       }catch(e){}
-      // fft_log: MERGE server + local, never overwrite. Prevents data loss when iOS kills the
-      // app before a save completes, or when two devices each have entries the other doesn't.
+      // fft_log: MERGE server + local, never overwrite.
       try{
         if(d.fft_log){
           var serverLog=JSON.parse(d.fft_log);
@@ -153,8 +161,6 @@ function restoreFromServer(callback){
       // Rehydrate dinnerTheme in-memory — handles both set and cleared state
       try{if(typeof dinnerTheme!=='undefined'){dinnerTheme=d.fft_dinner_theme||null;}}catch(e){}
       // Restore drinking days from server — iPad only.
-      // On phone, the cookie is more reliable than the server (beacon may not complete before kill).
-      // On iPad, server is the only source of truth (phone writes there, iPad reads).
       try{
         if(d.fft_drinking_days && window.FFT_IS_IPAD){
           drinkingDays=JSON.parse(d.fft_drinking_days);
@@ -165,7 +171,6 @@ function restoreFromServer(callback){
         if(typeof currentPlan!=='undefined'&&d.fft_plan){
           currentPlan=JSON.parse(d.fft_plan);
           if(typeof runPlanMigration==='function')runPlanMigration();
-          // Only restore drinkingDays from plan on iPad — phone trusts its cookie
           if(window.FFT_IS_IPAD&&currentPlan.drinkingDays&&typeof currentPlan.drinkingDays==='object'){
             drinkingDays=currentPlan.drinkingDays;
           }
@@ -180,32 +185,20 @@ function restoreFromServer(callback){
 
 // ── BACKGROUND GROUP SYNC ────────────────────────────────────
 // Runs every 5 minutes while app is active.
-//
 // PHONE: pushes current data to group slot, pulls merged result.
-// IPAD:  read-only — never writes to server, only pulls from group slot.
-//        groupId passed explicitly from localStorage so the server can find
-//        the group even if the device slot was overwritten by saveData.
+// IPAD:  read-only — never writes, only pulls from group slot.
 var _bgSyncInterval = null;
 var _bgSyncRunning = false;
 
 function startBackgroundSync() {
-  if (_bgSyncInterval) return; // already running
-  // Run immediately on start, then every 5 minutes
+  if (_bgSyncInterval) return;
   _doGroupSync();
   _bgSyncInterval = setInterval(_doGroupSync, 5 * 60 * 1000);
 }
 
-// Pull-only sync — used on boot to get latest data from group.
-//
-// For iPad: does a FULL restore of all fields (plan, meals, prefs, drinking days)
-// so that when initApp() reads localStorage it gets the phone's data, not the
-// iPad's stale personal slot data that restoreFromServer loaded earlier.
-//
-// For phone: partial restore only (log, saved meals) — phone is source of truth
-// for its own plan and should not overwrite its current data with group data.
-//
-// groupId passed explicitly so server fallback works even after saveData
-// writes the device slot without the top-level groupId field.
+// Pull-only sync — used on boot.
+// iPad path: full restore of all fields so initApp reads phone's data.
+// Phone path: partial restore only (log, saved meals).
 function pullGroupData(callback) {
   var deviceId = getDeviceId();
   var groupId = localStorage.getItem('fft_group_id');
@@ -220,11 +213,10 @@ function pullGroupData(callback) {
     if (!result.ok || !result.data) { if(callback)callback(false); return; }
     var d = result.data;
 
+    // Cache groupId from response — keeps phone's localStorage current mid-session
+    _cacheGroupId(d);
+
     // ── iPAD: full restore from group slot ──────────────────
-    // iPad must mirror the phone completely. restoreFromServer loaded the iPad's
-    // personal slot (stale, from claim time). This overwrites everything in
-    // localStorage with the group slot's current data so initApp() reads the
-    // phone's plan, not the iPad's old one.
     if (window.FFT_IS_IPAD) {
       var ipadKeys = [
         'fft_plan','fft_name','fft_workmode','fft_age',
@@ -236,14 +228,12 @@ function pullGroupData(callback) {
           try { localStorage.setItem(k, d[k]); } catch(e) {}
         }
       });
-      // Drinking days — memory + storage
       try {
         if (d.fft_drinking_days) {
           drinkingDays = JSON.parse(d.fft_drinking_days);
           localStorage.setItem('fft_drinking_days', d.fft_drinking_days);
         }
       } catch(e) {}
-      // Weight log — iPad never logs weight so just take the server value directly
       try {
         if (d.fft_log) {
           weightLog = JSON.parse(d.fft_log);
@@ -256,10 +246,6 @@ function pullGroupData(callback) {
     }
 
     // ── PHONE: partial restore only ─────────────────────────
-    // Phone is source of truth — don't overwrite its current plan or prefs.
-    // Only sync things that benefit from cross-device merging.
-
-    // Merge weight log
     try {
       if (d.fft_log) {
         var serverLog = JSON.parse(d.fft_log);
@@ -273,7 +259,6 @@ function pullGroupData(callback) {
         localStorage.setItem('fft_log', JSON.stringify(merged));
       }
     } catch(e) {}
-    // Merge saved meals
     try {
       if (d.fft_saved_meals) {
         var serverMeals = JSON.parse(d.fft_saved_meals);
@@ -293,19 +278,17 @@ function stopBackgroundSync() {
 }
 
 function _doGroupSync() {
-  if (_bgSyncRunning) return; // prevent overlapping syncs
+  if (_bgSyncRunning) return;
   var deviceId = getDeviceId();
   if (!deviceId) return;
-  if (!localStorage.getItem('fft_name')) return; // not initialized yet
+  if (!localStorage.getItem('fft_name')) return;
 
-  // ── iPAD: read-only — never push data to the group ───────────
-  // iPad is a display-only device. It must never overwrite phone data.
+  // iPad is read-only — only pull, never push
   if (window.FFT_IS_IPAD) {
     pullGroupData(function() {});
     return;
   }
 
-  // ── PHONE: push current data, pull merged result ──────────────
   _bgSyncRunning = true;
 
   var groupId = localStorage.getItem('fft_group_id');
@@ -314,8 +297,6 @@ function _doGroupSync() {
   fetch('/.netlify/functions/linkDevice', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    // groupId passed explicitly — server uses it as fallback if device slot
-    // was overwritten by saveData without the top-level groupId field.
     body: JSON.stringify({ action: 'sync', deviceId: deviceId, groupId: groupId, data: payload.data })
   })
   .then(function(res) { return res.json(); })
@@ -325,7 +306,11 @@ function _doGroupSync() {
     var d = result.data;
     if (!d) return;
 
-    // Merge weight log — critical for cross-device logging
+    // Cache groupId — ensures phone always has it in localStorage after first
+    // successful sync, so subsequent syncs work even mid-session after re-linking
+    _cacheGroupId(d);
+
+    // Merge weight log
     try {
       if (d.fft_log) {
         var serverLog = JSON.parse(d.fft_log);
@@ -372,8 +357,7 @@ function _doGroupSync() {
       }
     } catch(e) {}
 
-    // Sync drinking days — phone is always source of truth.
-    // After updating, re-render dashboard and weekly grid if open.
+    // Sync drinking days — re-render dashboard and weekly grid if open
     try {
       if (d.fft_drinking_days) {
         var incoming = JSON.parse(d.fft_drinking_days);

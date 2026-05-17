@@ -31,10 +31,26 @@ exports.handler = async function(event, context) {
       token: process.env.NETLIFY_TOKEN
     });
 
-    await store.setJSON(safeId, {
+    // Preserve groupId as a top-level field alongside the data fields.
+    //
+    // WHY: The linkDevice sync action identifies a device's group by looking for
+    // a top-level `groupId` field in the device slot. Previously this field was
+    // written by `claim` but then immediately erased on the next saveAllData call
+    // because saveData only spread `data` (which contains `fft_group_id` as a
+    // prefixed key, not `groupId` at the top level). Every subsequent _doGroupSync
+    // would get `not-in-group` and silently fail.
+    //
+    // Fix: mirror fft_group_id → groupId so the slot always has the top-level
+    // field no matter how many times saveAllData runs.
+    const slotToWrite = {
       ...data,
       savedAt: new Date().toISOString()
-    });
+    };
+    if (data.fft_group_id) {
+      slotToWrite.groupId = data.fft_group_id;
+    }
+
+    await store.setJSON(safeId, slotToWrite);
 
     return { statusCode: 200, headers, body: JSON.stringify({ ok: true }) };
 

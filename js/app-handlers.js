@@ -145,12 +145,25 @@ function renderWeeklyGrid() {
 
   // ── PRECOMPUTE effectiveScale PER DAY ────────────────────────
   var dayScales = plan.map(function(dayPlan, dIdx) {
-    var firstC = (mealPrefs && mealPrefs[dIdx] && mealPrefs[dIdx].first)
-      ? (mealPrefs[dIdx].first.cal || 0)
-      : ((dayPlan.first && dayPlan.first.c) || 0);
-    var dessertC = (mealPrefs && mealPrefs[dIdx] && mealPrefs[dIdx].dessert)
-      ? (mealPrefs[dIdx].dessert.cal || 0)
-      : ((dayPlan.dessert && dayPlan.dessert.c) || 0);
+    // First — today-only custom swap takes priority over permanent pref
+    var firstCustom = (customMeals || []).filter(function(m) {
+      return m.day === dIdx && m.slot === 'first';
+    })[0];
+    var firstC = firstCustom
+      ? (firstCustom.cal || 0)
+      : (mealPrefs && mealPrefs[dIdx] && mealPrefs[dIdx].first)
+        ? (mealPrefs[dIdx].first.cal || 0)
+        : ((dayPlan.first && dayPlan.first.c) || 0);
+
+    // Dessert — same priority order
+    var dessertCustom = (customMeals || []).filter(function(m) {
+      return m.day === dIdx && m.slot === 'dessert';
+    })[0];
+    var dessertC = dessertCustom
+      ? (dessertCustom.cal || 0)
+      : (mealPrefs && mealPrefs[dIdx] && mealPrefs[dIdx].dessert)
+        ? (mealPrefs[dIdx].dessert.cal || 0)
+        : ((dayPlan.dessert && dayPlan.dessert.c) || 0);
     var dinnerC = (dayPlan.dinner && dayPlan.dinner.c) || 0;
     if (typeof getResolvedDinner === 'function') {
       var rd = getResolvedDinner(dIdx);
@@ -222,10 +235,26 @@ function renderWeeklyGrid() {
         var rd = getResolvedDinner(dIdx);
         slotData = rd ? { i: rd.i, c: rd.c } : (dayPlan[slot.key] || {});
         isThemed = rd && rd.source === 'theme';
-      } else if (permPref) {
-        slotData = { i: permPref.items, c: permPref.cal };
       } else {
-        slotData = dayPlan[slot.key] || {};
+        // First/dessert: mirror getResolvedDinner's priority chain.
+        // Check today-only customMeals first, then permanent mealPrefs, then template.
+        // Previously only mealPrefs was checked — today-only swaps for first/dessert
+        // went into customMeals and were never found, so the grid showed the template.
+        var slotCustom = (customMeals || []).filter(function(m) {
+          return m.day === dIdx && m.slot === slot.key;
+        })[0];
+        if (slotCustom) {
+          slotData = {
+            i: slotCustom.ingredients
+              ? slotCustom.ingredients.map(function(x) { return x.item || ''; })
+              : [],
+            c: slotCustom.cal
+          };
+        } else if (permPref) {
+          slotData = { i: permPref.items, c: permPref.cal };
+        } else {
+          slotData = dayPlan[slot.key] || {};
+        }
       }
 
       var rawIngredients = slotData.i || [];

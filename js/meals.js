@@ -1676,6 +1676,8 @@ function applyMealSwap(optKey, permanent){
     customMeals.push({day:dayIdx,name:chosen.name,cal:chosen.cal,slot:slot,notes:'Swapped meal',id:Date.now(),mealKey:chosen.key,ingredients:mealItemsToStrings(chosen.items,'raw').map(function(x){return{item:x,amount:''};})});
     try{localStorage.setItem('fft_custom',JSON.stringify(customMeals));}catch(e){}
   }
+  // Push to server and group slot so linked devices (iPad) see the swap immediately
+  if(typeof saveAllData==='function')saveAllData();
 
   closeMealSwap();
   refreshCurrentView(dayIdx);
@@ -1694,6 +1696,8 @@ function applyMealSwap(optKey, permanent){
 function clearMealPref(dayIdx, slot){
   if(mealPrefs[dayIdx])delete mealPrefs[dayIdx][slot];
   try{localStorage.setItem('fft_meal_prefs',JSON.stringify(mealPrefs));}catch(e){}
+  // Push removal to server and group slot so iPad reflects it immediately
+  if(typeof saveAllData==='function')saveAllData();
   closeMealSwap();
   refreshCurrentView(dayIdx);
   buildDashDayTabs();
@@ -1708,6 +1712,8 @@ function closeMealSwap(){
 function removeCustomMealDash(id,dayIdx){
   customMeals=customMeals.filter(function(m){return m.id!==id;});
   try{localStorage.setItem('fft_custom',JSON.stringify(customMeals));}catch(e){}
+  // Push removal to server and group slot so iPad reflects it immediately
+  if(typeof saveAllData==='function')saveAllData();
   renderDashDay(dayIdx);
   buildDashDayTabs();
 }

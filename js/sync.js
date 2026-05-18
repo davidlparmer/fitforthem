@@ -157,6 +157,7 @@ function restoreFromServer(callback){
 
 var _bgSyncInterval = null;
 var _bgSyncRunning = false;
+var _syncPending = false; // true when a sync was requested while one was already in flight
 
 function startBackgroundSync() {
   if (_bgSyncInterval) return;
@@ -275,7 +276,6 @@ function stopBackgroundSync() {
 }
 
 function _doGroupSync() {
-  if (_bgSyncRunning) return;
   var deviceId = getDeviceId();
   if (!deviceId) return;
   if (!localStorage.getItem('fft_name')) return;
@@ -286,7 +286,17 @@ function _doGroupSync() {
     return;
   }
 
+  if (_bgSyncRunning) {
+    // A sync is already in flight. Mark it so we retry immediately when it lands
+    // rather than waiting for the next 60-second interval tick.
+    // This is what causes meal swaps to be dropped — the debounce fires into a
+    // running sync, the guard returns early, and the change sits unsynced for a minute.
+    _syncPending = true;
+    return;
+  }
+
   _bgSyncRunning = true;
+  _syncPending = false;
 
   var groupId = localStorage.getItem('fft_group_id');
   var payload = buildSavePayload();
@@ -299,6 +309,8 @@ function _doGroupSync() {
   .then(function(res) { return res.json(); })
   .then(function(result) {
     _bgSyncRunning = false;
+    // If a sync was requested while we were in flight, fire it now.
+    if (_syncPending) { _syncPending = false; setTimeout(_doGroupSync, 300); }
     if (!result.ok || result.reason === 'not-in-group') return;
     var d = result.data;
     if (!d) return;
@@ -363,7 +375,10 @@ function _doGroupSync() {
       }
     } catch(e) {}
   })
-  .catch(function() { _bgSyncRunning = false; });
+  .catch(function() {
+    _bgSyncRunning = false;
+    if (_syncPending) { _syncPending = false; setTimeout(_doGroupSync, 300); }
+  });
 }
 
 // ─────────────────────────────────────────────────────────────

@@ -161,7 +161,7 @@ var _bgSyncRunning = false;
 function startBackgroundSync() {
   if (_bgSyncInterval) return;
   _doGroupSync();
-  _bgSyncInterval = setInterval(_doGroupSync, 5 * 60 * 1000);
+  _bgSyncInterval = setInterval(_doGroupSync, 60 * 1000);
 }
 
 // pullGroupData — fetches the group slot and updates local state.

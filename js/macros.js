@@ -21,6 +21,15 @@ var MACRO_TABLE = {
   'egg whites':     { cal: 52,  pro: 11.0, carb: 0.7,  fat: 0.2  },
   'egg white':      { cal: 52,  pro: 11.0, carb: 0.7,  fat: 0.2  },
   'egg':            { cal: 143, pro: 13.0, carb: 1.0,  fat: 10.0 },
+  // Raw proteins — used when ingredient strings carry raw gram weights (templates, SWAP_OPTIONS)
+  // Values: USDA FoodData Central, raw/uncooked per 100g.
+  // Longer keys beat shorter ones in lookupMacros, so these correctly override
+  // 'chicken', 'beef', 'salmon', 'turkey' for specifically-named template ingredients.
+  'chicken breast':  { cal: 120, pro: 22.5, carb: 0.0, fat: 2.6  },
+  'beef sirloin':    { cal: 143, pro: 20.7, carb: 0.0, fat: 5.8  },
+  'salmon fillet':   { cal: 142, pro: 19.8, carb: 0.0, fat: 6.3  },
+  'turkey breast':   { cal: 119, pro: 17.4, carb: 0.0, fat: 5.0  },
+
   // Dairy
   'cottage cheese': { cal: 98,  pro: 11.0, carb: 3.4,  fat: 4.3  },
   'cottage':        { cal: 98,  pro: 11.0, carb: 3.4,  fat: 4.3  },
@@ -70,6 +79,10 @@ var MACRO_TABLE = {
   'biscoff':        { cal: 488, pro: 5.0,  carb: 67.0, fat: 22.0 },
   'cookie':         { cal: 488, pro: 5.0,  carb: 67.0, fat: 22.0 },
   'cookies':        { cal: 488, pro: 5.0,  carb: 67.0, fat: 22.0 },
+  // Chocolate — raw/as-eaten values per 100g (USDA FoodData Central)
+  'dark chocolate':  { cal: 598, pro: 7.8,  carb: 45.9, fat: 42.6 },
+  'chocolate bar':   { cal: 535, pro: 7.6,  carb: 59.0, fat: 29.7 },
+  'chocolate':       { cal: 535, pro: 7.6,  carb: 59.0, fat: 29.7 },
 };
 
 // ── LOOKUP ────────────────────────────────────────────────────

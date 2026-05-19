@@ -570,32 +570,38 @@ function buildDayHTML(i,plan,showSwap){
   customOther.forEach(function(m){customCal+=m.cal;totalFoodCal+=m.cal;});
 
   // ── DAY MACRO TOTAL ──────────────────────────────────────────
-  // Sum macros from all active meal slots.
-  // Template slots: calculate from scaled ingredient strings.
-  // Custom slots:   use stored pro/carb/fat if available (restaurant, fridge),
-  //                 otherwise fall back to ingredient calculation.
+  // Footer macros must match visible card macros exactly.
+  // Built-in swaps: normalize base ingredients to slot target (matches renderCustomMeal output).
+  // Restaurant/fridge: use stored normalized macros.
+  // Template: use normalized scaled ingredients.
   var _dPro=0,_dCarb=0,_dFat=0;
   function _addMacros(m){_dPro+=m.pro||0;_dCarb+=m.carb||0;_dFat+=m.fat||0;}
+  function _isBuiltInSwap(m){return !!(m&&m.mealKey&&(!m.notes||m.notes.indexOf('Eating out')!==0)&&m.notes!=='Built from fridge');}
+  function _customSlotMacros(cm,slotCal){
+    if(!cm)return null;
+    if(_isBuiltInSwap(cm)){
+      // Built-in swap: base ingredients + normalize to slot cal — identical to card display
+      var _ings=cm.ingredients.map(function(x){return x.item||'';}).filter(Boolean);
+      return _normalizeMacros(calcMealMacros(_ings),slotCal);
+    }
+    if(cm.pro||cm.carb||cm.fat)return{pro:cm.pro||0,carb:cm.carb||0,fat:cm.fat||0}; // fridge/restaurant stored
+    if(cm.ingredients&&cm.ingredients.length){
+      var _ings=cm.ingredients.map(function(x){return x.item||'';}).filter(Boolean);
+      return calcMealMacros(_ings);
+    }
+    return null;
+  }
   if(!firstSkipped){
-    if(customFirst&&(customFirst.pro||customFirst.carb||customFirst.fat)){_addMacros(customFirst);}
-    else if(customFirst&&customFirst.ingredients&&customFirst.ingredients.length){
-      var _fi=customFirst.ingredients.map(function(x){return x.item||'';}).filter(Boolean);
-      _addMacros(calcMealMacros(_fi));
-    } else if(!customFirst){_addMacros(_normalizeMacros(calcMealMacros(firstItems),firstCal));}
+    var _fm=customFirst?_customSlotMacros(customFirst,firstCal):_normalizeMacros(calcMealMacros(firstItems),firstCal);
+    if(_fm)_addMacros(_fm);
   }
   if(!dinnerSkipped){
-    if(customDinner&&(customDinner.pro||customDinner.carb||customDinner.fat)){_addMacros(customDinner);}
-    else if(customDinner&&customDinner.ingredients&&customDinner.ingredients.length){
-      var _di=customDinner.ingredients.map(function(x){return x.item||'';}).filter(Boolean);
-      _addMacros(calcMealMacros(_di));
-    } else if(!customDinner){_addMacros(_normalizeMacros(calcMealMacros(dinnerItems),dinnerCal));}
+    var _dm=customDinner?_customSlotMacros(customDinner,dinnerCal):_normalizeMacros(calcMealMacros(dinnerItems),dinnerCal);
+    if(_dm)_addMacros(_dm);
   }
   if(!dessertSkipped){
-    if(customDessert&&(customDessert.pro||customDessert.carb||customDessert.fat)){_addMacros(customDessert);}
-    else if(customDessert&&customDessert.ingredients&&customDessert.ingredients.length){
-      var _xi=customDessert.ingredients.map(function(x){return x.item||'';}).filter(Boolean);
-      _addMacros(calcMealMacros(_xi));
-    } else if(!customDessert){_addMacros(_normalizeMacros(calcMealMacros(dessertItems),dessertCal));}
+    var _xm=customDessert?_customSlotMacros(customDessert,dessertCal):_normalizeMacros(calcMealMacros(dessertItems),dessertCal);
+    if(_xm)_addMacros(_xm);
   }
   customOther.forEach(function(m){_addMacros(m);});
   _dPro=Math.round(_dPro);_dCarb=Math.round(_dCarb);_dFat=Math.round(_dFat);

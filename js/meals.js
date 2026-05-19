@@ -195,9 +195,7 @@ function buildDayHTML(i,plan,showSwap){
     // Egg whites stay as grams — they don't have a natural count unit
     var wholeEggM=item.match(/^(Whole\s+eggs?\s*)(\d+)(g)$/i)||item.match(/^(Eggs?\s*)(\d+)(g)$/i);
     if(wholeEggM)return eggsGtoCount(parseInt(wholeEggM[2]));
-    // Default: scale generic gram-based items proportionally to the dessert slot target
-    var scaledG=Math.round(baseG*dessertIngScale);
-    return m[1]+scaledG+'g';
+    return item;
   });
   // Apply mashed potato ratio rule to first meal if it has potatoes
   var firstPotatoG=0;
@@ -221,9 +219,7 @@ function buildDayHTML(i,plan,showSwap){
     var grams=parseInt(m[2]);
     if(name.indexOf('honey')>=0&&grams>42)return m[1]+'42g';
     if(name.indexOf('soy')>=0&&grams>36)return m[1]+'36g';
-    // Default: scale generic gram-based items proportionally to the dessert slot target
-    var scaledG=Math.round(baseG*dessertIngScale);
-    return m[1]+scaledG+'g';
+    return item;
   });
   // Apply mashed potato ratio rule to dinner
   var dinnerPotatoG=0;
@@ -263,9 +259,7 @@ function buildDayHTML(i,plan,showSwap){
       if(isDrinkingNight){honeyG=25;}
       return m[1]+honeyG+'g';
     }
-    // Default: scale generic gram-based items proportionally to the dessert slot target
-    var scaledG=Math.round(baseG*dessertIngScale);
-    return m[1]+scaledG+'g';
+    return item;
   });
 
   // Use lane-aware target cals for each slot.
@@ -954,8 +948,7 @@ var MEAL_INSTRUCTIONS_MAP = {
   'creamy-chicken-pasta':  MEAL_INSTRUCTIONS.pasta_bowl_family.creamy_chicken_pasta_bowl,
   'yogurt-honey-bowl':     MEAL_INSTRUCTIONS.greek_yogurt_bowl_family.berry_chia_bowl,
   'ricotta-bowl':          null,
-  'biscoff-cookies':       null,
-  'cookies':                 null,
+  'cookies':               null,
 };
 
 function renderHowToMake(variant) {
@@ -1190,15 +1183,9 @@ var SWAP_OPTIONS={
           {item:'Honey',       basis:'same', grams:25,  cooked_grams:25},
         ]},
 
-      // ── Cookies / Chocolate ──
-      {key:'biscoff-cookies', name:'Biscoff Cookies', img:'food-cookies.png', cal:342,
+      {key:'cookies', name:'Cookies', img:'food-cookies.png', cal:443,
         items:[
-          {item:'Biscoff cookies', basis:'same', grams:70, cooked_grams:70},
-        ]},
-
-      {key:'cookies', name:'Cookies', img:'food-cookies.png', cal:342,
-        items:[
-          {item:'Cookies', basis:'same', grams:70, cooked_grams:70},
+          {item:'Cookies (or chocolate bar 60g)', basis:'same', grams:70, cooked_grams:70},
         ]},
 
     ],

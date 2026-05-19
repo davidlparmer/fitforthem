@@ -398,6 +398,18 @@ function buildDayHTML(i,plan,showSwap){
           mPro=_calc2.pro;mCarb=_calc2.carb;mFat=_calc2.fat;
         }
       }
+      // Normalize macro-implied calories to match displayed slot calories.
+      // Root cause: ingredient strings use raw grams but MACRO_TABLE uses cooked values,
+      // causing systematic over-estimation (~20-30%). Ratios (pro/carb/fat) are preserved.
+      if(isBuiltInSwap&&slotTargetCal&&slotTargetCal>0){
+        var _macroImplied=mPro*4+mCarb*4+mFat*9;
+        if(_macroImplied>0){
+          var _nf=slotTargetCal/_macroImplied;
+          mPro=Math.round(mPro*_nf*10)/10;
+          mCarb=Math.round(mCarb*_nf*10)/10;
+          mFat=Math.round(mFat*_nf*10)/10;
+        }
+      }
       if(mPro||mCarb||mFat){customBody+=renderMacroBar({pro:mPro,carb:mCarb,fat:mFat},'bar');}
     }
     customBody+='<div style="display:flex;gap:8px;margin-top:12px">'+

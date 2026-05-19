@@ -950,8 +950,8 @@ var MEAL_INSTRUCTIONS_MAP = {
   'creamy-chicken-pasta':  MEAL_INSTRUCTIONS.pasta_bowl_family.creamy_chicken_pasta_bowl,
   'yogurt-honey-bowl':     MEAL_INSTRUCTIONS.greek_yogurt_bowl_family.berry_chia_bowl,
   'ricotta-bowl':          null,
-  'biscoff-cookies':       null,
   'cookies':                 null,
+  'chocolate-bar':          null,
 };
 
 function renderHowToMake(variant) {
@@ -1187,14 +1187,14 @@ var SWAP_OPTIONS={
         ]},
 
       // ── Cookies / Chocolate ──
-      {key:'biscoff-cookies', name:'Biscoff Cookies', img:'food-cookies.png', cal:342,
-        items:[
-          {item:'Biscoff cookies', basis:'same', grams:70, cooked_grams:70},
-        ]},
-
       {key:'cookies', name:'Cookies', img:'food-cookies.png', cal:342,
         items:[
           {item:'Cookies', basis:'same', grams:70, cooked_grams:70},
+        ]},
+
+      {key:'chocolate-bar', name:'Chocolate Bar', img:'food-cookies.png', cal:328,
+        items:[
+          {item:'Dark chocolate bar', basis:'same', grams:60, cooked_grams:60},
         ]},
 
     ],

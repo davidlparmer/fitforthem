@@ -168,23 +168,14 @@ function buildDayHTML(i,plan,showSwap){
   var targetDinnerCal=Math.round(foodCal*laneRatios.dinner);
   var targetDessertCal=foodCal-targetFirstCal-targetDinnerCal;// remainder avoids rounding drift
 
-  // baseTotal now reflects actual active meals (after prefs/swap resolution above)
-  var baseTotal=day.first.c+day.dinner.c+day.dessert.c;
-  var scale=baseTotal>0?cal/baseTotal:1;
+  // drinkScale: used for restaurant/quick-log cal display on drink nights
   var drinkScale=isWknd&&isDrinking?(cal-drinkReserve)/cal:1.0;
-  var effectiveScale=scale*drinkScale; // kept for renderCookedWeightDisplay
 
   // ── PER-SLOT INGREDIENT SCALES ────────────────────────────
-  // effectiveScale (planCal/baseTotal) works correctly when all slots have the same
-  // proportional relationship — i.e. template meals. But when a swap option has a
-  // different base cal than the template slot (e.g. chicken-bowl at 585 vs
-  // honey-soy-chicken at 945), effectiveScale compensates the TOTAL correctly but
-  // each individual slot's ingredients no longer hit their target.
-  //
-  // Per-slot scaling fixes this: targetSlotCal / slotBaseCal ensures every slot's
-  // ingredients scale exactly to the lane-aware target regardless of swap base cal.
-  // NOTE: targetSlotCal already incorporates drink reserve (via foodCal), so no
-  // additional drinkScale multiply is needed here.
+  // Each slot scales independently: targetSlotCal / slotBaseCal.
+  // Ingredient grams always match the displayed slot header regardless of
+  // whether the slot is template, permanent pref, or a just-today swap.
+  // targetSlotCal already incorporates the drink reserve via foodCal.
   var firstIngScale  = day.first.c  > 0 ? targetFirstCal  / day.first.c  : 1;
   var dinnerIngScale = day.dinner.c > 0 ? targetDinnerCal / day.dinner.c : 1;
   var dessertIngScale= day.dessert.c > 0 ? targetDessertCal / day.dessert.c : 1;
@@ -423,7 +414,7 @@ function buildDayHTML(i,plan,showSwap){
   var dinnerTitleDisplay=day.dinner.n||dinnerTitleProtein;
   // Theme badge — shown when family rotation is active for this day
   var isDinnerThemed=_rd&&_rd.source==='theme';
-  var dinnerCookedDisplay=isDinnerThemed?renderCookedWeightDisplay(day.dinner._swapOpt,effectiveScale):'';
+  var dinnerCookedDisplay=isDinnerThemed?renderCookedWeightDisplay(day.dinner._swapOpt,dinnerIngScale):'';
   var FOOD_IMGS={chicken:'food-chicken.png',beef:'food-beef.png',salmon:'food-salmon.png',fish:'food-salmon.png',turkey:'food-turkey.png'};
   var dinnerThumb=FOOD_IMGS[dinnerTitleProtein]||'food-chicken.png';
   var dinnerThumbHTML='<img src="'+dinnerThumb+'" alt="" style="width:52px;height:52px;object-fit:cover;border-radius:8px;margin-right:12px;flex-shrink:0;border:1px solid rgba(184,150,60,.22)">';
@@ -658,13 +649,13 @@ function getResolvedDinner(dayIdx) {
 
 // Renders cooked weight plating guide — only raw/dry basis items, only when theme active.
 // Skips same-basis condiments (salsa, seasoning, cheese, sauces) — not meaningful for plating.
-function renderCookedWeightDisplay(swapOpt, effectiveScale) {
+function renderCookedWeightDisplay(swapOpt, ingScale) {
   if (!swapOpt || !swapOpt.items) return '';
   var lines = [];
   swapOpt.items.forEach(function(ing) {
     if (typeof ing !== 'object') return;
     if (ing.basis === 'same') return;
-    var cookedG = Math.round((ing.cooked_grams || ing.grams) * effectiveScale);
+    var cookedG = Math.round((ing.cooked_grams || ing.grams) * ingScale);
     var itemName = ing.item.toLowerCase();
     var isWholeEgg = (itemName === 'whole eggs' || itemName === 'whole egg' || itemName === 'eggs' || itemName === 'egg');
     var isEggWhite = itemName.indexOf('white') >= 0;

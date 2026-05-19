@@ -299,22 +299,20 @@ async function buildMealFromModal(){
 
       // Macros
       html+='<div style="display:flex;gap:10px;margin-bottom:10px">';
-      html+='<div style="background:rgba(184,150,60,.1);border:1px solid var(--gold-line);border-radius:10px;padding:10px 14px;text-align:center"><div style="font-size:1.1rem;font-weight:700;color:var(--gold-light)">'+meal.totalCal+'</div><div style="font-size:.58rem;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;font-weight:600">Cal</div></div>';
+      html+='<div style="background:rgba(184,150,60,.1);border:1px solid var(--gold-line);border-radius:10px;padding:10px 14px;text-align:center"><div style="font-size:1.1rem;font-weight:700;color:var(--gold-light)">'+meal.totalCal+'</div><div style="font-size:.58rem;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;font-weight:600">Cal of '+budget+'</div></div>';
       html+='<div style="background:rgba(184,150,60,.06);border:1px solid var(--gold-line);border-radius:10px;padding:10px 14px;text-align:center"><div style="font-size:1.1rem;font-weight:700;color:var(--t1)">'+meal.totalPro+'g</div><div style="font-size:.58rem;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;font-weight:600">Protein</div></div>';
       html+='</div>';
       html+=renderMacroBar({pro:meal.totalPro||0,carb:meal.totalCarb||0,fat:meal.totalFat||0},'row');
 
-      // Budget badge
-      var _diff=meal.totalCal-budget;
-      var _badge=_diff>50
-        ?'<span style="background:rgba(192,57,43,.15);color:#e07b6a;border-radius:20px;padding:3px 10px;font-size:.68rem;font-weight:700">'+_diff+' cal over budget</span>'
-        :_diff>0
-        ?'<span style="background:rgba(184,150,60,.15);color:var(--gold-light);border-radius:20px;padding:3px 10px;font-size:.68rem;font-weight:700">'+_diff+' cal over — within range ✓</span>'
-        :Math.abs(_diff)<=60
-        ?'<span style="background:rgba(61,122,82,.15);color:#7ec99a;border-radius:20px;padding:3px 10px;font-size:.68rem;font-weight:700">Hits your target ✓</span>'
-        :'<span style="background:rgba(184,150,60,.1);color:var(--t3);border-radius:20px;padding:3px 10px;font-size:.68rem;font-weight:700">'+Math.abs(_diff)+' cal under — add more carbs</span>';
-      html+='<div style="margin:8px 0 12px">'+_badge+'</div>';
-      if(meal.budget_note){html+='<div style="font-size:.76rem;color:var(--t2);font-style:italic;margin-bottom:10px;padding:6px 10px;background:rgba(184,150,60,.04);border-left:2px solid rgba(184,150,60,.3);border-radius:0 6px 6px 0">'+meal.budget_note+'</div>';}
+      // Budget badge — parseInt ensures string cal values from Claude still work
+      var _mealCal=parseInt(meal.totalCal)||0;
+      var _diff=_mealCal-budget;
+      var _badgeColor=_diff>50?'rgba(192,57,43,.15)':_diff>0?'rgba(184,150,60,.15)':Math.abs(_diff)<=60?'rgba(61,122,82,.15)':'rgba(184,150,60,.1)';
+      var _badgeText=_diff>50?(_diff+' cal over — see tip below'):_diff>0?(_diff+' cal over — within grace range ✓'):Math.abs(_diff)<=60?'Hits your target ✓':(Math.abs(_diff)+' cal under target');
+      var _badgeFg=_diff>50?'#e07b6a':_diff>0?'var(--gold-light)':Math.abs(_diff)<=60?'#7ec99a':'var(--t2)';
+      html+='<div style="margin:8px 0 12px"><span style="background:'+_badgeColor+';color:'+_badgeFg+';border-radius:20px;padding:4px 12px;font-size:.7rem;font-weight:700">'+_badgeText+'</span></div>';
+      var _note=meal.budget_note||('Built to maximize your '+budget+' cal '+slotLabel+'.');
+      html+='<div style="font-size:.76rem;color:var(--t2);font-style:italic;margin-bottom:12px;padding:6px 10px;background:rgba(184,150,60,.04);border-left:2px solid rgba(184,150,60,.3);border-radius:0 6px 6px 0">'+_note+'</div>';
 
       // Ingredients
       html+='<div style="margin-bottom:14px;background:rgba(0,0,0,.2);border-radius:8px;border:1px solid var(--gold-line);overflow:hidden">';

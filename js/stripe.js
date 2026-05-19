@@ -52,8 +52,8 @@ function isTrialExpired(){
   if(isSubscribed())return false;
   var ts=localStorage.getItem('fft_trial_start');
   if(!ts)return false;
-  var THIRTY_DAYS=30*24*60*60*1000;
-  return(Date.now()-parseInt(ts))>THIRTY_DAYS;
+  var SEVEN_DAYS=7*24*60*60*1000;
+  return(Date.now()-parseInt(ts))>SEVEN_DAYS;
 }
 function checkTrialAndGate(){if(isTrialExpired())showPaywall();}
 function startJourney(){

@@ -173,6 +173,12 @@ function showIngredientsModal(){
   modal.style.display='block';
   document.body.style.overflow='hidden';
   document.getElementById('modal-results').innerHTML='';
+  // Auto-select time-appropriate slot if none chosen yet
+  var slotEl=document.getElementById('modal-meal-slot');
+  if(slotEl&&!slotEl.value){
+    var hour=new Date().getHours();
+    slotEl.value=hour<12?'first':hour<20?'dinner':'dessert';
+  }
   updateFridgeModalContext();
 }
 function closeFridgeModal(){
@@ -256,13 +262,15 @@ async function buildMealFromModal(){
       (slot==='dinner'?'- Today\'s protein: '+todayProtein.protein+' (prefer this if available)\n':'')+
       '- Available ingredients: '+ingredients+'\n\n'+
       'Rules:\n'+
-      '1. Show ONE Best Match — most satiating, closest to calorie and protein targets\n'+
+      '1. Show ONE Best Match — most satiating, MAXIMIZING calories up to '+budget+' cal\n'+
       '2. Show up to 2 Alternates only if they use different ingredients or approach\n'+
       '3. All measurements must be in grams (round to nearest 5g), except eggs (count)\n'+
       '4. Never fake precision — round to practical amounts\n'+
       '5. Include step-by-step cooking instructions\n'+
-      '6. Prioritize protein sources first, then use potatoes/rice/oats as calorie dial\n'+
-      '7. Role of '+slotLabel+': '+(slot==='dinner'?'largest most satisfying meal':slot==='first'?'controlled, not too heavy, sustaining':slot==='dessert'?'sweet, satiating, closes eating window':'small satisfying snack')+'\n\n'+
+      '6. Prioritize protein sources first, use potatoes/rice/oats as the calorie dial to reach '+budget+' cal\n'+
+      '7. MAXIMIZE: get totalCal within 50 cal of '+budget+'. Do not leave calories on the table.\n'+
+      '8. Role of '+slotLabel+': '+(slot==='dinner'?'largest most satisfying meal':slot==='first'?'controlled, not too heavy, sustaining':slot==='dessert'?'sweet, satiating, closes eating window':'small satisfying snack')+'\n'+
+      '9. Include a brief budget_note explaining how you hit the calorie target\n\n'+
       'JSON format:\n'+
       '{"items":[{\n'+
       '  "rank":"best"|"alternate",\n'+
@@ -273,7 +281,8 @@ async function buildMealFromModal(){
       '  "totalCarb":0,\n'+
       '  "totalFat":0,\n'+
       '  "instructions":["step 1","step 2","step 3"],\n'+
-      '  "tip":"one practical coaching note"\n'+
+      '  "tip":"one practical coaching note",\n'+
+      '  "budget_note":"one sentence on how you hit the calorie target"\n'+
       '}]}';
 
     var data=await askClaude(prompt);
@@ -294,6 +303,18 @@ async function buildMealFromModal(){
       html+='<div style="background:rgba(184,150,60,.06);border:1px solid var(--gold-line);border-radius:10px;padding:10px 14px;text-align:center"><div style="font-size:1.1rem;font-weight:700;color:var(--t1)">'+meal.totalPro+'g</div><div style="font-size:.58rem;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;font-weight:600">Protein</div></div>';
       html+='</div>';
       html+=renderMacroBar({pro:meal.totalPro||0,carb:meal.totalCarb||0,fat:meal.totalFat||0},'row');
+
+      // Budget badge
+      var _diff=meal.totalCal-budget;
+      var _badge=_diff>50
+        ?'<span style="background:rgba(192,57,43,.15);color:#e07b6a;border-radius:20px;padding:3px 10px;font-size:.68rem;font-weight:700">'+_diff+' cal over budget</span>'
+        :_diff>0
+        ?'<span style="background:rgba(184,150,60,.15);color:var(--gold-light);border-radius:20px;padding:3px 10px;font-size:.68rem;font-weight:700">'+_diff+' cal over — within range ✓</span>'
+        :Math.abs(_diff)<=60
+        ?'<span style="background:rgba(61,122,82,.15);color:#7ec99a;border-radius:20px;padding:3px 10px;font-size:.68rem;font-weight:700">Hits your target ✓</span>'
+        :'<span style="background:rgba(184,150,60,.1);color:var(--t3);border-radius:20px;padding:3px 10px;font-size:.68rem;font-weight:700">'+Math.abs(_diff)+' cal under — add more carbs</span>';
+      html+='<div style="margin:8px 0 12px">'+_badge+'</div>';
+      if(meal.budget_note){html+='<div style="font-size:.76rem;color:var(--t2);font-style:italic;margin-bottom:10px;padding:6px 10px;background:rgba(184,150,60,.04);border-left:2px solid rgba(184,150,60,.3);border-radius:0 6px 6px 0">'+meal.budget_note+'</div>';}
 
       // Ingredients
       html+='<div style="margin-bottom:14px;background:rgba(0,0,0,.2);border-radius:8px;border:1px solid var(--gold-line);overflow:hidden">';

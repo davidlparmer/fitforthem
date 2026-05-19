@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Loftin Method — Quiet system. Visible standard.</title>
-<meta name="description" content="A precision nutrition and movement system for men who want real fat loss — without supplements, complicated tracking, or programs that don't fit real life.">
+<meta name="description" content="A precision nutrition and movement system for real fat loss — without supplements, complicated tracking, or programs that don't fit real life.">
 <meta name="theme-color" content="#0C0B09">
 <link rel="icon" href="icon-512.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -188,26 +188,6 @@ section{padding:96px 24px}
 /* BADGES */
 .badge-item:hover img{transform:translateY(-3px);filter:drop-shadow(0 10px 28px rgba(200,160,74,.4))}
 /* WAITLIST */
-.waitlist-center{text-align:center}
-.waitlist-wrap{max-width:480px;margin:0 auto}
-.waitlist-form{display:flex;flex-direction:column;gap:12px;margin-bottom:14px}
-.waitlist-input{
-  background:var(--card);border:1px solid var(--gold-line);border-radius:2px;
-  padding:16px 18px;font-family:var(--font-body);font-size:.9rem;font-weight:300;
-  color:var(--t1);outline:none;transition:border-color .2s;-webkit-appearance:none;
-}
-.waitlist-input::placeholder{color:var(--t3)}
-.waitlist-input:focus{border-color:var(--gold-dim)}
-.waitlist-btn{
-  background:var(--gold);color:var(--bg);font-family:var(--font-body);
-  font-size:.74rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
-  border:none;padding:18px;border-radius:2px;cursor:pointer;transition:background .2s;
-}
-.waitlist-btn:hover{background:var(--gold-light)}
-.waitlist-note{font-size:.68rem;color:var(--t3);letter-spacing:.04em}
-.waitlist-success{
-  display:none;background:var(--card);border:1px solid var(--gold-line);border-radius:2px;padding:28px 24px;
-}
 .ws-title{font-family:var(--font-display);font-size:1.1rem;color:var(--gold);margin-bottom:8px}
 .ws-body{font-size:.86rem;color:var(--t2);font-weight:300;line-height:1.65}
 
@@ -292,7 +272,7 @@ footer{padding:28px 24px;border-top:1px solid var(--gold-line)}
     <h1>Real fat loss.<br><em>No noise.</em></h1>
     <p class="hero-tagline">Quiet system. Visible standard.</p>
     <p class="hero-sub">
-      Built for <strong>men who are done with programs that don't fit real life</strong> — no supplements, no complicated tracking, no gym required. Just a calculated system you follow.
+      Built for <strong>people who are done with programs that don't fit real life</strong> — no supplements, no complicated tracking, no gym required. Just a calculated system you follow.
     </p>
     <div class="cta-group">
       <a href="app.html" class="btn-primary">Start the Method →</a>
@@ -390,13 +370,13 @@ footer{padding:28px 24px;border-top:1px solid var(--gold-line)}
   <div class="section-wrap">
     <div class="s-rule reveal"></div>
     <div class="s-eye reveal">Who this is for</div>
-    <h2 class="s-title reveal">Built for men who<br><em>follow through.</em></h2>
+    <h2 class="s-title reveal">Built for people who<br><em>follow through.</em></h2>
     <p class="s-sub reveal">If you want a sustainable system that fits around a real job, a real family, and real weekends — this is it.</p>
     <div class="who-grid">
       <div class="who-card reveal">
         <div class="who-label yes">This is for you if</div>
         <ul class="who-items">
-          <li class="who-item"><div class="who-dot yes"></div>You're a man 30–50 who's done with fad programs</li>
+          <li class="who-item"><div class="who-dot yes"></div>You're done with fad programs that don't fit real life</li>
           <li class="who-item"><div class="who-dot yes"></div>You want fat loss that survives real life — kids, work, weekends</li>
           <li class="who-item"><div class="who-dot yes"></div>You're willing to weigh your food and trust the math</li>
           <li class="who-item"><div class="who-dot yes"></div>You want a system that tells you exactly what to do</li>
@@ -422,28 +402,6 @@ footer{padding:28px 24px;border-top:1px solid var(--gold-line)}
 <div class="divider"></div>
 
 <!-- WAITLIST -->
-<section id="waitlist" style="background:var(--bg2)">
-  <div class="section-wrap waitlist-center">
-    <div class="s-rule reveal" style="margin:0 auto 20px"></div>
-    <div class="s-eye reveal">Stay in the loop</div>
-    <h2 class="s-title reveal">Get notified when<br><em>we launch.</em></h2>
-    <p class="s-sub reveal" style="margin:0 auto 44px">The Loftin Method is in active development. Leave your email and we'll reach out when new features ship — no newsletters, no spam.</p>
-    <div class="waitlist-wrap reveal">
-      <div id="waitlist-form-wrap">
-        <form class="waitlist-form" onsubmit="submitWaitlist(event)">
-          <input type="text" class="waitlist-input" id="wl-name" placeholder="First name" autocomplete="given-name">
-          <input type="email" class="waitlist-input" id="wl-email" placeholder="Email address" required autocomplete="email">
-          <button type="submit" class="waitlist-btn">Join the Waitlist</button>
-        </form>
-        <p class="waitlist-note">No spam. Just a heads-up when something ships.</p>
-      </div>
-      <div class="waitlist-success" id="waitlist-success">
-        <div class="ws-title">You're on the list.</div>
-        <div class="ws-body">We'll be in touch when new features ship. In the meantime — the method is live and free to use.</div>
-      </div>
-    </div>
-  </div>
-</section>
 
 <div class="divider"></div>
 
@@ -483,21 +441,7 @@ var obs=new IntersectionObserver(function(entries){
 els.forEach(function(el){obs.observe(el);});
 
 // Waitlist submit
-function submitWaitlist(e){
-  e.preventDefault();
-  var name=document.getElementById('wl-name').value.trim();
-  var email=document.getElementById('wl-email').value.trim();
-  if(!email)return;
-  // Show success immediately — don't make user wait on the network
-  document.getElementById('waitlist-form-wrap').style.display='none';
-  document.getElementById('waitlist-success').style.display='block';
-  // Fire and forget to dedicated waitlist function
-  fetch('/.netlify/functions/waitlist',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({name:name,email:email})
-  }).catch(function(){});
-}
+
 </script>
 </body>
 </html>

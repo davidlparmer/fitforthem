@@ -1,10 +1,11 @@
-# Loftin Method: Eat Right, Anywhere
+# Loftin Method
 
 A structured nutrition and meal planning PWA built around the Loftin Method — a precision intermittent fasting system for sustainable fat loss, lean gaining, and long-term maintenance.
 
-**Status:** Beta — pre-revenue, active development  
+**Status:** Live — subscription active  
 **Live URL:** https://fitforthem.app/app.html  
-**Owner:** David Loftin / Loftin Method LLC  
+**Staging URL:** https://staging--fitforthem.netlify.app/app.html  
+**Owner:** David Parmer / Loftin Method LLC  
 **Contact:** david@fitforthem.app
 
 ---
@@ -15,16 +16,23 @@ The Loftin Method app is a decision engine for real-life eating. It does not ask
 
 **Core features:**
 - Personalized calorie, protein, and step targets (Mifflin-St Jeor + Hybrid Bridge method)
-- 7-day structured meal plan with breakfast, dinner, and dessert
-- Drinking day adjustments (Light / Regular / Big Night step targets)
-- Macro display on every meal card (protein, carbs, fat)
-- Restaurant finder — exact meal recommendations at any restaurant
-- Fridge builder — build a meal from whatever ingredients you have
+- 7-day structured meal plan with First Meal, Main Meal, and Final Meal
+- Per-slot calorie scaling — swapped meals always inherit the correct calorie budget
+- Macro bar on every meal card, normalized to displayed slot calories
+- Drinking day adjustments (Light / Regular / Big Night) with meal and step recalibration
+- Restaurant finder — slot-aware, maximizes calories to budget, side recommendations
+- Fridge builder — builds a meal from available ingredients scaled to the slot target
 - Carb Lookup — instant USDA nutrition data for any ingredient
 - Grocery list generator
 - Weight and progress tracking
-- Device linking — sync data across phone, tablet, and computer
-- PWA — installable on iOS, Android, and desktop
+- Device linking — syncs data across phone, tablet, and desktop (iPad read-only weekly grid)
+- PWA — installable on iOS and Android
+
+**Supported lanes:**
+- `men_deficit` — Men, fat loss
+- `women_deficit` — Women, fat loss
+- `men_surplus` — Men, lean gain
+- `women_surplus` — Women, lean gain
 
 ---
 
@@ -37,8 +45,8 @@ The Loftin Method app is a decision engine for real-life eating. It does not ask
 | Hosting | Netlify Pro |
 | Backend | Netlify Functions (Node.js) |
 | Database | Netlify Blobs (key-value, device-ID based) |
-| Payments | Stripe (test keys active, paywall bypassed for beta) |
-| AI | Anthropic Claude API (restaurant search, fridge builder, carb lookup) |
+| Payments | Stripe (live subscription — $9.99/month) |
+| AI | Anthropic Claude API (restaurant finder, fridge builder, carb lookup) |
 | PWA | Service Worker (`sw.js`) — network-first for HTML/JS, cache-first for assets |
 
 ---
@@ -48,30 +56,37 @@ The Loftin Method app is a decision engine for real-life eating. It does not ask
 ```
 /
 ├── app.html                    # Single-page app — all HTML and CSS
+├── index.html                  # Public landing page
 ├── sw.js                       # Service worker — caching and offline support
 ├── manifest.json               # PWA manifest
 ├── DESIGN.md                   # Full design system — read before any visual changes
 ├── README.md                   # This file
 │
-├── js/                         # Client-side JavaScript modules
-│   ├── migrate.js              # Silent plan migration on boot (run first)
+├── js/                         # Client-side JavaScript modules (load order matters — see below)
+│   ├── migrate.js              # Silent plan migration on boot — runs first
+│   ├── state.js                # Global state declarations — runs second
 │   ├── macros.js               # Macro calculation engine and display components
-│   ├── mealdb.js               # Master meal database and filter engine
+│   ├── mealdb.js               # Meal database (Meal Explorer — future feature)
+│   ├── savedmeals.js           # Saved meal preferences persistence
 │   ├── devicelink.js           # Device linking UI (6-digit code system)
 │   ├── carblookup.js           # Carb and macro lookup tool
 │   ├── sync.js                 # Server sync via Netlify Blobs
+│   ├── lane-profiles.js        # Lane definitions (men/women, deficit/surplus)
+│   ├── plan-templates.js       # 7-day meal template arrays for all four lanes
+│   ├── swap-options.js         # SWAP_OPTIONS data, MEAL_INSTRUCTIONS, getMealInstructions()
 │   ├── engine.js               # Calorie and plan calculation engine (pure math)
-│   ├── meals.js                # Meal rendering, dashboard day tabs, meal swap system
-│   ├── stripe.js               # Auth, subscription, and app boot sequence
+│   ├── meals.js                # Meal rendering, dashboard, swap system, macro normalization
+│   ├── stripe.js               # Auth, subscription check, and app boot sequence
 │   ├── grocery.js              # Grocery list generator
 │   ├── progress.js             # Weight logging and progress charts
-│   ├── restaurants.js          # Restaurant finder, food search, drink calculator
-│   ├── fridge.js               # Fridge meal builder and ingredient swap system
+│   ├── restaurants.js          # Restaurant finder — slot-aware, side recommendations
+│   ├── fridge.js               # Fridge meal builder — scales to slot calorie target
 │   ├── history.js              # Meal history tracking
-│   └── ui.js                   # Navigation, mobile menu, light mode, tooltips
+│   ├── ui.js                   # Navigation, mobile menu, light mode, tooltips
+│   └── app-handlers.js         # iPad weekly grid, boot handlers, orientation management
 │
 └── netlify/
-    └── functions/              # Server-side Netlify Functions (Node.js)
+    └── functions/              # Netlify Functions (Node.js)
         ├── saveData.js         # Save user data to Netlify Blobs
         ├── loadData.js         # Load user data from Netlify Blobs
         ├── linkDevice.js       # Device linking — generate and claim 6-digit codes
@@ -88,338 +103,216 @@ The Loftin Method app is a decision engine for real-life eating. It does not ask
 Modules must load in this exact order in `app.html`. Each module depends on globals declared by modules above it.
 
 ```html
-<script src="js/migrate.js"></script>      <!-- Must be first — migrates plan before anything renders -->
-<script src="js/macros.js"></script>       <!-- Macro engine — used by meals, restaurants, fridge -->
-<script src="js/mealdb.js"></script>       <!-- Meal database — used by Meal Explorer (coming soon) -->
-<script src="js/devicelink.js"></script>   <!-- Device linking UI -->
-<script src="js/carblookup.js"></script>   <!-- Carb lookup tool -->
-<script src="js/sync.js"></script>         <!-- Data sync — used by stripe.js boot sequence -->
-<script src="js/engine.js"></script>       <!-- Calorie engine — used by meals.js -->
-<script src="js/meals.js"></script>        <!-- Meal rendering -->
-<script src="js/stripe.js"></script>       <!-- Boot sequence — runs last critical init -->
+<script src="js/migrate.js"></script>        <!-- Must be first — migrates plan before anything renders -->
+<script src="js/state.js"></script>          <!-- Global state declarations -->
+<script src="js/macros.js"></script>         <!-- Macro engine — used by meals, restaurants, fridge -->
+<script src="js/mealdb.js"></script>         <!-- Meal database (future Meal Explorer) -->
+<script src="js/savedmeals.js"></script>     <!-- Saved meal prefs -->
+<script src="js/devicelink.js"></script>     <!-- Device linking UI -->
+<script src="js/carblookup.js"></script>     <!-- Carb lookup tool -->
+<script src="js/sync.js"></script>           <!-- Data sync -->
+<script src="js/lane-profiles.js"></script>  <!-- Lane definitions -->
+<script src="js/plan-templates.js"></script> <!-- Meal template arrays -->
+<script src="js/swap-options.js"></script>   <!-- SWAP_OPTIONS, MEAL_INSTRUCTIONS -->
+<script src="js/engine.js"></script>         <!-- Calorie engine -->
+<script src="js/meals.js"></script>          <!-- Meal rendering and swap system -->
+<script src="js/stripe.js"></script>         <!-- Boot sequence — subscription check -->
 <script src="js/grocery.js"></script>
 <script src="js/progress.js"></script>
 <script src="js/restaurants.js"></script>
 <script src="js/fridge.js"></script>
 <script src="js/history.js"></script>
-<script src="js/ui.js"></script>           <!-- Must be last — wires up all navigation -->
+<script src="js/ui.js"></script>             <!-- Navigation — loads before app-handlers -->
+<script src="js/app-handlers.js"></script>   <!-- Must be last -->
+```
+
+---
+
+## Calorie Engine Architecture
+
+### Lanes and Slot Ratios
+
+Every user is assigned to one of four lanes based on sex and goal:
+
+| Lane | First Meal | Main Meal | Final Meal |
+|------|-----------|-----------|------------|
+| `men_deficit` | 27.5% | 52.5% | 20.0% |
+| `women_deficit` | 27.5% | 52.5% | 20.0% |
+| `men_surplus` | 30.0% | 40.0% | 30.0% |
+| `women_surplus` | 30.0% | 40.0% | 30.0% |
+
+### Meal Slot Scaling
+
+Every meal slot has a calorie budget derived from the user's daily plan:
+
+```javascript
+targetFirstCal  = round(foodCal * laneRatios.first)
+targetDinnerCal = round(foodCal * laneRatios.dinner)
+targetDessertCal = foodCal - targetFirstCal - targetDinnerCal
+```
+
+`foodCal` is the daily calorie target minus any drink reserve (for drinking nights).
+
+**Per-slot ingredient scaling:** Each slot scales independently. `ingScale = targetSlotCal / slotBaseCal`. This ensures swapped meals always inherit the correct calorie budget regardless of their base calories.
+
+**Macro normalization:** After calculating macros from ingredient amounts, they are normalized so macro-implied calories (pro×4 + carb×4 + fat×9) match the displayed slot calorie. This keeps the macro bar consistent with what the user sees.
+
+### Drink Reserve
+
+| Level | Reserve |
+|-------|---------|
+| Light | 200 cal |
+| Regular | 450 cal |
+| Big | 700 cal |
+
+### Meal Resolution Priority (per slot)
+
+```
+customMeals (just-today swap) → mealPrefs (permanent swap) → template
 ```
 
 ---
 
 ## Key Global Variables
 
-These are declared in `ui.js` and used across all modules. Do not redeclare them.
+Declared in `state.js`. Do not redeclare in other modules.
 
 | Variable | Type | Description |
 |----------|------|-------------|
 | `currentPlan` | Object | The user's active nutrition plan |
 | `userName` | String | User's first name |
 | `workMode` | String | `'office'` or `'wfh'` |
-| `weightLog` | Array | Array of `{d: 'YYYY-MM-DD', w: number}` entries |
+| `weightLog` | Array | `[{d: 'YYYY-MM-DD', w: number}]` |
 | `mealPrefs` | Object | Permanent meal swaps by day and slot |
 | `proteinSwaps` | Object | Protein rotation overrides by day index |
 | `skippedMeals` | Object | Skipped meals by day index |
-| `customMeals` | Array | Restaurant and fridge meals added to the plan |
-| `drinkingDays` | Object | Drinking level by day index (`false`, `'light'`, `'regular'`, `'big'`) |
+| `customMeals` | Array | Restaurant, fridge, and just-today swap meals |
+| `drinkingDays` | Object | Drinking level by day (`false`, `'light'`, `'regular'`, `'big'`) |
 | `currentDayIdx` | Number | Currently viewed day (0=Mon, 6=Sun) |
-| `S` | Object | Plan settings (walkType, speed, incline, wakeTime, bedTime, proteins) |
+| `eoMealType` | String | Selected slot in restaurant feature (`'first'`, `'dinner'`, `'dessert'`) |
 
 ---
 
 ## Data Persistence
 
-User data is stored in two places:
-
 **localStorage** (primary, fast)
-All user data lives in localStorage under these keys:
 
 | Key | Contents |
 |-----|----------|
 | `fft_plan` | Current nutrition plan (JSON) |
 | `fft_name` | User's first name |
 | `fft_workmode` | `'office'` or `'wfh'` |
-| `fft_age` | User's age |
 | `fft_log` | Weight log array (JSON) |
 | `fft_meal_prefs` | Permanent meal swap preferences (JSON) |
 | `fft_swaps` | Protein rotation swaps (JSON) |
 | `fft_skipped` | Skipped meals (JSON) |
-| `fft_custom` | Custom/restaurant meals (JSON) |
-| `fft_milestones` | Milestone tracking (JSON) |
-| `fft_summary_dismissed` | Dismissed UI banners |
+| `fft_custom` | Custom/restaurant/fridge meals (JSON) |
+| `fft_group_id` | Device group ID for multi-device sync |
 
 **Netlify Blobs** (server backup)
-iOS aggressively clears localStorage when a PWA is killed. All data is backed up to Netlify Blobs on every save, keyed by a device ID stored in a cookie (`fft_device`). On boot, the app restores from the server if localStorage is empty.
 
-Device linking (`linkDevice.js` / `netlify/functions/linkDevice.js`) allows multiple devices to share the same data by mapping their device IDs to the same server blob.
+iOS aggressively clears localStorage. All data is backed up to Netlify Blobs on every save, keyed by device ID (cookie `fft_device`). On boot, `restoreFromServer()` restores from the server if localStorage is empty.
 
----
-
-## Plan Schema
-
-`currentPlan` is the central data object. All fields and their types:
-
-```javascript
-{
-  // Biometrics
-  hIn: Number,          // Height in inches
-  wLbs: Number,         // Weight in pounds
-  age: Number,          // Age in years
-  goalWeight: Number,   // User-set goal weight (0 if not set)
-
-  // Target zone (BMI 24.0–25.0)
-  tz: { low: Number, mid: Number, high: Number },
-
-  // Bridge reference weight
-  bridge: { bridge: Number, ref: Number },
-
-  // Calorie targets
-  maintenance: Number,  // TDEE
-  calLow: Number,       // Lower bound of calorie window
-  cal: Number,          // Target calories (center)
-  calHigh: Number,      // Upper bound of calorie window
-  protein: Number,      // Daily protein target in grams
-
-  // Phase
-  phase: String,        // 'aggressive' | 'moderate' | 'mild' | 'landing' | 'maintenance' | 'moderate_gain' | 'mild_gain' | 'landing_gain'
-  phaseLabel: String,
-  phaseMsg: String,
-
-  // Step targets
-  steps: Number,        // Regular day steps
-  wStepsLight: Number,  // Light drinking night steps
-  wSteps: Number,       // Regular drinking night steps
-  wStepsBig: Number,    // Big night steps
-  burnNormal: Number,   // Calorie burn target for regular day
-  burnLight: Number,    // Calorie burn target for light night
-  burnDrink: Number,    // Calorie burn target for regular drinking night
-  burnBig: Number,      // Calorie burn target for big night
-
-  // Meal timing
-  mealTimes: { first: String, second: String, last: String },
-
-  // Protein rotation
-  rotation: Array,      // 7-item array of { protein, icon }
-
-  // Progress
-  lossData: Object,     // Weekly loss/gain estimate
-  tmp: Number,          // Next milestone weight
-
-  // Settings
-  workMode: String,     // 'office' | 'wfh'
-
-  // Schema version (for migration)
-  _schemaVersion: Number  // Current: 3
-}
-```
-
-### Plan Migration
-
-When new fields are added to `currentPlan`, existing users get them automatically on next boot via `migrate.js`. To add a new field:
-
-1. Add it to `PLAN_FIELD_DEFAULTS` in `migrate.js`
-2. Add smart derivation logic to `applySmartDefaults()` if the value can be calculated from existing fields
-3. Bump `PLAN_SCHEMA_VERSION` by 1
-
----
-
-## Meal Database (`mealdb.js`)
-
-The meal database powers the Meal Explorer (coming soon). It is separate from the core Loftin Method plan engine — see Architecture note below.
-
-### Meal Schema
-
-```javascript
-{
-  id: String,             // Unique slug, kebab-case
-  family: String,         // Meal family (groups related meals)
-  name: String,           // Display name
-  meal_type: String,      // 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'any'
-  goals: Array,           // ['lose', 'maintain', 'gain']
-  tags: {
-    diet: Array,          // e.g. ['high-protein', 'vegetarian', 'dairy-free']
-    cultural: Array,      // e.g. ['mexican-inspired', 'mediterranean']
-    budget: String,       // 'low' | 'moderate' | 'premium'
-    family_friendly: Boolean,
-    medical: Array,       // e.g. ['carb-conscious', 'lower-sodium', 'heart-healthy']
-    prep: String          // 'quick' | 'moderate' | 'batch'
-  },
-  base_servings: Number,
-  ingredients: Array,     // [{ item, amount, unit, role }]
-  macros_per_serving: {
-    cal, pro, carb, fat, fiber, sugar
-  },
-  scaling: {
-    light: Number,        // Multiplier for lighter serving
-    medium: Number,       // 1.00 = base
-    large: Number         // Multiplier for larger serving
-  },
-  modifiers: Object,      // Named transformations (budget, carb_conscious, family, etc.)
-  instructions: Array,    // Cooking steps
-  swap_options: Array,    // IDs of meals in same family
-  image: String,          // Asset filename
-  loftin_plan: Boolean    // true = core Loftin plan meal
-}
-```
-
-### Filter Engine
-
-```javascript
-// Filter meals by any combination of tags
-var results = filterMeals({
-  goal: 'lose',
-  diet: 'vegetarian',
-  cultural: 'mexican-inspired',
-  budget: 'low',
-  family_friendly: true,
-  medical: 'carb-conscious',
-  meal_type: 'dinner'
-});
-
-// Get a single meal by ID
-var meal = getMealById('chicken-taco-bowl');
-
-// Get all meals in a family
-var tacoFamily = getMealFamily('taco-bowl');
-```
-
----
-
-## Service Worker Strategy
-
-`sw.js` uses different caching strategies by asset type:
-
-| Asset type | Strategy | Reason |
-|------------|----------|--------|
-| HTML files | Network-first | Always get latest app shell |
-| JS files (`/js/*.js`) | Network-first | Deploys are live on next refresh |
-| Icons, manifest, images | Cache-first | Rarely change, fast from cache |
-| API calls, POST requests | Not cached | Never intercept server calls |
-
-**Bumping the SW version:** Every deploy that changes a JS file should bump `CACHE_VERSION` in `sw.js`. Format: `fft-vN`. Current version is tracked in the constant at the top of the file.
-
----
-
-## Architecture Notes
-
-### Option A — Two Meal Systems (Current)
-
-The core Loftin Method meal plan (`IF_PLAN_OFFICE`, `IF_PLAN_WFH` in `engine.js`) and the new Meal Explorer (`mealdb.js`) run in parallel. This was a deliberate decision to avoid breaking existing users before launch.
-
-**Core plan** — powers the dashboard, 7-day rotation, meal scaling, swap system. Stable.  
-**Meal Explorer** — powered by `mealdb.js`, UI coming post-launch. Expandable.
-
-Migration to Option B (unified engine) is planned post-launch when there is stable revenue and time to refactor carefully.
-
-### Boot Sequence
-
-1. `migrate.js` runs — silently fixes any missing plan fields
-2. `stripe.js` IIFE runs — checks subscription, restores from server, calls `initApp()`
-3. `initApp()` loads plan from localStorage, renders dashboard
-4. `ui.js` wires navigation
-
-### iOS Data Reliability
-
-iOS aggressively kills PWA processes and wipes localStorage. The app handles this with:
-- Server restore on every boot via `restoreFromServer()` in `sync.js`
-- Silent retry on network failure (3-second delay, one attempt)
-- `saveAllData()` called on `visibilitychange` (hidden) so data is saved before iOS kills the process
-- `sendBeacon` used for saves — survives app termination
-
----
-
-## Environment Variables
-
-Set these in Netlify dashboard under Site Settings → Environment Variables:
-
-| Variable | Description |
-|----------|-------------|
-| `NETLIFY_TOKEN` | Netlify API token for Blobs access |
-| `ANTHROPIC_API_KEY` | Claude API key for restaurant/fridge/carb features |
-| `STRIPE_SECRET_KEY` | Stripe secret key (test or live) |
-| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
-| `STRIPE_PRICE_ID` | Stripe price ID for subscription product |
+Device linking maps multiple device IDs to the same server blob, enabling cross-device sync. iPad devices are read-only — they pull data but never push.
 
 ---
 
 ## Deployment
 
-This app deploys via Netlify's Git integration. Every push to `main` triggers a deploy.
+**Branch strategy:**
+- `staging` branch → `staging--fitforthem.netlify.app` — test everything here first
+- `main` branch → `fitforthem.app` — production, only merge when staging passes
+
+**Workflow:**
+```bash
+# Make changes, test on staging first
+git add js/filename.js
+git commit -m "description"
+git pull origin staging
+git push origin main:staging   # pushes local main to remote staging
+
+# When staging passes, merge to main
+git push origin main
+```
 
 **Deploy checklist:**
 1. Bump `CACHE_VERSION` in `sw.js` if any JS file changed
-2. Syntax check changed JS files: `node --check js/filename.js`
-3. Verify new JS files are added to `STATIC_ASSETS` in `sw.js`
-4. Verify new JS files have a `<script src="js/filename.js">` tag in `app.html` in the correct load order
-5. Push to `main`
-
-**There is no local dev server.** The app runs directly from the filesystem or from the Netlify CDN. For testing, deploy to a Netlify preview branch.
+2. Syntax check: `node --check js/filename.js`
+3. Test on iPhone at staging URL before merging to main
 
 ---
 
 ## Pricing
 
-- **Target:** $19.99/month
-- **Stripe:** Test keys active, paywall bypassed for beta
-- **To go live:** Swap test Stripe keys for live keys in `stripe.js` and Netlify environment variables, then remove the paywall bypass in `stripe.js` `finishBoot()` and `startJourney()`
+- **Price:** $9.99/month
+- **Stripe:** Live keys active
+- **Whitelisted devices:** Can bypass paywall for testing (see `stripe.js`)
+
+---
+
+## Environment Variables
+
+Set in Netlify dashboard → Site Settings → Environment Variables:
+
+| Variable | Description |
+|----------|-------------|
+| `NETLIFY_TOKEN` | Netlify API token for Blobs access |
+| `ANTHROPIC_API_KEY` | Claude API key |
+| `STRIPE_SECRET_KEY` | Stripe secret key (live) |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
+| `STRIPE_PRICE_ID` | Stripe price ID (`price_1TXUcP7SIAqrERB3dFl78QEU`) |
 
 ---
 
 ## Known Technical Debt
 
-1. **Two meal systems** — `IF_PLAN_OFFICE`/`IF_PLAN_WFH` and `mealdb.js` run in parallel. Planned unification post-launch (Option B migration).
-2. **No local dev environment** — all testing happens on deployed Netlify previews.
-3. **Single-file PWA** — `app.html` contains all HTML and CSS. CSS should eventually be extracted to a separate file for maintainability.
+1. **Two meal systems** — `plan-templates.js` (active plan engine) and `mealdb.js` (future Meal Explorer) run in parallel. Unification planned post-launch.
+2. **No local dev environment** — all testing happens on deployed Netlify staging branch.
+3. **Single-file PWA** — `app.html` contains all HTML and CSS. CSS extraction planned post-launch.
 4. **No automated tests** — all testing is manual. Unit tests for `engine.js` and `macros.js` would be high value.
+5. **Women's deficit content gap** — women's lane has fewer meal varieties than men's. Ongoing improvement.
+6. **Raw-vs-cooked macro mismatch on template meals** — partially addressed via macro normalization. Full resolution requires updating `c:` base values in `plan-templates.js` to match MACRO_TABLE.
 
 ---
 
 ## Roadmap
 
-**Pre-launch (current sprint):**
-- [x] Silent plan migration
-- [x] iOS data reliability
-- [x] Device linking
-- [x] Macros on meal cards, restaurants, fridge
-- [x] Carb Lookup tool
-- [x] Meal database schema and filter engine
-- [ ] Dietary preferences (vegetarian, dairy-free, no pork, etc.)
-- [ ] Stripe live keys + paywall re-enable
-- [ ] Second dessert option
+**Active (pre-main merge):**
+- [x] Per-slot calorie scaling for meal swaps
+- [x] Macro normalization on all meal surfaces
+- [x] Restaurant feature — slot-aware, maximizes budget, side recommendations
+- [x] Fridge builder — slot-aware, practical meal names, macro reconciliation
+- [x] iPad weekly grid (read-only, pulls from phone via group sync)
+- [x] Meal card open-state persistence on re-renders
+- [x] Footer day macro totals
+- [x] Women's deficit Final Meal fix
+- [x] MACRO_TABLE expanded (raw proteins, vegetables, dark chocolate)
 
-**Post-launch:**
-- [ ] Meal Explorer UI (powered by mealdb.js)
-- [ ] Custom recipes page
+**Planned (post-main):**
+- [ ] Women's deficit lane content expansion (more meal varieties)
+- [ ] Light theme (wife-requested)
+- [ ] Emoji cleanup pass across all pages
+- [ ] Protein floor warning when daily protein drops too low
+- [ ] Slot swapping (e.g. larger lunch, lighter dinner)
 - [ ] Maintenance Day toggle
-- [ ] Recipe Reference with scaled ingredients
-- [ ] Restaurant page meal type + drink selectors
-- [ ] Device linking auto-sync (currently manual)
+- [ ] Meal Explorer UI (powered by `mealdb.js`)
+- [ ] Unified meal engine (single source of truth for all meal surfaces)
 - [ ] Lazy loading for JS modules
-- [ ] Progress chart redesign
-- [ ] Dashboard/Meals landscape mode (iPad cooking)
-- [ ] Unified meal engine (Option B migration)
+- [ ] Automated tests for `engine.js` and `macros.js`
 
 ---
 
 ## Design System
 
-All visual decisions are documented in `DESIGN.md` in the repo root. **Read it before making any visual change.** It covers:
+All visual decisions are documented in `DESIGN.md`. **Read it before making any visual change.**
 
-- Color system and CSS variables
-- Typography scale
-- Component patterns (cards, buttons, toggles, modals)
-- Spacing and layout rules
-- Animation guidelines
-- Dark theme implementation
-- UX principles
-
-The short version: dark warm neutrals, single gold accent, Playfair Display for headings, DM Sans for everything else. Restraint over decoration.
+Short version: dark warm neutrals, single gold accent (`--gold`), Playfair Display for headings, DM Sans for body. Restraint over decoration. The app should feel like a precision instrument, not a wellness product.
 
 ---
 
 ## Contact
 
-**David Loftin**  
+**David Parmer**  
 Loftin Method LLC  
 david@fitforthem.app  
 https://fitforthem.app

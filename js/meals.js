@@ -803,6 +803,10 @@ var MEAL_INSTRUCTIONS = {
     banana_oat_nut_butter_bowl: {
       how_to_make: ['Add Greek yogurt to a bowl.','Add oats and sliced banana.','Top with peanut butter and honey.','Stir lightly or leave layered and serve.'],
       batch_note: 'Best made fresh. Pre-measure oats and peanut butter ahead to make assembly fast.'
+    },
+    yogurt_honey_cookie_bowl: {
+      how_to_make: ['Add Greek yogurt to a bowl.','Drizzle honey over the top.','Add Biscoff cookies on the side or crumble over the yogurt.','Serve cold.'],
+      batch_note: 'Best made fresh. Add cookies at the last minute so they stay crisp.'
     }
   },
   egg_potato_skillet_family: {
@@ -811,7 +815,7 @@ var MEAL_INSTRUCTIONS = {
       batch_note: 'Batch-cook potatoes separately, then reheat portions and add fresh eggs when serving.'
     },
     cheesy_egg_potato_skillet: {
-      how_to_make: ['Cook potatoes in a skillet until browned and tender.','Add eggs and/or egg whites and cook until almost set.','Sprinkle cheese over the top.','Finish with salsa or serve as-is.'],
+      how_to_make: ['Cook potatoes in a skillet until browned and tender.','Add eggs and cook until almost set.','Sprinkle cheese over the top and let it melt.','Add a dollop of sour cream and serve hot.'],
       batch_note: 'For family use, batch-cook potatoes first. Cook egg portions fresh for best texture.'
     },
     salsa_egg_potato_skillet: {
@@ -819,7 +823,7 @@ var MEAL_INSTRUCTIONS = {
       batch_note: 'Potatoes can be batch-cooked ahead. Add salsa after plating.'
     },
     loaded_egg_potato_skillet: {
-      how_to_make: ['Cook potatoes in a skillet until browned and tender.','Add eggs and/or egg whites and cook until set.','Top with cheese and let it melt.','Finish with sour cream or salsa and serve hot.'],
+      how_to_make: ['Cook potatoes in a skillet until browned and tender.','Add eggs and egg whites and cook until set.','Top with cheese and let it melt.','Finish with a dollop of sour cream and serve hot.'],
       batch_note: 'Batch-cook potatoes ahead. Keep cheese and sour cream for final plating.'
     }
   },
@@ -948,7 +952,7 @@ var MEAL_INSTRUCTIONS_MAP = {
   'turkey-pasta':          MEAL_INSTRUCTIONS.pasta_bowl_family.turkey_pasta_bowl,
   'beef-pasta':            MEAL_INSTRUCTIONS.pasta_bowl_family.beef_pasta_bowl,
   'creamy-chicken-pasta':  MEAL_INSTRUCTIONS.pasta_bowl_family.creamy_chicken_pasta_bowl,
-  'yogurt-honey-bowl':     MEAL_INSTRUCTIONS.greek_yogurt_bowl_family.berry_chia_bowl,
+  'yogurt-honey-bowl':     MEAL_INSTRUCTIONS.greek_yogurt_bowl_family.yogurt_honey_cookie_bowl,
   'ricotta-bowl':          null,
   'cookies':                 null,
   'chocolate-bar':          null,

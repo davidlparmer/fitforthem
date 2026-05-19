@@ -376,8 +376,16 @@ function buildDayHTML(i,plan,showSwap){
     if(!customBody){customBody='<p>'+displayCal+' cal</p>';}
     var mealStr=(m.name||'').toLowerCase()+' '+(m.ingredients||[]).map(function(x){return x.item||'';}).join(' ').toLowerCase();
     var isRestaurant=m.notes&&m.notes.indexOf('Eating out')===0;
-    var swapCookSteps=(!isRestaurant&&typeof getMealInstructions==='function')
-      ?getMealInstructions(m.mealKey||null,mealStr):'';
+    var isFridgeMeal=m.notes&&m.notes.indexOf('Built from fridge')===0;
+    // Fridge meals carry Claude-generated instructions — use those directly.
+    // Built-in swaps and restaurant meals fall through to getMealInstructions lookup.
+    var swapCookSteps='';
+    if(isFridgeMeal&&m.instructions&&m.instructions.length){
+      swapCookSteps='<div style="margin-top:10px"><div style="font-size:.58rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--t3);margin-bottom:6px">How to cook</div>'+
+        m.instructions.map(function(s,idx){return '<div style="display:flex;gap:8px;padding:4px 0;font-size:.82rem;color:var(--t2)"><span style="color:var(--gold);font-weight:700;min-width:16px">'+(idx+1)+'.</span><span>'+s+'</span></div>';}).join('')+'</div>';
+    } else if(!isRestaurant&&typeof getMealInstructions==='function'){
+      swapCookSteps=getMealInstructions(m.mealKey||null,mealStr);
+    }
     if(swapCookSteps){customBody+=swapCookSteps;}
     if(typeof renderMacroBar==='function'){
       var mPro=0,mCarb=0,mFat=0;

@@ -1003,7 +1003,7 @@ var SWAP_OPTIONS={
         ]},
 
       // ── Egg & Potato Skillet Family ──
-      {key:'cheesy-egg-potato', name:'Egg & Potato Skillet', img:'food-eggs.png', cal:569,
+      {key:'cheesy-egg-potato', name:'Whole Egg & Potato Skillet', img:'food-eggs.png', cal:569,
         items:[
           {item:'Whole eggs',  basis:'raw',  grams:200, cooked_grams:180, count:4},
           {item:'Potatoes',    basis:'raw',  grams:250, cooked_grams:212},
@@ -1011,7 +1011,7 @@ var SWAP_OPTIONS={
           {item:'Sour cream',  basis:'same', grams:30,  cooked_grams:30},
         ]},
 
-      {key:'salsa-egg-potato', name:'Salsa Egg & Potato Skillet', img:'food-eggs.png', cal:571,
+      {key:'salsa-egg-potato', name:'Salsa Egg White & Potato Skillet', img:'food-eggs.png', cal:571,
         items:[
           {item:'Whole eggs',  basis:'raw',  grams:100, cooked_grams:90,  count:2},
           {item:'Egg whites',  basis:'raw',  grams:300, cooked_grams:276},
@@ -1024,7 +1024,7 @@ var SWAP_OPTIONS={
     dinner:[
 
       // ── Original Loftin Potato-Based Meals (plan template defaults) ──
-      {key:'honey-soy-chicken', name:'Honey Soy Chicken', img:'food-chicken.png', cal:719,
+      {key:'honey-soy-chicken', name:'Honey Soy Chicken & Potatoes', img:'food-chicken.png', cal:719,
         items:[
           {item:'Chicken breast', basis:'raw',  grams:227, cooked_grams:170},
           {item:'Potatoes',       basis:'raw',  grams:240, cooked_grams:204},
@@ -1042,7 +1042,7 @@ var SWAP_OPTIONS={
           {item:'Sour cream',   basis:'same', grams:20,  cooked_grams:20},
         ]},
 
-      {key:'honey-soy-salmon', name:'Honey Soy Salmon', img:'food-salmon.png', cal:810,
+      {key:'honey-soy-salmon', name:'Honey Soy Salmon & Potatoes', img:'food-salmon.png', cal:810,
         items:[
           {item:'Salmon',     basis:'raw',  grams:200, cooked_grams:170},
           {item:'Potatoes',   basis:'raw',  grams:260, cooked_grams:221},
@@ -1053,7 +1053,7 @@ var SWAP_OPTIONS={
         ]},
 
       // ── Protein Bowl Family ──
-      {key:'chicken-bowl', name:'Honey Soy Chicken Bowl', img:'food-chicken.png', cal:585,
+      {key:'chicken-bowl', name:'Honey Soy Chicken Rice Bowl', img:'food-chicken.png', cal:585,
         items:[
           {item:'Chicken breast', basis:'raw',  grams:220, cooked_grams:165},
           {item:'White rice',     basis:'dry',  grams:60,  cooked_grams:180},
@@ -1226,7 +1226,7 @@ var SWAP_OPTIONS={
         ]},
 
       // ── Egg & Potato Skillet Family ──
-      {key:'salsa-egg-potato', name:'Salsa Egg & Potato Skillet', img:'food-eggs.png', cal:370,
+      {key:'salsa-egg-potato', name:'Salsa Egg White & Potato Skillet', img:'food-eggs.png', cal:370,
         items:[
           {item:'Whole eggs',  basis:'raw',  grams:50,  cooked_grams:45,  count:1},
           {item:'Egg whites',  basis:'raw',  grams:220, cooked_grams:202},
@@ -1248,7 +1248,7 @@ var SWAP_OPTIONS={
           {item:'Veg',        basis:'same', grams:90,  cooked_grams:90},
         ]},
 
-      {key:'chicken-bowl', name:'Honey Soy Chicken Bowl', img:'food-chicken.png', cal:538,
+      {key:'chicken-bowl', name:'Honey Soy Chicken Rice Bowl', img:'food-chicken.png', cal:538,
         items:[
           {item:'Chicken breast', basis:'raw',  grams:180, cooked_grams:135},
           {item:'White rice',     basis:'dry',  grams:63,  cooked_grams:189},
@@ -1436,7 +1436,7 @@ var SWAP_OPTIONS={
         ]},
 
       // ── Egg & Potato Skillet Family ──
-      {key:'cheesy-egg-potato', name:'Egg & Potato Skillet', img:'food-eggs.png', cal:540,
+      {key:'cheesy-egg-potato', name:'Whole Egg & Potato Skillet', img:'food-eggs.png', cal:540,
         items:[
           {item:'Whole eggs',  basis:'raw',  grams:200, cooked_grams:180, count:4},
           {item:'Potatoes',    basis:'raw',  grams:220, cooked_grams:187},
@@ -1448,7 +1448,7 @@ var SWAP_OPTIONS={
     dinner:[
 
       // ── Protein Bowl Family ──
-      {key:'chicken-bowl', name:'Honey Soy Chicken Bowl', img:'food-chicken.png', cal:538,
+      {key:'chicken-bowl', name:'Honey Soy Chicken Rice Bowl', img:'food-chicken.png', cal:538,
         items:[
           {item:'Chicken breast', basis:'raw',  grams:180, cooked_grams:135},
           {item:'White rice',     basis:'dry',  grams:63,  cooked_grams:189},

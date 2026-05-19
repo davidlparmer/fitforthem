@@ -26,6 +26,10 @@ var MEAL_INSTRUCTIONS = {
     yogurt_honey_cookie_bowl: {
       how_to_make: ['Add Greek yogurt to a bowl.','Drizzle honey over the top.','Add Biscoff cookies on the side or crumble over the yogurt.','Serve cold.'],
       batch_note: 'Best made fresh. Add cookies at the last minute so they stay crisp.'
+    },
+    blueberry_yogurt_cookie_bowl: {
+      how_to_make: ['Add Greek yogurt to a bowl.','Top with blueberries.','Drizzle honey over the top.','Add Biscoff cookies on the side or crumble over the yogurt.','Serve cold.'],
+      batch_note: 'Best made fresh. Add cookies at the last minute so they stay crisp.'
     }
   },
   egg_potato_skillet_family: {
@@ -171,7 +175,8 @@ var MEAL_INSTRUCTIONS_MAP = {
   'turkey-pasta':          MEAL_INSTRUCTIONS.pasta_bowl_family.turkey_pasta_bowl,
   'beef-pasta':            MEAL_INSTRUCTIONS.pasta_bowl_family.beef_pasta_bowl,
   'creamy-chicken-pasta':  MEAL_INSTRUCTIONS.pasta_bowl_family.creamy_chicken_pasta_bowl,
-  'yogurt-honey-bowl':     MEAL_INSTRUCTIONS.greek_yogurt_bowl_family.yogurt_honey_cookie_bowl,
+  'yogurt-honey-bowl':            MEAL_INSTRUCTIONS.greek_yogurt_bowl_family.yogurt_honey_cookie_bowl,
+  'blueberry-yogurt-cookie-bowl': MEAL_INSTRUCTIONS.greek_yogurt_bowl_family.blueberry_yogurt_cookie_bowl,
   'ricotta-bowl':          null,
   'cookies':                 null,
   'chocolate-bar':          null,
@@ -517,12 +522,38 @@ var SWAP_OPTIONS={
     dessert:[
 
       // ── Greek Yogurt Bowl Family ──
+      {key:'blueberry-yogurt-cookie-bowl', name:'Blueberry Yogurt Cookie Bowl', img:'food-yogurt.png', cal:269,
+        items:[
+          {item:'Nonfat Greek yogurt', basis:'same', grams:200, cooked_grams:200},
+          {item:'Blueberries',         basis:'same', grams:75,  cooked_grams:75},
+          {item:'Honey',               basis:'same', grams:10,  cooked_grams:10},
+          {item:'Biscoff cookies',     basis:'same', grams:16,  cooked_grams:16},
+        ]},
+
       {key:'oats-berry-bowl', name:'Oats & Berry Bowl', img:'food-yogurt.png', cal:302,
         items:[
           {item:'Nonfat Greek yogurt', basis:'same', grams:250, cooked_grams:250},
           {item:'Oats',                basis:'same', grams:20,  cooked_grams:20},
           {item:'Blueberries',         basis:'same', grams:80,  cooked_grams:80},
           {item:'Honey',               basis:'same', grams:10,  cooked_grams:10},
+        ]},
+
+      {key:'yogurt-honey-bowl', name:'Yogurt & Honey Bowl', img:'food-yogurt.png', cal:227,
+        items:[
+          {item:'Nonfat Greek yogurt', basis:'same', grams:200, cooked_grams:200},
+          {item:'Honey',               basis:'same', grams:10,  cooked_grams:10},
+          {item:'Biscoff cookies',     basis:'same', grams:16,  cooked_grams:16},
+        ]},
+
+      // ── Cookies / Chocolate ──
+      {key:'cookies', name:'Cookies', img:'food-cookies.png', cal:342,
+        items:[
+          {item:'Cookies', basis:'same', grams:70, cooked_grams:70},
+        ]},
+
+      {key:'chocolate-bar', name:'Chocolate Bar', img:'food-cookies.png', cal:328,
+        items:[
+          {item:'Dark chocolate bar', basis:'same', grams:60, cooked_grams:60},
         ]},
 
       {key:'berry-chia-bowl', name:'Berry Chia Bowl', img:'food-yogurt.png', cal:297,

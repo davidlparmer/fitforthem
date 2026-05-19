@@ -404,10 +404,6 @@ function tdBase() {
 }
 
 
-// ── DINNER THEME UI ──────────────────────────────────────────
-function buildDinnerThemeUI() {
-  return; // hidden for v1
-}
 
 
 // ── BOOT ─────────────────────────────────────────────────────

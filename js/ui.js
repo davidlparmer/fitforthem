@@ -172,7 +172,6 @@ document.addEventListener('visibilitychange',function(){
       try{mealPrefs=JSON.parse(localStorage.getItem('fft_meal_prefs')||'{}');}catch(e){}
       try{proteinSwaps=JSON.parse(localStorage.getItem('fft_swaps')||'{}');}catch(e){}
       try{skippedMeals=JSON.parse(localStorage.getItem('fft_skipped')||'{}');}catch(e){}
-      try{dinnerTheme=localStorage.getItem('fft_dinner_theme')||null;}catch(e){}
       if(!userName)userName=localStorage.getItem('fft_name')||'';
       if(!workMode)workMode=localStorage.getItem('fft_workmode')||'wfh';
       try{var _sp=localStorage.getItem('fft_plan');if(_sp)currentPlan=JSON.parse(_sp);}catch(e){}
@@ -202,7 +201,6 @@ window.addEventListener('pageshow',function(e){
       runPlanMigration();
       if(!userName)userName=localStorage.getItem('fft_name')||'';
       if(!workMode)workMode=localStorage.getItem('fft_workmode')||'wfh';
-      try{dinnerTheme=localStorage.getItem('fft_dinner_theme')||null;}catch(e){}
       // Pull group data after device restore to merge any cross-device weight entries
       if(localStorage.getItem('fft_group_id')){
         pullGroupData(function(){

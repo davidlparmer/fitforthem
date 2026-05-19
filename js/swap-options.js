@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────
 // swap-options.js — Loftin Method Meal Data
-// Contains: MEAL_INSTRUCTIONS, MEAL_INSTRUCTIONS_MAP, SWAP_OPTIONS, DINNER_THEME_FAMILIES
+// Contains: MEAL_INSTRUCTIONS, MEAL_INSTRUCTIONS_MAP, SWAP_OPTIONS
 // Pure data. No DOM. No side effects. No dependencies.
 // Load order: after plan-templates.js, before meals.js
 // ─────────────────────────────────────────────────────────────
@@ -22,6 +22,10 @@ var MEAL_INSTRUCTIONS = {
     banana_oat_nut_butter_bowl: {
       how_to_make: ['Add Greek yogurt to a bowl.','Add oats and sliced banana.','Top with peanut butter and honey.','Stir lightly or leave layered and serve.'],
       batch_note: 'Best made fresh. Pre-measure oats and peanut butter ahead to make assembly fast.'
+    },
+    yogurt_honey_cookie_bowl: {
+      how_to_make: ['Add Greek yogurt to a bowl.','Drizzle honey over the top.','Add Biscoff cookies on the side or crumble over the yogurt.','Serve cold.'],
+      batch_note: 'Best made fresh. Add cookies at the last minute so they stay crisp.'
     }
   },
   egg_potato_skillet_family: {
@@ -30,7 +34,7 @@ var MEAL_INSTRUCTIONS = {
       batch_note: 'Batch-cook potatoes separately, then reheat portions and add fresh eggs when serving.'
     },
     cheesy_egg_potato_skillet: {
-      how_to_make: ['Cook potatoes in a skillet until browned and tender.','Add eggs and/or egg whites and cook until almost set.','Sprinkle cheese over the top.','Finish with salsa or serve as-is.'],
+      how_to_make: ['Cook potatoes in a skillet until browned and tender.','Add eggs and cook until almost set.','Sprinkle cheese over the top and let it melt.','Add a dollop of sour cream and serve hot.'],
       batch_note: 'For family use, batch-cook potatoes first. Cook egg portions fresh for best texture.'
     },
     salsa_egg_potato_skillet: {
@@ -38,7 +42,7 @@ var MEAL_INSTRUCTIONS = {
       batch_note: 'Potatoes can be batch-cooked ahead. Add salsa after plating.'
     },
     loaded_egg_potato_skillet: {
-      how_to_make: ['Cook potatoes in a skillet until browned and tender.','Add eggs and/or egg whites and cook until set.','Top with cheese and let it melt.','Finish with sour cream or salsa and serve hot.'],
+      how_to_make: ['Cook potatoes in a skillet until browned and tender.','Add eggs and egg whites and cook until set.','Top with cheese and let it melt.','Finish with a dollop of sour cream and serve hot.'],
       batch_note: 'Batch-cook potatoes ahead. Keep cheese and sour cream for final plating.'
     }
   },
@@ -136,6 +140,7 @@ var MEAL_INSTRUCTIONS = {
   }
 };
 
+// Flat key map — SWAP_OPTIONS key → instruction variant
 var MEAL_INSTRUCTIONS_MAP = {
   'oats-berry-bowl':       MEAL_INSTRUCTIONS.greek_yogurt_bowl_family.oats_berry_bowl,
   'berry-chia-bowl':       MEAL_INSTRUCTIONS.greek_yogurt_bowl_family.berry_chia_bowl,
@@ -166,10 +171,32 @@ var MEAL_INSTRUCTIONS_MAP = {
   'turkey-pasta':          MEAL_INSTRUCTIONS.pasta_bowl_family.turkey_pasta_bowl,
   'beef-pasta':            MEAL_INSTRUCTIONS.pasta_bowl_family.beef_pasta_bowl,
   'creamy-chicken-pasta':  MEAL_INSTRUCTIONS.pasta_bowl_family.creamy_chicken_pasta_bowl,
-  'yogurt-honey-bowl':     MEAL_INSTRUCTIONS.greek_yogurt_bowl_family.berry_chia_bowl,
+  'yogurt-honey-bowl':     MEAL_INSTRUCTIONS.greek_yogurt_bowl_family.yogurt_honey_cookie_bowl,
   'ricotta-bowl':          null,
-  'cookies':               null,
+  'cookies':                 null,
+  'chocolate-bar':          null,
 };
+
+function renderHowToMake(variant) {
+  if (!variant || !variant.how_to_make || !variant.how_to_make.length) return '';
+  var inner = variant.how_to_make.map(function(step, idx) {
+    return '<div style="display:flex;gap:10px;padding:4px 0;border-bottom:1px solid rgba(184,150,60,.06)">' +
+      '<div style="font-size:.75rem;font-weight:700;color:var(--gold);min-width:16px;flex-shrink:0">' + (idx+1) + '.</div>' +
+      '<div style="font-size:.80rem;color:var(--t2);line-height:1.5">' + step + '</div>' +
+    '</div>';
+  }).join('');
+  return '<div class="coach-note" style="margin-top:8px"><strong>How to make:</strong><div style="margin-top:6px">' + inner + '</div></div>';
+}
+
+function getMealInstructions(mealKey, proteinFallback) {
+  if (mealKey && MEAL_INSTRUCTIONS_MAP.hasOwnProperty(mealKey)) {
+    var variant = MEAL_INSTRUCTIONS_MAP[mealKey];
+    if (variant) return renderHowToMake(variant);
+    return '';
+  }
+  if (typeof getCookSteps === 'function') return getCookSteps(proteinFallback || '');
+  return '';
+}
 
 var SWAP_OPTIONS={
 
@@ -199,9 +226,7 @@ var SWAP_OPTIONS={
         ]},
 
       // ── Egg & Potato Skillet Family ──
-      // cheesy-egg-potato: eggs + potatoes + cheese + sour cream — rich, satisfying
-      // salsa-egg-potato:  eggs + egg whites + potatoes + salsa — lighter, fresher, same cal tier
-      {key:'cheesy-egg-potato', name:'Egg & Potato Skillet', img:'food-eggs.png', cal:569,
+      {key:'cheesy-egg-potato', name:'Whole Egg & Potato Skillet', img:'food-eggs.png', cal:569,
         items:[
           {item:'Whole eggs',  basis:'raw',  grams:200, cooked_grams:180, count:4},
           {item:'Potatoes',    basis:'raw',  grams:250, cooked_grams:212},
@@ -209,7 +234,7 @@ var SWAP_OPTIONS={
           {item:'Sour cream',  basis:'same', grams:30,  cooked_grams:30},
         ]},
 
-      {key:'salsa-egg-potato', name:'Salsa Egg & Potato Skillet', img:'food-eggs.png', cal:571,
+      {key:'salsa-egg-potato', name:'Salsa Egg White & Potato Skillet', img:'food-eggs.png', cal:571,
         items:[
           {item:'Whole eggs',  basis:'raw',  grams:100, cooked_grams:90,  count:2},
           {item:'Egg whites',  basis:'raw',  grams:300, cooked_grams:276},
@@ -222,7 +247,7 @@ var SWAP_OPTIONS={
     dinner:[
 
       // ── Original Loftin Potato-Based Meals (plan template defaults) ──
-      {key:'honey-soy-chicken', name:'Honey Soy Chicken', img:'food-chicken.png', cal:719,
+      {key:'honey-soy-chicken', name:'Honey Soy Chicken & Potatoes', img:'food-chicken.png', cal:719,
         items:[
           {item:'Chicken breast', basis:'raw',  grams:227, cooked_grams:170},
           {item:'Potatoes',       basis:'raw',  grams:240, cooked_grams:204},
@@ -240,7 +265,7 @@ var SWAP_OPTIONS={
           {item:'Sour cream',   basis:'same', grams:20,  cooked_grams:20},
         ]},
 
-      {key:'honey-soy-salmon', name:'Honey Soy Salmon', img:'food-salmon.png', cal:810,
+      {key:'honey-soy-salmon', name:'Honey Soy Salmon & Potatoes', img:'food-salmon.png', cal:810,
         items:[
           {item:'Salmon',     basis:'raw',  grams:200, cooked_grams:170},
           {item:'Potatoes',   basis:'raw',  grams:260, cooked_grams:221},
@@ -251,7 +276,7 @@ var SWAP_OPTIONS={
         ]},
 
       // ── Protein Bowl Family ──
-      {key:'chicken-bowl', name:'Honey Soy Chicken Bowl', img:'food-chicken.png', cal:585,
+      {key:'chicken-bowl', name:'Honey Soy Chicken Rice Bowl', img:'food-chicken.png', cal:585,
         items:[
           {item:'Chicken breast', basis:'raw',  grams:220, cooked_grams:165},
           {item:'White rice',     basis:'dry',  grams:60,  cooked_grams:180},
@@ -384,9 +409,15 @@ var SWAP_OPTIONS={
           {item:'Honey',       basis:'same', grams:25,  cooked_grams:25},
         ]},
 
-      {key:'cookies', name:'Cookies', img:'food-cookies.png', cal:443,
+      // ── Cookies / Chocolate ──
+      {key:'cookies', name:'Cookies', img:'food-cookies.png', cal:342,
         items:[
-          {item:'Cookies (or chocolate bar 60g)', basis:'same', grams:70, cooked_grams:70},
+          {item:'Cookies', basis:'same', grams:70, cooked_grams:70},
+        ]},
+
+      {key:'chocolate-bar', name:'Chocolate Bar', img:'food-cookies.png', cal:328,
+        items:[
+          {item:'Dark chocolate bar', basis:'same', grams:60, cooked_grams:60},
         ]},
 
     ],
@@ -418,7 +449,7 @@ var SWAP_OPTIONS={
         ]},
 
       // ── Egg & Potato Skillet Family ──
-      {key:'salsa-egg-potato', name:'Salsa Egg & Potato Skillet', img:'food-eggs.png', cal:370,
+      {key:'salsa-egg-potato', name:'Salsa Egg White & Potato Skillet', img:'food-eggs.png', cal:370,
         items:[
           {item:'Whole eggs',  basis:'raw',  grams:50,  cooked_grams:45,  count:1},
           {item:'Egg whites',  basis:'raw',  grams:220, cooked_grams:202},
@@ -440,7 +471,7 @@ var SWAP_OPTIONS={
           {item:'Veg',        basis:'same', grams:90,  cooked_grams:90},
         ]},
 
-      {key:'chicken-bowl', name:'Honey Soy Chicken Bowl', img:'food-chicken.png', cal:538,
+      {key:'chicken-bowl', name:'Honey Soy Chicken Rice Bowl', img:'food-chicken.png', cal:538,
         items:[
           {item:'Chicken breast', basis:'raw',  grams:180, cooked_grams:135},
           {item:'White rice',     basis:'dry',  grams:63,  cooked_grams:189},
@@ -628,9 +659,7 @@ var SWAP_OPTIONS={
         ]},
 
       // ── Egg & Potato Skillet Family ──
-      // cheesy-egg-potato: matches plan template (eggs + potatoes + cheese + sour cream)
-      // loaded-egg-potato: egg-whites variant — distinct heavier meal
-      {key:'cheesy-egg-potato', name:'Egg & Potato Skillet', img:'food-eggs.png', cal:540,
+      {key:'cheesy-egg-potato', name:'Whole Egg & Potato Skillet', img:'food-eggs.png', cal:540,
         items:[
           {item:'Whole eggs',  basis:'raw',  grams:200, cooked_grams:180, count:4},
           {item:'Potatoes',    basis:'raw',  grams:220, cooked_grams:187},
@@ -642,7 +671,7 @@ var SWAP_OPTIONS={
     dinner:[
 
       // ── Protein Bowl Family ──
-      {key:'chicken-bowl', name:'Honey Soy Chicken Bowl', img:'food-chicken.png', cal:538,
+      {key:'chicken-bowl', name:'Honey Soy Chicken Rice Bowl', img:'food-chicken.png', cal:538,
         items:[
           {item:'Chicken breast', basis:'raw',  grams:180, cooked_grams:135},
           {item:'White rice',     basis:'dry',  grams:63,  cooked_grams:189},
@@ -799,54 +828,12 @@ var SWAP_OPTIONS={
 
 };
 
-var DINNER_THEME_FAMILIES = {
-
-  'taco-bowl': {
-    name: 'Taco Bowl Week',
-    img: 'food-chicken.png',
-    uiVisible: true,
-    lanes: {
-      men_deficit:   ['chicken-taco-bowl', 'turkey-taco-bowl', 'beef-taco-bowl'],
-      women_deficit: ['chicken-taco-bowl', 'turkey-taco-bowl'],
-      men_surplus:   ['loaded-beef-taco', 'chicken-taco-bowl'],
-      women_surplus: ['chicken-taco-bowl', 'turkey-taco-bowl', 'beef-taco-bowl']
-    }
-  },
-
-  'burger-bowl': {
-    name: 'Burger Bowl Week',
-    img: 'food-beef.png',
-    uiVisible: true,
-    lanes: {
-      men_deficit:   ['cheeseburger-bowl', 'turkey-burger-bowl', 'classic-burger-bowl'],
-      women_deficit: ['classic-burger-bowl', 'cheeseburger-bowl'],
-      men_surplus:   ['loaded-burger-bowl', 'cheeseburger-bowl'],
-      women_surplus: ['cheeseburger-bowl', 'turkey-burger-bowl', 'classic-burger-bowl']
-    }
-  },
-
-  'pasta-bowl': {
-    name: 'Pasta Bowl Week',
-    img: 'food-chicken.png',
-    uiVisible: true,
-    lanes: {
-      men_deficit:   null,// pasta not a featured theme for men_deficit v1
-      women_deficit: ['turkey-pasta', 'chicken-pasta'],
-      men_surplus:   ['beef-pasta', 'chicken-pasta'],
-      women_surplus: ['chicken-pasta', 'turkey-pasta', 'beef-pasta', 'creamy-chicken-pasta']
-    }
-  },
-
-  'protein-bowl': {
-    name: 'Rice Bowl Week',
-    img: 'food-chicken.png',
-    uiVisible: false,// reserved for future — not shown in v1 selector
-    lanes: {
-      men_deficit:   ['chicken-bowl', 'salmon-bowl'],
-      women_deficit: ['chicken-bowl', 'salmon-rice-bowl'],
-      men_surplus:   ['beef-rice-bowl', 'chicken-bowl'],
-      women_surplus: ['chicken-bowl', 'salmon-bowl', 'beef-rice-bowl']
-    }
-  }
-
-};
+// ── DINNER THEME FAMILIES ─────────────────────────────────────
+// Maps family keys to their lane-aware variant arrays.
+// Rotation: variants[dayIdx % variants.length] — natural variety across the week.
+//
+// null for a lane = family not valid for that lane (not shown in selector).
+// uiVisible:false = in architecture for future use, not shown in v1 selector.
+//
+// Variant order within each lane array determines weekly rotation.
+// Put the most family-friendly / most neutral variant first.

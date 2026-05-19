@@ -383,11 +383,20 @@ function buildDayHTML(i,plan,showSwap){
       ?getMealInstructions(m.mealKey||null,mealStr):'';
     if(swapCookSteps){customBody+=swapCookSteps;}
     if(typeof renderMacroBar==='function'){
-      var mPro=m.pro||0,mCarb=m.carb||0,mFat=m.fat||0;
-      if(!mPro&&!mCarb&&!mFat&&m.ingredients&&m.ingredients.length&&typeof calcMealMacros==='function'){
-        var ingStrings=m.ingredients.map(function(x){return x.item||'';}).filter(Boolean);
-        var calc=calcMealMacros(ingStrings);
-        mPro=calc.pro;mCarb=calc.carb;mFat=calc.fat;
+      var mPro=0,mCarb=0,mFat=0;
+      if(isBuiltInSwap&&scaledIngredients&&scaledIngredients.length&&typeof calcMealMacros==='function'){
+        // Built-in swap: always recalculate from scaled ingredient grams so macros match the scaled amounts
+        var _scaledStrs=scaledIngredients.map(function(x){return x.item||'';}).filter(Boolean);
+        var _calc=calcMealMacros(_scaledStrs);
+        mPro=_calc.pro;mCarb=_calc.carb;mFat=_calc.fat;
+      } else {
+        // Restaurant / quick-log: use stored macros if provided, else calculate from original amounts
+        mPro=m.pro||0;mCarb=m.carb||0;mFat=m.fat||0;
+        if(!mPro&&!mCarb&&!mFat&&m.ingredients&&m.ingredients.length&&typeof calcMealMacros==='function'){
+          var _ingStrs=m.ingredients.map(function(x){return x.item||'';}).filter(Boolean);
+          var _calc2=calcMealMacros(_ingStrs);
+          mPro=_calc2.pro;mCarb=_calc2.carb;mFat=_calc2.fat;
+        }
       }
       if(mPro||mCarb||mFat){customBody+=renderMacroBar({pro:mPro,carb:mCarb,fat:mFat},'bar');}
     }

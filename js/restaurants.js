@@ -177,6 +177,16 @@ function selectNearbyRestaurant(restaurant){
 
 function checkCalOverride(){var el=document.getElementById('eo-cal');var planCal=parseInt(el.dataset.planCal||0);var entered=parseInt(el.value||0);var isOverride=planCal>0&&entered!==planCal;el.style.color=isOverride?'var(--text)':'var(--muted)';el.style.fontStyle=isOverride?'normal':'italic';document.getElementById('cal-override-note').classList.toggle('hidden',!isOverride);}
 function setMealType(t,el){eoMealType=t;document.querySelectorAll('[id^="mt-"]').forEach(function(b){b.classList.remove('active');});el.classList.add('active');}
+
+// Auto-highlight the meal slot that matches current time of day when page opens.
+// User can always override — this is just a starting suggestion.
+function initEatOut(){
+  if(eoMealType)return; // already selected from a previous visit
+  var hour=new Date().getHours();
+  var suggested=hour<12?'first':hour<20?'dinner':'dessert';
+  var btn=document.getElementById('mt-'+suggested);
+  if(btn)setMealType(suggested,btn);
+}
 var drinkingAgeConfirmed=false;
 try{drinkingAgeConfirmed=localStorage.getItem('fft_drink_age')==='1';}catch(e){}
 
@@ -232,36 +242,51 @@ async function searchRestaurant(){
   infoEl.innerHTML='<strong>Replacing '+slotLabel+' — '+(proteinIcons[proteinName]||'🍽️')+' '+proteinName+' day.</strong> Food budget: '+foodBudget+' cal'+(eoDrinking?' + '+drinkReserve+' cal drinks':'')+'.';
   infoEl.classList.remove('hidden');
 
+  // Guard — slot must be selected
+  if(!eoMealType){
+    el.innerHTML='<div style="padding:20px;text-align:center;color:var(--t2);font-size:.9rem">Please select a meal slot above — First Meal, Main Meal, or Final Meal.</div>';
+    return;
+  }
+
   try{
-    var prompt='You are a physique nutrition coach. The user is replacing their '+slotLabel+' at '+restaurant+'.\n\n'+
+    var prompt=
+      'You are a physique nutrition coach helping a user maximize their restaurant meal.\n\n'+
       'System context:\n'+
+      '- Restaurant: '+restaurant+'\n'+
       '- Meal slot: '+slotLabel+'\n'+
-      '- Food calorie budget: '+foodBudget+' cal\n'+
+      '- Calorie budget: '+foodBudget+' cal (SPEND THIS — do not leave calories on the table)\n'+
       '- Today\'s protein: '+proteinName+'\n'+
       '- Plan mode: '+planMode+' ('+planLane+')\n'+
       '- User sex: '+planSex+'\n'+
-      '- Goal: match calories, maximize protein and satiety\n'+
       '- Day: '+dayName+'\n\n'+
+      'Core mission: Find the most DELICIOUS, SATISFYING meal that spends as close to '+foodBudget+' cal as possible. '+
+      'This is a restaurant treat — prioritize real, bold flavors. Not gym food. Not dry grilled chicken with steamed broccoli. '+
+      'Think: a loaded protein + a satisfying starchy side + any sauce or topping that makes it great.\n\n'+
       'Rules:\n'+
-      '1. Show ONE Best Match first — the most satiating option closest to the budget using '+proteinName+' if available\n'+
-      '2. Show up to 2 Alternates only if genuinely different and useful\n'+
-      '3. Each item must include per-component calorie breakdown (e.g. steak ~350 cal, potato ~200 cal)\n'+
-      '4. Include practical ordering notes (sauce on side, grilled not fried, etc)\n'+
-      '5. Prefer protein + starchy side structure (potato, rice) for satiety\n'+
-      '6. Do not invent items not on the menu\n'+
-      '7. REQUIRED: You MUST include pro, carb, and fat in grams for every item. These are mandatory fields — do not omit them.\n\n'+
-      'JSON format:\n'+
-      '{"restaurant":"name","items":[{\n'+
-      '  "rank":"best"|"alternate",\n'+
-      '  "name":"full meal name",\n'+
-      '  "protein":"chicken|steak|fish|other",\n'+
-      '  "cal":0,\n'+
-      '  "pro":0,\n'+
-      '  "carb":0,\n'+
-      '  "fat":0,\n'+
-      '  "components":[{"item":"Grilled sirloin","cal":350},{"item":"Baked potato","cal":220}],\n'+
-      '  "ordering_notes":["sauce on the side","no butter","grilled not fried"],\n'+
-      '  "why":"one sentence on why this fits"\n'+
+      '1. Show ONE Best Match — the most satisfying option using '+proteinName+' if available\n'+
+      '2. Show up to 2 Alternates only if genuinely different\n'+
+      '3. MAXIMIZE calories: get within 50 cal of the '+foodBudget+' cal budget\n'+
+      '4. If the main dish leaves more than 100 cal under budget, you MUST include a side_recommendation to close the gap\n'+
+      '5. The side should be satiating — potato, rice, mac and cheese, extra protein, not a side salad\n'+
+      '6. Up to 50 cal OVER budget is acceptable — set over_budget: true\n'+
+      '7. If over by more than 50 cal, include a specific modification to bring it within budget\n'+
+      '8. Each component needs a calorie estimate\n'+
+      '9. REQUIRED: include pro, carb, fat in grams for every item\n'+
+      '10. Do not invent items not on the menu\n\n'+
+      'JSON format (return ONLY this JSON, no other text):\n'+
+      '{"restaurant":"name","items":[{'+
+      '"rank":"best",'+
+      '"name":"full meal name",'+
+      '"protein":"chicken|steak|fish|other",'+
+      '"cal":0,'+
+      '"pro":0,"carb":0,"fat":0,'+
+      '"components":[{"item":"Grilled sirloin","cal":350}],'+
+      '"side_recommendation":{"item":"Baked potato with butter","cal":280,"why":"Closes your gap and adds satiety"},'+
+      '"combined_cal":0,'+
+      '"ordering_notes":["sauce on the side","no butter on steak"],'+
+      '"why":"one sentence on why this is the best pick",'+
+      '"over_budget":false,'+
+      '"modification":""'+
       '}]}';
 
     var data=await askClaude(prompt);
@@ -271,14 +296,36 @@ async function searchRestaurant(){
     var bestItems=data.items.filter(function(i){return i.rank==='best';});
     var altItems=data.items.filter(function(i){return i.rank==='alternate';});
 
-    // Best Match — prominent dark card matching app design
+    function budgetBadge(itemCal, side, budget){
+      var total = side ? (itemCal + (side.cal||0)) : itemCal;
+      var diff = total - budget;
+      if(diff > 50){
+        return '<span style="background:rgba(192,57,43,.15);color:#e07b6a;border-radius:20px;padding:3px 10px;font-size:.68rem;font-weight:700">'+diff+' cal over — see modification</span>';
+      } else if(diff > 0){
+        return '<span style="background:rgba(184,150,60,.15);color:var(--gold-light);border-radius:20px;padding:3px 10px;font-size:.68rem;font-weight:700">'+diff+' cal over — within grace range ✓</span>';
+      } else if(diff >= -80){
+        return '<span style="background:rgba(61,122,82,.15);color:#7ec99a;border-radius:20px;padding:3px 10px;font-size:.68rem;font-weight:700">On budget ✓</span>';
+      } else {
+        return '<span style="background:rgba(184,150,60,.1);color:var(--t3);border-radius:20px;padding:3px 10px;font-size:.68rem;font-weight:700">'+(Math.abs(diff))+' cal under budget</span>';
+      }
+    }
+
+    // Best Match
     bestItems.forEach(function(item){
       var itemKey='ri'+Date.now()+Math.random();
-      window.restaurantCardItems[itemKey]={item:{name:item.name,cal:item.cal,pro:item.pro||0,carb:item.carb||0,fat:item.fat||0,meal:item.components?item.components.map(function(c){return c.item+' ~'+c.cal+' cal'}):[],protein:item.protein},restaurant:data.restaurant||restaurant};
+      var side=item.side_recommendation&&item.side_recommendation.item?item.side_recommendation:null;
+      var totalCal=item.combined_cal||(side?(item.cal+(side.cal||0)):item.cal);
+      window.restaurantCardItems[itemKey]={
+        item:{name:item.name,cal:totalCal,pro:item.pro||0,carb:item.carb||0,fat:item.fat||0,
+          meal:item.components?item.components.map(function(c){return c.item+' ~'+c.cal+' cal'}):[],
+          protein:item.protein},
+        restaurant:data.restaurant||restaurant
+      };
       html+='<div style="background:linear-gradient(170deg,var(--s2),var(--s1));border:1px solid rgba(184,150,60,.35);border-top:2px solid rgba(184,150,60,.6);border-radius:14px;padding:20px;margin-bottom:16px;box-shadow:0 16px 48px rgba(0,0,0,.55)">';
       html+='<div style="font-size:.6rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;font-family:var(--font-body)">Best Match — Order This</div>';
       html+='<div style="font-size:1.1rem;font-weight:700;color:var(--t1);font-family:var(--font-display);margin-bottom:4px">'+item.name+'</div>';
-      // Per-component breakdown
+
+      // Component breakdown
       if(item.components&&item.components.length){
         html+='<div style="margin:12px 0;padding:10px 12px;background:rgba(0,0,0,.2);border-radius:8px;border:1px solid var(--gold-line)">';
         html+='<div style="font-size:.58rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--t3);margin-bottom:8px">Your Complete Order</div>';
@@ -288,21 +335,42 @@ async function searchRestaurant(){
             '<span style="color:var(--gold-light);font-weight:600">~'+c.cal+' cal</span>'+
           '</div>';
         });
+
+        // Side recommendation — shown inside the order breakdown
+        if(side){
+          html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(184,150,60,.08);font-size:.84rem">'+
+            '<span style="color:#7ec99a">+ '+side.item+' <span style="font-size:.7rem;color:var(--t3)">(recommended side)</span></span>'+
+            '<span style="color:#7ec99a;font-weight:600">~'+side.cal+' cal</span>'+
+          '</div>';
+        }
+
         html+='<div style="display:flex;justify-content:space-between;align-items:center;padding-top:8px;font-size:.88rem;font-weight:700">'+
           '<span style="color:var(--t2)">Total</span>'+
-          '<span style="color:var(--gold-light)">~'+item.cal+' cal</span>'+
+          '<span style="color:var(--gold-light)">~'+totalCal+' cal</span>'+
         '</div>';
         html+='</div>';
       }
-      // Protein + calorie fit
+
+      // Side rationale (if included)
+      if(side&&side.why){
+        html+='<div style="font-size:.76rem;color:#7ec99a;margin:8px 0;padding:6px 10px;background:rgba(61,122,82,.08);border-radius:6px;border-left:2px solid rgba(61,122,82,.4)">'+
+          '💡 '+side.why+'</div>';
+      }
+
+      // Budget badge + protein tag
       html+='<div style="display:flex;gap:8px;margin:10px 0;flex-wrap:wrap">';
       html+='<span style="background:rgba(184,150,60,.12);color:var(--gold-light);border-radius:20px;padding:3px 10px;font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase">'+(proteinIcons[item.protein]||'🍽️')+' '+item.protein+'</span>';
-      var diff=Math.abs(item.cal-foodBudget);
-      var fitColor=diff<=100?'rgba(61,122,82,.8)':'rgba(184,150,60,.8)';
-      html+='<span style="background:rgba(61,122,82,.12);color:var(--gold-light);border-radius:20px;padding:3px 10px;font-size:.68rem;font-weight:700">~'+item.cal+' cal</span>';
+      html+=budgetBadge(item.cal, side, foodBudget);
       html+='</div>';
+
+      // Modification note if over by more than 50
+      if(item.over_budget&&item.modification){
+        html+='<div style="font-size:.78rem;color:var(--t2);padding:8px 12px;background:rgba(192,57,43,.08);border-radius:6px;margin-bottom:8px;border-left:2px solid rgba(192,57,43,.3)">✂️ To stay on budget: '+item.modification+'</div>';
+      }
+
       // Macro bar
       if(item.pro||item.carb||item.fat){html+=renderMacroBar({pro:item.pro||0,carb:item.carb||0,fat:item.fat||0},'row');}
+
       // Ordering notes
       if(item.ordering_notes&&item.ordering_notes.length){
         html+='<div style="margin-top:10px;padding:10px 12px;background:rgba(184,150,60,.04);border-left:2px solid rgba(184,150,60,.3);border-radius:0 6px 6px 0">';
@@ -312,12 +380,10 @@ async function searchRestaurant(){
         });
         html+='</div>';
       }
-      if(item.why){
-        html+='<div style="font-size:.78rem;color:var(--t2);font-style:italic;margin-top:10px">'+item.why+'</div>';
-      }
-            html+='<button onclick="_pendingSaveRestaurant={item:window.restaurantCardItems[this.dataset.k]&&window.restaurantCardItems[this.dataset.k].item,restaurant:window.restaurantCardItems[this.dataset.k]&&window.restaurantCardItems[this.dataset.k].restaurant,slot:eoMealType};savePendingRestaurant()" data-k=\''+itemKey+'\'  style="width:100%;padding:10px;margin-top:8px;background:none;border:1px solid rgba(184,150,60,.4);border-radius:8px;color:var(--gold);font-size:.72rem;font-weight:700;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;font-family:var(--font-body)">⭐ Save to My Meals</button>';
-// Add to day button
-      html+='<button onclick="window.addMealToDay(\''+itemKey+'\')" style="width:100%;padding:12px;margin-top:14px;background:var(--cream-bg);color:var(--cream-text);border:1px solid var(--cream-border);border-radius:10px;font-size:.75rem;font-weight:700;cursor:pointer;letter-spacing:.08em;text-transform:uppercase;font-family:var(--font-body)">I\'m ordering this — add to my day</button>';
+      if(item.why){html+='<div style="font-size:.78rem;color:var(--t2);font-style:italic;margin-top:10px">'+item.why+'</div>';}
+
+      html+='<button onclick="_pendingSaveRestaurant={item:window.restaurantCardItems[this.dataset.k]&&window.restaurantCardItems[this.dataset.k].item,restaurant:window.restaurantCardItems[this.dataset.k]&&window.restaurantCardItems[this.dataset.k].restaurant,slot:eoMealType};savePendingRestaurant()" data-k=\''+itemKey+'\' style="width:100%;padding:10px;margin-top:14px;background:none;border:1px solid rgba(184,150,60,.4);border-radius:8px;color:var(--gold);font-size:.72rem;font-weight:700;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;font-family:var(--font-body)">⭐ Save to My Meals</button>';
+      html+='<button onclick="window.addMealToDay(\''+itemKey+'\')" style="width:100%;padding:12px;margin-top:8px;background:var(--cream-bg);color:var(--cream-text);border:1px solid var(--cream-border);border-radius:10px;font-size:.75rem;font-weight:700;cursor:pointer;letter-spacing:.08em;text-transform:uppercase;font-family:var(--font-body)">I\'m ordering this — add to my day</button>';
       html+='</div>';
     });
 
@@ -326,11 +392,18 @@ async function searchRestaurant(){
       html+='<div style="font-size:.6rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--t3);margin:20px 0 12px;font-family:var(--font-body);padding-top:16px;border-top:1px solid var(--gold-line)">Alternates</div>';
       altItems.slice(0,2).forEach(function(item){
         var itemKey='ri'+Date.now()+Math.random();
-        window.restaurantCardItems[itemKey]={item:{name:item.name,cal:item.cal,pro:item.pro||0,carb:item.carb||0,fat:item.fat||0,meal:item.components?item.components.map(function(c){return c.item+' ~'+c.cal+' cal'}):[],protein:item.protein},restaurant:data.restaurant||restaurant};
+        var side=item.side_recommendation&&item.side_recommendation.item?item.side_recommendation:null;
+        var totalCal=item.combined_cal||(side?(item.cal+(side.cal||0)):item.cal);
+        window.restaurantCardItems[itemKey]={
+          item:{name:item.name,cal:totalCal,pro:item.pro||0,carb:item.carb||0,fat:item.fat||0,
+            meal:item.components?item.components.map(function(c){return c.item+' ~'+c.cal+' cal'}):[],
+            protein:item.protein},
+          restaurant:data.restaurant||restaurant
+        };
         html+='<div style="background:var(--card);border:1px solid var(--gold-line);border-radius:10px;padding:16px 18px;margin-bottom:10px">';
         html+='<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">';
         html+='<div style="font-family:var(--font-display);font-size:.95rem;font-weight:600;color:var(--t1);line-height:1.2;flex:1;padding-right:12px">'+item.name+'</div>';
-        html+='<div style="font-size:.85rem;font-weight:700;color:var(--gold-light);white-space:nowrap">~'+item.cal+' cal</div>';
+        html+='<div style="font-size:.85rem;font-weight:700;color:var(--gold-light);white-space:nowrap">~'+totalCal+' cal</div>';
         html+='</div>';
         if(item.components&&item.components.length){
           html+='<div style="margin-bottom:10px;padding:10px 12px;background:rgba(0,0,0,.25);border-radius:6px">';
@@ -340,8 +413,15 @@ async function searchRestaurant(){
             html+='<div style="font-size:.78rem;color:var(--t3)">~'+c.cal+' cal</div>';
             html+='</div>';
           });
+          if(side){
+            html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0">';
+            html+='<div style="font-size:.8rem;color:#7ec99a">+ '+side.item+'</div>';
+            html+='<div style="font-size:.78rem;color:#7ec99a">~'+side.cal+' cal</div>';
+            html+='</div>';
+          }
           html+='</div>';
         }
+        html+=budgetBadge(item.cal, side, foodBudget);
         if(item.pro||item.carb||item.fat){html+=renderMacroBar({pro:item.pro||0,carb:item.carb||0,fat:item.fat||0},'row');}
         if(item.ordering_notes&&item.ordering_notes.length){
           html+='<div style="margin-bottom:10px">';
@@ -351,7 +431,7 @@ async function searchRestaurant(){
           html+='</div>';
         }
         html+='<button onclick="window.addMealToDay(\''+itemKey+'\')" style="width:100%;padding:9px;margin-top:10px;background:none;border:1px solid var(--gold-line);color:var(--gold-light);border-radius:8px;font-size:.72rem;font-weight:700;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;font-family:var(--font-body)">Add to my day</button>';
-        html+='<button onclick="_pendingSaveRestaurant={item:window.restaurantCardItems[this.dataset.k]&&window.restaurantCardItems[this.dataset.k].item,restaurant:window.restaurantCardItems[this.dataset.k]&&window.restaurantCardItems[this.dataset.k].restaurant,slot:eoMealType};savePendingRestaurant()" data-k=\''+itemKey+'\'  style="width:100%;padding:10px;margin-top:8px;background:none;border:1px solid rgba(184,150,60,.4);border-radius:8px;color:var(--gold);font-size:.72rem;font-weight:700;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;font-family:var(--font-body)">⭐ Save to My Meals</button>';
+        html+='<button onclick="_pendingSaveRestaurant={item:window.restaurantCardItems[this.dataset.k]&&window.restaurantCardItems[this.dataset.k].item,restaurant:window.restaurantCardItems[this.dataset.k]&&window.restaurantCardItems[this.dataset.k].restaurant,slot:eoMealType};savePendingRestaurant()" data-k=\''+itemKey+'\' style="width:100%;padding:10px;margin-top:8px;background:none;border:1px solid rgba(184,150,60,.4);border-radius:8px;color:var(--gold);font-size:.72rem;font-weight:700;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;font-family:var(--font-body)">⭐ Save to My Meals</button>';
         html+='</div>';
       });
     }

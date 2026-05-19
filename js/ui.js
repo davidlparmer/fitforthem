@@ -125,6 +125,7 @@ function showPage(id){
   window.scrollTo({top:0,behavior:'instant'});
   if(id==='progress'){document.getElementById('log-d').value=new Date().toISOString().split('T')[0];renderProgress();switchProgressTab('weight');mealHistoryLoaded=false;}
   if(id==='grocery'){setTimeout(function(){generateGroceryList();},50);}
+  if(id==='eatout'&&typeof initEatOut==='function'){initEatOut();}
   if(id==='dashboard'){
     updateDashGreeting();
     if(currentPlan.cal){

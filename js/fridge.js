@@ -270,7 +270,9 @@ async function buildMealFromModal(){
       '6. Prioritize protein sources first, use potatoes/rice/oats as the calorie dial to reach '+budget+' cal\n'+
       '7. MAXIMIZE: get totalCal within 50 cal of '+budget+'. Do not leave calories on the table.\n'+
       '8. Role of '+slotLabel+': '+(slot==='dinner'?'largest most satisfying meal':slot==='first'?'controlled, not too heavy, sustaining':slot==='dessert'?'sweet, satiating, closes eating window':'small satisfying snack')+'\n'+
-      '9. Include a brief budget_note explaining how you hit the calorie target\n\n'+
+      '9. Include a brief budget_note explaining how you hit the calorie target\n'+
+      '10. Use standard ingredient names for best nutrition tracking: \'beef sirloin\' not \'steak\', \'chicken breast\' not \'chicken\', \'broccoli\' not \'mixed vegetables\'\n'+
+      '11. Name meals with simple food-based names only. Format: \'Chicken with Rice and Broccoli\' or \'Beef Sirloin and Potatoes\'. No hype words: no \'Power Bowl\', \'Shredded\', \'Bodybuilder\', \'Loaded\', \'Hearty\', \'Ultimate\', or fitness marketing language.\n\n'+
       'JSON format:\n'+
       '{"items":[{\n'+
       '  "rank":"best"|"alternate",\n'+

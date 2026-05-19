@@ -75,6 +75,37 @@ var MACRO_TABLE = {
   'pickles':        { cal: 11,  pro: 0.3,  carb: 2.3,  fat: 0.2  },
   'pickle':         { cal: 11,  pro: 0.3,  carb: 2.3,  fat: 0.2  },
   'onion':          { cal: 40,  pro: 1.1,  carb: 9.0,  fat: 0.1  },
+  // Common proteins — cooked/as-served values per 100g
+  // These handle fridge/restaurant meal ingredient names Claude commonly uses
+  'steak':           { cal: 207, pro: 26.0, carb: 0.0,  fat: 11.0 },
+  'ground beef':     { cal: 215, pro: 26.1, carb: 0.0,  fat: 11.8 },
+  'ground turkey':   { cal: 189, pro: 29.0, carb: 0.0,  fat: 7.0  },
+  'ground chicken':  { cal: 165, pro: 31.0, carb: 0.0,  fat: 3.6  },
+  'tuna':            { cal: 116, pro: 25.5, carb: 0.0,  fat: 0.9  },
+  'shredded chicken':{ cal: 165, pro: 31.0, carb: 0.0,  fat: 3.6  },
+  // Vegetables — raw values per 100g (USDA)
+  'broccoli':        { cal: 34,  pro: 2.8,  carb: 7.0,  fat: 0.4  },
+  'spinach':         { cal: 23,  pro: 2.9,  carb: 3.6,  fat: 0.4  },
+  'bell pepper':     { cal: 26,  pro: 1.0,  carb: 6.0,  fat: 0.2  },
+  'peppers':         { cal: 26,  pro: 1.0,  carb: 6.0,  fat: 0.2  },
+  'mushrooms':       { cal: 22,  pro: 3.1,  carb: 3.3,  fat: 0.3  },
+  'mushroom':        { cal: 22,  pro: 3.1,  carb: 3.3,  fat: 0.3  },
+  'zucchini':        { cal: 17,  pro: 1.2,  carb: 3.1,  fat: 0.3  },
+  'carrots':         { cal: 41,  pro: 0.9,  carb: 10.0, fat: 0.2  },
+  'carrot':          { cal: 41,  pro: 0.9,  carb: 10.0, fat: 0.2  },
+  'asparagus':       { cal: 20,  pro: 2.2,  carb: 3.9,  fat: 0.1  },
+  'green beans':     { cal: 31,  pro: 1.8,  carb: 7.0,  fat: 0.2  },
+  'tomato':          { cal: 18,  pro: 0.9,  carb: 3.9,  fat: 0.2  },
+  'tomatoes':        { cal: 18,  pro: 0.9,  carb: 3.9,  fat: 0.2  },
+  'cucumber':        { cal: 15,  pro: 0.7,  carb: 3.6,  fat: 0.1  },
+  'lettuce':         { cal: 14,  pro: 1.4,  carb: 2.2,  fat: 0.2  },
+  'avocado':         { cal: 160, pro: 2.0,  carb: 9.0,  fat: 15.0 },
+  // Generic vegetable — fallback for mixed/unspecified veg
+  'mixed vegetables':{ cal: 30,  pro: 1.5,  carb: 6.0,  fat: 0.3  },
+  'mixed veg':       { cal: 30,  pro: 1.5,  carb: 6.0,  fat: 0.3  },
+  'vegetables':      { cal: 30,  pro: 1.5,  carb: 6.0,  fat: 0.3  },
+  'veg':             { cal: 30,  pro: 1.5,  carb: 6.0,  fat: 0.3  },
+
   // Cookies / sweets
   'biscoff':        { cal: 488, pro: 5.0,  carb: 67.0, fat: 22.0 },
   'cookie':         { cal: 488, pro: 5.0,  carb: 67.0, fat: 22.0 },

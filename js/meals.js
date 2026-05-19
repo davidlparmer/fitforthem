@@ -259,7 +259,9 @@ function buildDayHTML(i,plan,showSwap){
       if(isDrinkingNight){honeyG=25;}
       return m[1]+honeyG+'g';
     }
-    return item;
+    // Default: scale generic gram-based items proportionally to the dessert slot target
+    var scaledG=Math.round(baseG*dessertIngScale);
+    return m[1]+scaledG+'g';
   });
 
   // Use lane-aware target cals for each slot.
@@ -948,7 +950,8 @@ var MEAL_INSTRUCTIONS_MAP = {
   'creamy-chicken-pasta':  MEAL_INSTRUCTIONS.pasta_bowl_family.creamy_chicken_pasta_bowl,
   'yogurt-honey-bowl':     MEAL_INSTRUCTIONS.greek_yogurt_bowl_family.berry_chia_bowl,
   'ricotta-bowl':          null,
-  'cookies':               null,
+  'biscoff-cookies':       null,
+  'cookies':                 null,
 };
 
 function renderHowToMake(variant) {
@@ -1183,9 +1186,15 @@ var SWAP_OPTIONS={
           {item:'Honey',       basis:'same', grams:25,  cooked_grams:25},
         ]},
 
-      {key:'cookies', name:'Cookies', img:'food-cookies.png', cal:443,
+      // ── Cookies / Chocolate ──
+      {key:'biscoff-cookies', name:'Biscoff Cookies', img:'food-cookies.png', cal:342,
         items:[
-          {item:'Cookies (or chocolate bar 60g)', basis:'same', grams:70, cooked_grams:70},
+          {item:'Biscoff cookies', basis:'same', grams:70, cooked_grams:70},
+        ]},
+
+      {key:'cookies', name:'Cookies', img:'food-cookies.png', cal:342,
+        items:[
+          {item:'Cookies', basis:'same', grams:70, cooked_grams:70},
         ]},
 
     ],

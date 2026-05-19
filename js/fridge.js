@@ -194,6 +194,9 @@ function addLastBuiltMealToDay(slot){
 }
 
 function addBuiltMealToDay(mealName, mealCal, slot, ingredients, instructions, tip, pro, carb, fat){
+  // Normalize macros so stored values reconcile with mealCal — fixes footer totals
+  var _impl=(pro||0)*4+(carb||0)*4+(fat||0)*9;
+  if(_impl>0&&mealCal>0){var _nf=mealCal/_impl;pro=Math.round((pro||0)*_nf*10)/10;carb=Math.round((carb||0)*_nf*10)/10;fat=Math.round((fat||0)*_nf*10)/10;}
   var todayIdx=new Date().getDay()===0?6:new Date().getDay()-1;
   // Check if same slot already has a custom meal — prompt to replace
   var existing=customMeals.filter(function(m){return m.day===todayIdx&&m.slot===slot;});
@@ -304,7 +307,10 @@ async function buildMealFromModal(){
       html+='<div style="background:rgba(184,150,60,.1);border:1px solid var(--gold-line);border-radius:10px;padding:10px 14px;text-align:center"><div style="font-size:1.1rem;font-weight:700;color:var(--gold-light)">'+meal.totalCal+'</div><div style="font-size:.58rem;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;font-weight:600">Cal of '+budget+'</div></div>';
       html+='<div style="background:rgba(184,150,60,.06);border:1px solid var(--gold-line);border-radius:10px;padding:10px 14px;text-align:center"><div style="font-size:1.1rem;font-weight:700;color:var(--t1)">'+meal.totalPro+'g</div><div style="font-size:.58rem;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;font-weight:600">Protein</div></div>';
       html+='</div>';
-      html+=renderMacroBar({pro:meal.totalPro||0,carb:meal.totalCarb||0,fat:meal.totalFat||0},'row');
+      var _fm=typeof _normalizeMacros==='function'
+        ?_normalizeMacros({pro:meal.totalPro||0,carb:meal.totalCarb||0,fat:meal.totalFat||0},parseInt(meal.totalCal)||0)
+        :{pro:meal.totalPro||0,carb:meal.totalCarb||0,fat:meal.totalFat||0};
+      html+=renderMacroBar(_fm,'row');
 
       // Budget badge — parseInt ensures string cal values from Claude still work
       var _mealCal=parseInt(meal.totalCal)||0;

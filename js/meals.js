@@ -1043,8 +1043,33 @@ function buildDashDayTabs(){
 
 function renderDashDay(i){
   var el=document.getElementById('dash-day-content');if(!el||!currentPlan.cal)return;
+  // Preserve which cards are open — but only when re-rendering the same day.
+  // Switching to a different day always starts fresh (all cards collapsed).
+  var openTitles=[];
+  var prevDay=parseInt(el.dataset.renderedDay||-1);
+  if(prevDay===i){
+    el.querySelectorAll('.meal-body.open').forEach(function(body){
+      var header=body.previousElementSibling;
+      var titleEl=header?header.querySelector('.meal-title'):null;
+      if(titleEl)openTitles.push(titleEl.textContent.trim());
+    });
+  }
+  el.dataset.renderedDay=i;
   el.innerHTML=buildDayHTML(i,currentPlan,false);
   document.querySelectorAll('#dash-day-content .meal-header').forEach(function(h){h.onclick=function(){toggleMeal(h);};});
+  // Restore open cards
+  if(openTitles.length){
+    el.querySelectorAll('.meal-header').forEach(function(header){
+      var titleEl=header.querySelector('.meal-title');
+      if(!titleEl)return;
+      if(openTitles.indexOf(titleEl.textContent.trim())>=0){
+        var body=header.nextElementSibling;
+        var arrow=header.querySelector('.meal-expand');
+        if(body)body.classList.add('open');
+        if(arrow)arrow.textContent='▲';
+      }
+    });
+  }
 }
 
 

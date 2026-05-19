@@ -172,18 +172,34 @@ function buildDayHTML(i,plan,showSwap){
   var baseTotal=day.first.c+day.dinner.c+day.dessert.c;
   var scale=baseTotal>0?cal/baseTotal:1;
   var drinkScale=isWknd&&isDrinking?(cal-drinkReserve)/cal:1.0;
-  var effectiveScale=scale*drinkScale;
+  var effectiveScale=scale*drinkScale; // kept for renderCookedWeightDisplay
 
-  var scaleItems=function(items){return items.map(function(item){
+  // ── PER-SLOT INGREDIENT SCALES ────────────────────────────
+  // effectiveScale (planCal/baseTotal) works correctly when all slots have the same
+  // proportional relationship — i.e. template meals. But when a swap option has a
+  // different base cal than the template slot (e.g. chicken-bowl at 585 vs
+  // honey-soy-chicken at 945), effectiveScale compensates the TOTAL correctly but
+  // each individual slot's ingredients no longer hit their target.
+  //
+  // Per-slot scaling fixes this: targetSlotCal / slotBaseCal ensures every slot's
+  // ingredients scale exactly to the lane-aware target regardless of swap base cal.
+  // NOTE: targetSlotCal already incorporates drink reserve (via foodCal), so no
+  // additional drinkScale multiply is needed here.
+  var firstIngScale  = day.first.c  > 0 ? targetFirstCal  / day.first.c  : 1;
+  var dinnerIngScale = day.dinner.c > 0 ? targetDinnerCal / day.dinner.c : 1;
+  var dessertIngScale= day.dessert.c > 0 ? targetDessertCal / day.dessert.c : 1;
+
+  // scaleItems now takes an explicit ingScale parameter so each slot can use its own value
+  var scaleItems=function(items, ingScale){return items.map(function(item){
     // Handle legacy count format: 'Whole eggs 4 (200g)' → scale the gram value in parens
     var legacyM=item.match(/^(.*?\s)\d+\s*\((\d+)g\)$/);
-    if(legacyM)return legacyM[1].trimRight()+' '+Math.round(parseInt(legacyM[2])*effectiveScale)+'g';
+    if(legacyM)return legacyM[1].trimRight()+' '+Math.round(parseInt(legacyM[2])*ingScale)+'g';
     // Standard format: 'Item Xg'
     var m=item.match(/^(.*?)(\d+)(g)$/);
-    return m?m[1]+Math.round(parseInt(m[2])*effectiveScale)+'g':item;
+    return m?m[1]+Math.round(parseInt(m[2])*ingScale)+'g':item;
   });};
 
-  var firstItems=scaleItems(day.first.i).map(function(item){
+  var firstItems=scaleItems(day.first.i,firstIngScale).map(function(item){
     // Convert whole egg gram amounts to count display — 'Eggs Xg' or 'Whole eggs Xg'
     // Egg whites stay as grams — they don't have a natural count unit
     var wholeEggM=item.match(/^(Whole\s+eggs?\s*)(\d+)(g)$/i)||item.match(/^(Eggs?\s*)(\d+)(g)$/i);
@@ -205,7 +221,7 @@ function buildDayHTML(i,plan,showSwap){
 
   // Dinner: scale then cap honey (42g max) and soy sauce (36g max)
   // Also enforce mashed potato ratio: sourCream = potato*0.12, cheese = potato*0.09
-  var dinnerItems=scaleItems(day.dinner.i).map(function(item){
+  var dinnerItems=scaleItems(day.dinner.i,dinnerIngScale).map(function(item){
     var m=item.match(/^(.*?)(\d+)(g)$/);
     if(!m)return item;
     var name=m[1].toLowerCase();
@@ -232,7 +248,7 @@ function buildDayHTML(i,plan,showSwap){
   var dessertItems=day.dessert.i.map(function(item){
     var mCookie=item.match(/^(Biscoff cookies)\s+(\d+(?:\.\d+)?)$/i);
     if(mCookie){
-      var scaledCount=Math.round(BASE_COOKIE_COUNT*effectiveScale*2)/2;
+      var scaledCount=Math.round(BASE_COOKIE_COUNT*dessertIngScale*2)/2;
       scaledCount=Math.max(0.5,scaledCount);
       return 'Biscoff cookies '+scaledCount;
     }
@@ -241,11 +257,11 @@ function buildDayHTML(i,plan,showSwap){
     var name=m[1].toLowerCase();
     var baseG=parseInt(m[2]);
     if(name.indexOf('yogurt')>=0||name.indexOf('greek')>=0){
-      var scaledYogurt=Math.round(baseG*effectiveScale);
+      var scaledYogurt=Math.round(baseG*dessertIngScale);
       return m[1]+scaledYogurt+'g';
     }
     if(name.indexOf('honey')>=0){
-      var scaledYogurtG=Math.round(BASE_YOGURT_G*effectiveScale);
+      var scaledYogurtG=Math.round(BASE_YOGURT_G*dessertIngScale);
       var yogurtIncrease=scaledYogurtG-BASE_YOGURT_G;
       var honeyIncrease=Math.round((yogurtIncrease/50)*5);
       var honeyG=BASE_HONEY_G+honeyIncrease;
@@ -275,9 +291,9 @@ function buildDayHTML(i,plan,showSwap){
       if(saved){
         items[idx]=saved.ingredient;
         // Update cal for this slot
-        if(slot==='first')firstCal=Math.max(50,firstCal+(saved.cal-Math.round(day.first.c*effectiveScale/day.first.i.length)));
-        if(slot==='dinner')dinnerCal=Math.max(50,dinnerCal+(saved.cal-Math.round(day.dinner.c*effectiveScale/day.dinner.i.length)));
-        if(slot==='dessert')dessertCal=Math.max(50,dessertCal+(saved.cal-Math.round(day.dessert.c*effectiveScale/day.dessert.i.length)));
+        if(slot==='first')firstCal=Math.max(50,firstCal+(saved.cal-Math.round(day.first.c*firstIngScale/day.first.i.length)));
+        if(slot==='dinner')dinnerCal=Math.max(50,dinnerCal+(saved.cal-Math.round(day.dinner.c*dinnerIngScale/day.dinner.i.length)));
+        if(slot==='dessert')dessertCal=Math.max(50,dessertCal+(saved.cal-Math.round(day.dessert.c*dessertIngScale/day.dessert.i.length)));
       }
     }
   });
@@ -320,16 +336,49 @@ function buildDayHTML(i,plan,showSwap){
   var customDessert=dayCustom.filter(function(m){return m.slot==='dessert';})[0]||null;
   var customOther=dayCustom.filter(function(m){return m.slot!=='first'&&m.slot!=='dinner'&&m.slot!=='dessert';});
 
+  // ── RENDER CUSTOM MEAL ────────────────────────────────────
+  // renderCustomMeal handles: just-today meal library swaps, restaurant meals,
+  // fridge-built meals, and quick-logged meals.
+  //
+  // CALORIE ACCURACY RULES:
+  //   Built-in swap (from SWAP_OPTIONS meal library, has mealKey):
+  //     - displayCal = lane-aware slot target (not the SWAP_OPTIONS base cal)
+  //     - ingredients scale by targetSlotCal / m.cal (slot-specific, drink-adjusted)
+  //     - contributes targetSlotCal to the day total (keeps total inside plan range)
+  //   Restaurant / quick-log (no mealKey, or notes contains 'Eating out'):
+  //     - displayCal = m.cal * drinkScale (as entered, user owns this)
+  //     - no ingredient scaling (exact amounts)
+  //     - contributes actual cal to day total
   function renderCustomMeal(m,slotLabel){
-    var displayCal=isDrinking?Math.round(m.cal*drinkScale):m.cal;
+    // Is this a built-in swap from the SWAP_OPTIONS meal library?
+    var isBuiltInSwap=!!(m.mealKey&&(!m.notes||m.notes.indexOf('Eating out')!==0));
+
+    // Lane-aware slot target cal (drink reserve already applied via foodCal)
+    var slotTargetCal=slotLabel==='First Meal'?targetFirstCal
+                     :slotLabel==='Main Meal'?targetDinnerCal
+                     :slotLabel==='Final Meal'?targetDessertCal
+                     :null;
+
+    // For built-in swaps: show the plan target so it matches the user's calorie budget.
+    // For restaurant / quick-log: apply drinkScale to the actual recorded cal.
+    var displayCal=isBuiltInSwap&&slotTargetCal!=null
+        ?slotTargetCal
+        :(isDrinking?Math.round(m.cal*drinkScale):m.cal);
+
     var customBody='';
     if(m.ingredients&&m.ingredients.length){
-      var isBuiltIn=m.mealKey&&m.source!=='restaurant';
+      // For built-in swaps: scale ingredients to hit slotTargetCal.
+      //   ingScale = targetSlotCal / swapBaseCal
+      //   targetSlotCal is already drink-adjusted, so this produces the correct amounts.
+      // For restaurant / manual meals: no scaling (exact amounts the user recorded).
+      var ingScale=isBuiltInSwap&&slotTargetCal!=null&&m.cal>0
+          ?slotTargetCal/m.cal
+          :1;
       var scaledIngredients=m.ingredients.map(function(ing){
         var item=ing.item||'';
-        if(isBuiltIn&&effectiveScale!==1){
+        if(ingScale!==1){
           var gm=item.match(/^(.*?)(\d+)(g)$/);
-          if(gm)item=gm[1]+Math.round(parseInt(gm[2])*effectiveScale)+'g';
+          if(gm)item=gm[1]+Math.round(parseInt(gm[2])*ingScale)+'g';
         }
         return {item:item,amount:ing.amount||''};
       });
@@ -471,11 +520,31 @@ function buildDayHTML(i,plan,showSwap){
     html+='<div class="wknd-banner" style="margin-top:4px">Meals scaled down · Drink budget: <strong>~'+drinkReserve+' cal</strong>. Food: '+totalFoodCal+' cal. Total: ~'+(totalFoodCal+alcCal)+' cal.</div>';
   }
 
-  // Recalculate total with custom meals replacing slots
+  // ── TOTAL FOOD CAL ADJUSTMENT ─────────────────────────────
+  // For built-in swaps (from SWAP_OPTIONS meal library, has mealKey):
+  //   Contribute the lane-aware slot target to the total — keeps day total inside
+  //   the plan's calorie range regardless of the swap option's base cal.
+  // For restaurant / quick-log meals:
+  //   Contribute the actual recorded cal (drink-adjusted where appropriate).
   var customCal=0;
-  if(customFirst){customCal+=customFirst.cal;if(!firstSkipped)totalFoodCal=totalFoodCal-firstCal+customFirst.cal;}
-  if(customDinner){customCal+=customDinner.cal;if(!dinnerSkipped)totalFoodCal=totalFoodCal-dinnerCal+customDinner.cal;}
-  if(customDessert){customCal+=customDessert.cal;if(!dessertSkipped)totalFoodCal=totalFoodCal-dessertCal+customDessert.cal;}
+  if(customFirst){
+    var _firstBuiltIn=!!(customFirst.mealKey&&(!customFirst.notes||customFirst.notes.indexOf('Eating out')!==0));
+    var _effFirstCal=_firstBuiltIn?targetFirstCal:(isDrinking?Math.round(customFirst.cal*drinkScale):customFirst.cal);
+    customCal+=_effFirstCal;
+    if(!firstSkipped)totalFoodCal=totalFoodCal-firstCal+_effFirstCal;
+  }
+  if(customDinner){
+    var _dinnerBuiltIn=!!(customDinner.mealKey&&(!customDinner.notes||customDinner.notes.indexOf('Eating out')!==0));
+    var _effDinnerCal=_dinnerBuiltIn?targetDinnerCal:(isDrinking?Math.round(customDinner.cal*drinkScale):customDinner.cal);
+    customCal+=_effDinnerCal;
+    if(!dinnerSkipped)totalFoodCal=totalFoodCal-dinnerCal+_effDinnerCal;
+  }
+  if(customDessert){
+    var _dessertBuiltIn=!!(customDessert.mealKey&&(!customDessert.notes||customDessert.notes.indexOf('Eating out')!==0));
+    var _effDessertCal=_dessertBuiltIn?targetDessertCal:(isDrinking?Math.round(customDessert.cal*drinkScale):customDessert.cal);
+    customCal+=_effDessertCal;
+    if(!dessertSkipped)totalFoodCal=totalFoodCal-dessertCal+_effDessertCal;
+  }
   customOther.forEach(function(m){customCal+=m.cal;totalFoodCal+=m.cal;});
 
   html+='<div style="font-size:.62rem;color:rgba(154,138,106,.6);margin-top:12px;padding:10px 0;border-top:1px solid rgba(184,150,60,.08);display:flex;gap:16px;letter-spacing:.08em;text-transform:uppercase;font-family:var(--font-body)"><span>'+totalFoodCal+' cal'+(alcCal?' + '+alcCal+' drinks':'')+'</span><span style="color:rgba(184,150,60,.2)">·</span><span>'+daySteps.toLocaleString()+' steps'+(S.walkType==='incline'?' · '+S.incline+'% / '+S.speed+' mph':'')+'</span></div>';
@@ -926,8 +995,6 @@ var SWAP_OPTIONS={
         ]},
 
       // ── Egg & Potato Skillet Family ──
-      // cheesy-egg-potato: eggs + potatoes + cheese + sour cream — rich, satisfying
-      // salsa-egg-potato:  eggs + egg whites + potatoes + salsa — lighter, fresher, same cal tier
       {key:'cheesy-egg-potato', name:'Egg & Potato Skillet', img:'food-eggs.png', cal:569,
         items:[
           {item:'Whole eggs',  basis:'raw',  grams:200, cooked_grams:180, count:4},
@@ -1355,8 +1422,6 @@ var SWAP_OPTIONS={
         ]},
 
       // ── Egg & Potato Skillet Family ──
-      // cheesy-egg-potato: matches plan template (eggs + potatoes + cheese + sour cream)
-      // loaded-egg-potato: egg-whites variant — distinct heavier meal
       {key:'cheesy-egg-potato', name:'Egg & Potato Skillet', img:'food-eggs.png', cal:540,
         items:[
           {item:'Whole eggs',  basis:'raw',  grams:200, cooked_grams:180, count:4},
@@ -1835,7 +1900,6 @@ function updateDashboard(){
     progLine.style.display='none';
   }
   var phaseObj={name:currentPlan.phase};
-  // Weekly loss line in greeting
   // weekly loss display removed
   document.getElementById('dash-no-plan').classList.add('hidden');
   document.getElementById('dash-plan').classList.remove('hidden');
@@ -1843,7 +1907,6 @@ function updateDashboard(){
   if(typeof buildDinnerThemeUI==='function')buildDinnerThemeUI();
 
   // Nudge — show only if today's weight hasn't been logged
-  // Nudge starts hidden in HTML — we explicitly show or hide here
   var nudgeEl=document.getElementById('log-nudge');
   if(nudgeEl){
     var todayStr=new Date().toISOString().split('T')[0];
@@ -1933,10 +1996,6 @@ function renderDashDay(i){
   el.innerHTML=buildDayHTML(i,currentPlan,false);
   document.querySelectorAll('#dash-day-content .meal-header').forEach(function(h){h.onclick=function(){toggleMeal(h);};});
 }
-
-
-
-
 
 
 function renderCustomMealsList(i){

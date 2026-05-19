@@ -313,12 +313,7 @@ function buildDayHTML(i,plan,showSwap){
   var dessertKey=dessertItems[0].toLowerCase();
   var dessertNameDetected=dessertKey.indexOf('yogurt')>=0||dessertKey.indexOf('greek')>=0?'Yogurt Dessert Bowl':dessertKey.indexOf('ricotta')>=0?'Ricotta Bowl':dessertKey.indexOf('cookie')>=0?'Cookies':'Chocolate Bar';
   var dessertName=dayPrefs.dessert&&dayPrefs.dessert.name?dayPrefs.dessert.name:day.dessert.n||dessertNameDetected;
-  var FIRST_IMGS={cottage:'food-cottage.png',yogurt:'food-yogurt.png',greek:'food-yogurt.png',oat:'food-oats.png',egg:'food-eggs.png'};
-  var firstImgKey=firstKey.indexOf('cottage')>=0?'cottage':firstKey.indexOf('yogurt')>=0||firstKey.indexOf('greek')>=0?'yogurt':firstKey.indexOf('oat')>=0?'oat':'egg';
-  var firstThumbHTML='<img src="'+FIRST_IMGS[firstImgKey]+'" alt="" style="width:52px;height:52px;object-fit:cover;border-radius:8px;margin-right:12px;flex-shrink:0;border:1px solid rgba(184,150,60,.22)">';
-  var DESSERT_IMGS={yogurt:'food-yogurt.png',ricotta:'food-ricotta.png',cookie:'food-cookies.png',chocolate:'food-cookies.png'};
-  var dessertImgKey=dessertKey.indexOf('yogurt')>=0||dessertKey.indexOf('greek')>=0?'yogurt':dessertKey.indexOf('ricotta')>=0?'ricotta':'cookie';
-  var dessertThumbHTML='<img src="'+DESSERT_IMGS[dessertImgKey]+'" alt="" style="width:52px;height:52px;object-fit:cover;border-radius:8px;margin-right:12px;flex-shrink:0;border:1px solid rgba(184,150,60,.22)">';
+
 
   // Declare custom meal replacements BEFORE rendering meal cards
   var dayCustom=customMeals.filter(function(m){return m.day===i;});
@@ -436,9 +431,7 @@ function buildDayHTML(i,plan,showSwap){
   // Theme badge — shown when family rotation is active for this day
   var isDinnerThemed=_rd&&_rd.source==='theme';
   var dinnerCookedDisplay=isDinnerThemed?renderCookedWeightDisplay(day.dinner._swapOpt,dinnerIngScale):'';
-  var FOOD_IMGS={chicken:'food-chicken.png',beef:'food-beef.png',salmon:'food-salmon.png',fish:'food-salmon.png',turkey:'food-turkey.png'};
-  var dinnerThumb=FOOD_IMGS[dinnerTitleProtein]||'food-chicken.png';
-  var dinnerThumbHTML='<img src="'+dinnerThumb+'" alt="" style="width:52px;height:52px;object-fit:cover;border-radius:8px;margin-right:12px;flex-shrink:0;border:1px solid rgba(184,150,60,.22)">';
+
   var dessertMealKey=(dayPrefs.dessert&&dayPrefs.dessert.key)||day.dessert.k||null;
   var dessertCookSteps=getMealInstructions(dessertMealKey, dessertItems[0]);
 
@@ -457,7 +450,7 @@ function buildDayHTML(i,plan,showSwap){
   } else {
     var hasFirstSwap=Object.keys(window.ingredientSwaps||{}).some(function(k){return k.startsWith('fft_ingswap_'+i+'_first_');});
     var firstCustomBadge=hasFirstSwap?'<span class="badge custom" style="margin-left:6px">Custom</span>':'';
-    html+=mealCard('','','First Meal · Break your fast when ready',firstThumbHTML+fn+fTag+firstCustomBadge,
+    html+=mealCard('','','First Meal · Break your fast when ready',fn+fTag+firstCustomBadge,
       '<ul>'+firstItems.map(function(x,idx){
         var gramsMatch=x.match(/(\d+)g/);
         var grams=gramsMatch?parseInt(gramsMatch[1]):100;
@@ -494,7 +487,7 @@ function buildDayHTML(i,plan,showSwap){
     var hasDinnerSwap=Object.keys(window.ingredientSwaps||{}).some(function(k){return k.startsWith('fft_ingswap_'+i+'_dinner_');});
     var dinnerCustomBadge=hasDinnerSwap?'<span class="badge custom" style="margin-left:6px">Custom</span>':'';
     var dinnerThemeBadge=isDinnerThemed?'<span style="font-size:.58rem;font-weight:700;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;font-family:var(--font-body);margin-left:6px;opacity:.8">🍲 Dinner Family</span>':'';
-    html+=mealCard('alt','4–6 hrs after first meal · make this','Main Meal',dinnerThumbHTML+dinnerTitleDisplay+dinnerCustomBadge+dinnerThemeBadge,
+    html+=mealCard('alt','4–6 hrs after first meal · make this','Main Meal',dinnerTitleDisplay+dinnerCustomBadge+dinnerThemeBadge,
       '<ul>'+dinnerItems.map(function(x,idx){
         var gramsMatch=x.match(/(\d+)g/);
         var grams=gramsMatch?parseInt(gramsMatch[1]):100;
@@ -513,7 +506,7 @@ function buildDayHTML(i,plan,showSwap){
   } else {
     var hasDessertSwap=Object.keys(window.ingredientSwaps||{}).some(function(k){return k.startsWith('fft_ingswap_'+i+'_dessert_');});
     var dessertCustomBadge=hasDessertSwap?'<span class="badge custom" style="margin-left:6px">Custom</span>':'';
-    html+=mealCard('dessert','1–2 hrs after dinner · make this','Final Meal',dessertThumbHTML+dessertName+dessertCustomBadge,
+    html+=mealCard('dessert','1–2 hrs after dinner · make this','Final Meal',dessertName+dessertCustomBadge,
       '<ul>'+dessertItems.map(function(x,idx){
         var gramsMatch=x.match(/(\d+)g/);
         var grams=gramsMatch?parseInt(gramsMatch[1]):100;
@@ -1688,7 +1681,7 @@ function showMealSwap(dayIdx, slot){
   opts.forEach(function(opt){
     var hasPref=mealPrefs[dayIdx]&&mealPrefs[dayIdx][slot]&&mealPrefs[dayIdx][slot].key===opt.key;
     html+='<div onclick="confirmMealSwap(\''+opt.key+'\')" style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:'+(hasPref?'rgba(184,150,60,.1)':'var(--s2)')+';border:1px solid '+(hasPref?'rgba(184,150,60,.5)':'var(--gold-line)')+';border-radius:12px;cursor:pointer;margin-bottom:10px;transition:all .2s">'+
-      '<img src="'+opt.img+'" style="width:56px;height:56px;object-fit:cover;border-radius:8px;flex-shrink:0">'+
+
       '<div style="flex:1"><div style="font-size:.95rem;font-weight:700;color:var(--t1);font-family:var(--font-display)">'+opt.name+(hasPref?' <span style="font-size:.65rem;font-weight:700;color:var(--gold);letter-spacing:.08em;text-transform:uppercase;font-family:var(--font-body)">Current Default</span>':'')+'</div>'+
       '<div style="font-size:.75rem;color:var(--t2);margin-top:3px">'+opt.cal+' cal base</div></div>'+
       '<div style="color:var(--gold);font-size:1rem">→</div>'+
@@ -1720,7 +1713,7 @@ function confirmMealSwap(optKey){
   var dayLabel=DAYS_FULL[dayIdx];
   document.getElementById('msm-options').innerHTML=
     '<div style="text-align:center;padding:10px 0 20px">'+
-      '<img src="'+chosen.img+'" style="width:80px;height:80px;object-fit:cover;border-radius:12px;margin-bottom:14px">'+
+
       '<div style="font-size:1.1rem;font-weight:700;color:var(--t1);font-family:var(--font-display);margin-bottom:6px">'+chosen.name+'</div>'+
       '<div style="font-size:.82rem;color:var(--t2);margin-bottom:24px">Make this your permanent '+slot+' on '+dayLabel+'s?</div>'+
       '<div style="display:flex;flex-direction:column;gap:10px">'+

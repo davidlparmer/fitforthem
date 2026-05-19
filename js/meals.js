@@ -869,7 +869,8 @@ function refreshCurrentView(i){
 }
 
 function mealCard(cls,time,label,name,desc,cal,isList){
-  return '<div class="meal-card '+cls+'"><div class="meal-header" onclick="toggleMeal(this)"><div style="display:flex;align-items:center;flex:1;min-width:0"><div style="min-width:0"><div class="meal-title" style="display:flex;align-items:center;flex-wrap:wrap;gap:6px">'+name+'</div><div class="meal-subtitle">'+label+(time?'<span style="font-size:.72rem;color:var(--muted);opacity:.8"> · '+time+'</span>':'')+'</div></div></div><div style="display:flex;align-items:center;gap:5px;white-space:nowrap;flex-shrink:0"><span class="meal-cal">'+cal+' cal</span><span class="meal-expand">▼</span></div></div><div class="meal-body">'+(isList?desc:'<p>'+desc+'</p>')+'</div></div>';
+  var _safeLabel=label.replace(/['"]/g,'');
+  return '<div class="meal-card '+cls+'" data-slotlabel="'+_safeLabel+'"><div class="meal-header" onclick="toggleMeal(this)"><div style="display:flex;align-items:center;flex:1;min-width:0"><div style="min-width:0"><div class="meal-title" style="display:flex;align-items:center;flex-wrap:wrap;gap:6px">'+name+'</div><div class="meal-subtitle">'+label+(time?'<span style="font-size:.72rem;color:var(--muted);opacity:.8"> · '+time+'</span>':'')+'</div></div></div><div style="display:flex;align-items:center;gap:5px;white-space:nowrap;flex-shrink:0"><span class="meal-cal">'+cal+' cal</span><span class="meal-expand">▼</span></div></div><div class="meal-body">'+(isList?desc:'<p>'+desc+'</p>')+'</div></div>';
 }
 function toggleMeal(h){var b=h.nextElementSibling;var a=h.querySelector('.meal-expand');b.classList.toggle('open');if(a)a.textContent=b.classList.contains('open')?'▲':'▼';}
 
@@ -1043,28 +1044,28 @@ function buildDashDayTabs(){
 
 function renderDashDay(i){
   var el=document.getElementById('dash-day-content');if(!el||!currentPlan.cal)return;
-  // Preserve which cards are open — but only when re-rendering the same day.
+  // Preserve which slots are open — only when re-rendering the same day.
+  // Use data-slotlabel (set by mealCard) — reliable, never includes badge text.
   // Switching to a different day always starts fresh (all cards collapsed).
-  var openTitles=[];
+  var openSlots=[];
   var prevDay=parseInt(el.dataset.renderedDay||-1);
   if(prevDay===i){
-    el.querySelectorAll('.meal-body.open').forEach(function(body){
-      var header=body.previousElementSibling;
-      var titleEl=header?header.querySelector('.meal-title'):null;
-      if(titleEl)openTitles.push(titleEl.textContent.trim());
+    el.querySelectorAll('.meal-card').forEach(function(card){
+      var body=card.querySelector('.meal-body');
+      if(body&&body.classList.contains('open')&&card.dataset.slotlabel){
+        openSlots.push(card.dataset.slotlabel);
+      }
     });
   }
   el.dataset.renderedDay=i;
   el.innerHTML=buildDayHTML(i,currentPlan,false);
   document.querySelectorAll('#dash-day-content .meal-header').forEach(function(h){h.onclick=function(){toggleMeal(h);};});
-  // Restore open cards
-  if(openTitles.length){
-    el.querySelectorAll('.meal-header').forEach(function(header){
-      var titleEl=header.querySelector('.meal-title');
-      if(!titleEl)return;
-      if(openTitles.indexOf(titleEl.textContent.trim())>=0){
-        var body=header.nextElementSibling;
-        var arrow=header.querySelector('.meal-expand');
+  // Restore open slots
+  if(openSlots.length){
+    el.querySelectorAll('#dash-day-content .meal-card').forEach(function(card){
+      if(card.dataset.slotlabel&&openSlots.indexOf(card.dataset.slotlabel)>=0){
+        var body=card.querySelector('.meal-body');
+        var arrow=card.querySelector('.meal-expand');
         if(body)body.classList.add('open');
         if(arrow)arrow.textContent='▲';
       }

@@ -551,7 +551,41 @@ function buildDayHTML(i,plan,showSwap){
   }
   customOther.forEach(function(m){customCal+=m.cal;totalFoodCal+=m.cal;});
 
-  html+='<div style="font-size:.62rem;color:rgba(154,138,106,.6);margin-top:12px;padding:10px 0;border-top:1px solid rgba(184,150,60,.08);display:flex;gap:16px;letter-spacing:.08em;text-transform:uppercase;font-family:var(--font-body)"><span>'+totalFoodCal+' cal'+(alcCal?' + '+alcCal+' drinks':'')+'</span><span style="color:rgba(184,150,60,.2)">·</span><span>'+daySteps.toLocaleString()+' steps'+(S.walkType==='incline'?' · '+S.incline+'% / '+S.speed+' mph':'')+'</span></div>';
+  // ── DAY MACRO TOTAL ──────────────────────────────────────────
+  // Sum macros from all active meal slots.
+  // Template slots: calculate from scaled ingredient strings.
+  // Custom slots:   use stored pro/carb/fat if available (restaurant, fridge),
+  //                 otherwise fall back to ingredient calculation.
+  var _dPro=0,_dCarb=0,_dFat=0;
+  function _addMacros(m){_dPro+=m.pro||0;_dCarb+=m.carb||0;_dFat+=m.fat||0;}
+  if(!firstSkipped){
+    if(customFirst&&(customFirst.pro||customFirst.carb||customFirst.fat)){_addMacros(customFirst);}
+    else if(customFirst&&customFirst.ingredients&&customFirst.ingredients.length){
+      var _fi=customFirst.ingredients.map(function(x){return x.item||'';}).filter(Boolean);
+      _addMacros(calcMealMacros(_fi));
+    } else if(!customFirst){_addMacros(calcMealMacros(firstItems));}
+  }
+  if(!dinnerSkipped){
+    if(customDinner&&(customDinner.pro||customDinner.carb||customDinner.fat)){_addMacros(customDinner);}
+    else if(customDinner&&customDinner.ingredients&&customDinner.ingredients.length){
+      var _di=customDinner.ingredients.map(function(x){return x.item||'';}).filter(Boolean);
+      _addMacros(calcMealMacros(_di));
+    } else if(!customDinner){_addMacros(calcMealMacros(dinnerItems));}
+  }
+  if(!dessertSkipped){
+    if(customDessert&&(customDessert.pro||customDessert.carb||customDessert.fat)){_addMacros(customDessert);}
+    else if(customDessert&&customDessert.ingredients&&customDessert.ingredients.length){
+      var _xi=customDessert.ingredients.map(function(x){return x.item||'';}).filter(Boolean);
+      _addMacros(calcMealMacros(_xi));
+    } else if(!customDessert){_addMacros(calcMealMacros(dessertItems));}
+  }
+  customOther.forEach(function(m){_addMacros(m);});
+  _dPro=Math.round(_dPro);_dCarb=Math.round(_dCarb);_dFat=Math.round(_dFat);
+  var _macroSummary=(_dPro||_dCarb||_dFat)
+    ?'<span style="color:rgba(184,150,60,.2)">·</span><span>'+_dPro+'g protein · '+_dCarb+'g carbs · '+_dFat+'g fat</span>'
+    :'';
+
+  html+='<div style="font-size:.62rem;color:rgba(154,138,106,.6);margin-top:12px;padding:10px 0;border-top:1px solid rgba(184,150,60,.08);display:flex;gap:16px;letter-spacing:.08em;text-transform:uppercase;font-family:var(--font-body);flex-wrap:wrap"><span>'+totalFoodCal+' cal'+(alcCal?' + '+alcCal+' drinks':'')+'</span><span style="color:rgba(184,150,60,.2)">·</span><span>'+daySteps.toLocaleString()+' steps'+(S.walkType==='incline'?' · '+S.incline+'% / '+S.speed+' mph':'')+'</span>'+_macroSummary+'</div>';
 
   // Invisible coaching — completion state for today
   if(i===todayIdx){
@@ -869,8 +903,7 @@ function refreshCurrentView(i){
 }
 
 function mealCard(cls,time,label,name,desc,cal,isList){
-  var _safeLabel=label.replace(/['"]/g,'');
-  return '<div class="meal-card '+cls+'" data-slotlabel="'+_safeLabel+'"><div class="meal-header" onclick="toggleMeal(this)"><div style="display:flex;align-items:center;flex:1;min-width:0"><div style="min-width:0"><div class="meal-title" style="display:flex;align-items:center;flex-wrap:wrap;gap:6px">'+name+'</div><div class="meal-subtitle">'+label+(time?'<span style="font-size:.72rem;color:var(--muted);opacity:.8"> · '+time+'</span>':'')+'</div></div></div><div style="display:flex;align-items:center;gap:5px;white-space:nowrap;flex-shrink:0"><span class="meal-cal">'+cal+' cal</span><span class="meal-expand">▼</span></div></div><div class="meal-body">'+(isList?desc:'<p>'+desc+'</p>')+'</div></div>';
+  return '<div class="meal-card '+cls+'"><div class="meal-header" onclick="toggleMeal(this)"><div style="display:flex;align-items:center;flex:1;min-width:0"><div style="min-width:0"><div class="meal-title" style="display:flex;align-items:center;flex-wrap:wrap;gap:6px">'+name+'</div><div class="meal-subtitle">'+label+(time?'<span style="font-size:.72rem;color:var(--muted);opacity:.8"> · '+time+'</span>':'')+'</div></div></div><div style="display:flex;align-items:center;gap:5px;white-space:nowrap;flex-shrink:0"><span class="meal-cal">'+cal+' cal</span><span class="meal-expand">▼</span></div></div><div class="meal-body">'+(isList?desc:'<p>'+desc+'</p>')+'</div></div>';
 }
 function toggleMeal(h){var b=h.nextElementSibling;var a=h.querySelector('.meal-expand');b.classList.toggle('open');if(a)a.textContent=b.classList.contains('open')?'▲':'▼';}
 
@@ -1044,33 +1077,8 @@ function buildDashDayTabs(){
 
 function renderDashDay(i){
   var el=document.getElementById('dash-day-content');if(!el||!currentPlan.cal)return;
-  // Preserve which slots are open — only when re-rendering the same day.
-  // Use data-slotlabel (set by mealCard) — reliable, never includes badge text.
-  // Switching to a different day always starts fresh (all cards collapsed).
-  var openSlots=[];
-  var prevDay=parseInt(el.dataset.renderedDay||-1);
-  if(prevDay===i){
-    el.querySelectorAll('.meal-card').forEach(function(card){
-      var body=card.querySelector('.meal-body');
-      if(body&&body.classList.contains('open')&&card.dataset.slotlabel){
-        openSlots.push(card.dataset.slotlabel);
-      }
-    });
-  }
-  el.dataset.renderedDay=i;
   el.innerHTML=buildDayHTML(i,currentPlan,false);
   document.querySelectorAll('#dash-day-content .meal-header').forEach(function(h){h.onclick=function(){toggleMeal(h);};});
-  // Restore open slots
-  if(openSlots.length){
-    el.querySelectorAll('#dash-day-content .meal-card').forEach(function(card){
-      if(card.dataset.slotlabel&&openSlots.indexOf(card.dataset.slotlabel)>=0){
-        var body=card.querySelector('.meal-body');
-        var arrow=card.querySelector('.meal-expand');
-        if(body)body.classList.add('open');
-        if(arrow)arrow.textContent='▲';
-      }
-    });
-  }
 }
 
 

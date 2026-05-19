@@ -16,7 +16,7 @@ var MEAL_INSTRUCTIONS = {
       batch_note: 'Can be pre-portioned for 1–2 days. Keep fruit and honey separate for best texture.'
     },
     banana_honey_bowl: {
-      how_to_make: ['Add Greek yogurt to a bowl.','Slice banana over the top.','Add honey and any oats if included.','Stir gently and serve cold.'],
+      how_to_make: ['Add Greek yogurt to a bowl.','Slice banana over the top.','Drizzle honey over the top.','Stir gently and serve cold.'],
       batch_note: 'Best made fresh so the banana stays at its best.'
     },
     banana_oat_nut_butter_bowl: {

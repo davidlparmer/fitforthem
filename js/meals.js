@@ -75,6 +75,16 @@ function formatIngredient(x){
   return pre+grams+'g'+rest+'<span style="color:var(--t2);font-size:.72rem;margin-left:4px;opacity:.7">('+converted+')</span>';
 }
 
+// Normalize macro totals so macro-implied calories match the displayed slot target.
+// Preserves protein/carb/fat ratios. Guards against divide-by-zero.
+// Used for template meal bars and day footer total.
+function _normalizeMacros(macros, targetCal){
+  var implied=macros.pro*4+macros.carb*4+macros.fat*9;
+  if(!implied||!targetCal)return macros;
+  var nf=targetCal/implied;
+  return{pro:Math.round(macros.pro*nf*10)/10,carb:Math.round(macros.carb*nf*10)/10,fat:Math.round(macros.fat*nf*10)/10};
+}
+
 function buildDayHTML(i,plan,showSwap){
   var cal=plan.cal,mealTimes=plan.mealTimes,phase=plan.phase,rotation=plan.rotation;
   var isWknd=i>=4;
@@ -470,7 +480,7 @@ function buildDayHTML(i,plan,showSwap){
           '<span>'+formatIngredient(x)+'</span>'+
           '<button onclick="showIngredientSwap('+i+',\'first\','+idx+',\''+x.replace(/\x27/g,"\\'")+'\',\''+name.replace(/\x27/g,"\\'")+'\','+grams+')" style="background:none;border:none;color:var(--warm);font-size:.72rem;cursor:pointer;padding:2px 6px;font-weight:600;white-space:nowrap">swap</button>'+
         '</li>';
-      }).join('')+'</ul>'+renderMacroBar(calcMealMacros(firstItems),'bar')+firstCookSteps+skipBtn('first'),firstCal,true);
+      }).join('')+'</ul>'+renderMacroBar(_normalizeMacros(calcMealMacros(firstItems),firstCal),'bar')+firstCookSteps+skipBtn('first'),firstCal,true);
   }
 
   if(dinnerSkipped){
@@ -503,7 +513,7 @@ function buildDayHTML(i,plan,showSwap){
           '<span>'+formatIngredient(x)+'</span>'+
           '<button onclick="showIngredientSwap('+i+',\'dinner\','+idx+',\''+x.replace(/\x27/g,"\\'")+'\',\''+name.replace(/\x27/g,"\\'")+'\','+grams+')" style="background:none;border:none;color:var(--warm);font-size:.72rem;cursor:pointer;padding:2px 6px;font-weight:600;white-space:nowrap">swap</button>'+
         '</li>';
-      }).join('')+'</ul>'+renderMacroBar(calcMealMacros(dinnerItems),'bar')+dinnerCookSteps+skipBtn('dinner'),dinnerCal,true);
+      }).join('')+'</ul>'+renderMacroBar(_normalizeMacros(calcMealMacros(dinnerItems),dinnerCal),'bar')+dinnerCookSteps+skipBtn('dinner'),dinnerCal,true);
   }
 
   if(dessertSkipped){
@@ -522,7 +532,7 @@ function buildDayHTML(i,plan,showSwap){
           '<span>'+formatIngredient(x)+'</span>'+
           '<button onclick="showIngredientSwap('+i+',\'dessert\','+idx+',\''+x.replace(/\x27/g,"\\'")+'\',\''+name.replace(/\x27/g,"\\'")+'\','+grams+')" style="background:none;border:none;color:var(--warm);font-size:.72rem;cursor:pointer;padding:2px 6px;font-weight:600;white-space:nowrap">swap</button>'+
         '</li>';
-      }).join('')+'</ul>'+renderMacroBar(calcMealMacros(dessertItems),'bar')+dessertCookSteps+skipBtn('dessert'),dessertCal,true);
+      }).join('')+'</ul>'+renderMacroBar(_normalizeMacros(calcMealMacros(dessertItems),dessertCal),'bar')+dessertCookSteps+skipBtn('dessert'),dessertCal,true);
   }
 
   // Any other custom meals (not replacing a slot)
@@ -571,21 +581,21 @@ function buildDayHTML(i,plan,showSwap){
     else if(customFirst&&customFirst.ingredients&&customFirst.ingredients.length){
       var _fi=customFirst.ingredients.map(function(x){return x.item||'';}).filter(Boolean);
       _addMacros(calcMealMacros(_fi));
-    } else if(!customFirst){_addMacros(calcMealMacros(firstItems));}
+    } else if(!customFirst){_addMacros(_normalizeMacros(calcMealMacros(firstItems),firstCal));}
   }
   if(!dinnerSkipped){
     if(customDinner&&(customDinner.pro||customDinner.carb||customDinner.fat)){_addMacros(customDinner);}
     else if(customDinner&&customDinner.ingredients&&customDinner.ingredients.length){
       var _di=customDinner.ingredients.map(function(x){return x.item||'';}).filter(Boolean);
       _addMacros(calcMealMacros(_di));
-    } else if(!customDinner){_addMacros(calcMealMacros(dinnerItems));}
+    } else if(!customDinner){_addMacros(_normalizeMacros(calcMealMacros(dinnerItems),dinnerCal));}
   }
   if(!dessertSkipped){
     if(customDessert&&(customDessert.pro||customDessert.carb||customDessert.fat)){_addMacros(customDessert);}
     else if(customDessert&&customDessert.ingredients&&customDessert.ingredients.length){
       var _xi=customDessert.ingredients.map(function(x){return x.item||'';}).filter(Boolean);
       _addMacros(calcMealMacros(_xi));
-    } else if(!customDessert){_addMacros(calcMealMacros(dessertItems));}
+    } else if(!customDessert){_addMacros(_normalizeMacros(calcMealMacros(dessertItems),dessertCal));}
   }
   customOther.forEach(function(m){_addMacros(m);});
   _dPro=Math.round(_dPro);_dCarb=Math.round(_dCarb);_dFat=Math.round(_dFat);

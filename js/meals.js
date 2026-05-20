@@ -609,7 +609,16 @@ function buildDayHTML(i,plan,showSwap){
     ?'<span style="color:rgba(184,150,60,.2)">·</span><span>'+_dPro+'g protein · '+_dCarb+'g carbs · '+_dFat+'g fat</span>'
     :'';
 
-  html+='<div style="font-size:.62rem;color:rgba(154,138,106,.6);margin-top:12px;padding:10px 0;border-top:1px solid rgba(184,150,60,.08);display:flex;gap:16px;letter-spacing:.08em;text-transform:uppercase;font-family:var(--font-body);flex-wrap:wrap"><span>'+totalFoodCal+' cal'+(alcCal?' + '+alcCal+' drinks':'')+'</span><span style="color:rgba(184,150,60,.2)">·</span><span>'+daySteps.toLocaleString()+' steps'+(S.walkType==='incline'?' · '+S.incline+'% / '+S.speed+' mph':'')+'</span>'+_macroSummary+'</div>';
+  // Protein floor warning — 0.45g per lb body weight minimum
+  var _proFloor=S.wLbs?Math.round(S.wLbs*0.45):0;
+  var _proWarning='';
+  if(_dPro>0&&_proFloor>0&&_dPro<_proFloor){
+    _proWarning='<div style="margin-top:8px;padding:8px 12px;background:rgba(192,100,60,.08);border-left:2px solid rgba(192,100,60,.5);border-radius:0 6px 6px 0;font-size:.7rem;color:rgba(210,130,90,.95);letter-spacing:.03em;font-family:var(--font-body);line-height:1.5">'+
+      '⚠️ Today\'s protein is on the low side ('+_dPro+'g of '+_proFloor+'g+ recommended). Consider a higher-protein swap or add egg whites to a meal.'+
+    '</div>';
+  }
+
+  html+='<div style="font-size:.62rem;color:rgba(154,138,106,.6);margin-top:12px;padding:10px 0;border-top:1px solid rgba(184,150,60,.08);display:flex;gap:16px;letter-spacing:.08em;text-transform:uppercase;font-family:var(--font-body);flex-wrap:wrap"><span>'+totalFoodCal+' cal'+(alcCal?' + '+alcCal+' drinks':'')+'</span><span style="color:rgba(184,150,60,.2)">·</span><span>'+daySteps.toLocaleString()+' steps'+(S.walkType==='incline'?' · '+S.incline+'% / '+S.speed+' mph':'')+'</span>'+_macroSummary+'</div>'+_proWarning;
 
   // Invisible coaching — completion state for today
   if(i===todayIdx){

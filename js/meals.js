@@ -1002,7 +1002,7 @@ function updateDashboard(){
       var done=Math.max(0,startW-wLbs);
       var pct=Math.min(100,Math.max(2,Math.round((done/totalJ)*100)));
       progFill.style.width=pct+'%';
-      progTxt.textContent=parseFloat(lbsToGo.toFixed(1))+' lbs to go';
+      progTxt.textContent=parseFloat(lbsToGo.toFixed(1))+' lbs to next milestone ('+tzHigh+' lbs)';
     }
     progLine.style.display='block';
   } else if(progLine){

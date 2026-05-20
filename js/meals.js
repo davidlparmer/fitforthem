@@ -87,7 +87,7 @@ function _normalizeMacros(macros, targetCal){
 
 function buildDayHTML(i,plan,showSwap){
   var cal=plan.cal,mealTimes=plan.mealTimes,phase=plan.phase,rotation=plan.rotation;
-  var isWknd=i>=4;
+  var isWknd=true; // drinking selector available every day
   var isDrinking=drinkingDays[i]||false;
   var daySteps=plan.steps;
   if(isDrinking==='light')daySteps=plan.wStepsLight||plan.wSteps||plan.steps;

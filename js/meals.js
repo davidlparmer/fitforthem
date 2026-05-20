@@ -609,10 +609,12 @@ function buildDayHTML(i,plan,showSwap){
     ?'<span style="color:rgba(184,150,60,.2)">·</span><span>'+_dPro+'g protein · '+_dCarb+'g carbs · '+_dFat+'g fat</span>'
     :'';
 
-  // Protein floor warning — 0.45g per lb body weight minimum
-  var _proFloor=S.wLbs?Math.round(S.wLbs*0.45):0;
+  // Protein floor warning — 0.45g per lb body weight, minimum floor of 75g
+  var _planWeight=S.wLbs||currentPlan.wLbs||0;
+  var _proFloor=_planWeight?Math.round(_planWeight*0.45):75;
+  _proFloor=Math.max(_proFloor,75);
   var _proWarning='';
-  if(_dPro>0&&_proFloor>0&&_dPro<_proFloor){
+  if(_dPro>0&&_dPro<_proFloor){
     _proWarning='<div style="margin-top:8px;padding:8px 12px;background:rgba(192,100,60,.08);border-left:2px solid rgba(192,100,60,.5);border-radius:0 6px 6px 0;font-size:.7rem;color:rgba(210,130,90,.95);letter-spacing:.03em;font-family:var(--font-body);line-height:1.5">'+
       '⚠️ Today\'s protein is on the low side ('+_dPro+'g of '+_proFloor+'g+ recommended). Consider a higher-protein swap or add egg whites to a meal.'+
     '</div>';

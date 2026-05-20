@@ -416,6 +416,239 @@ body.light-mode .badge.work{background:rgba(2,132,199,.12);color:var(--blue)}
 /* ── PROGRESS BAR GLOW ── */
 #ds-progress-fill{box-shadow:0 0 10px rgba(103,232,249,.55),0 0 20px rgba(103,232,249,.2)}
 .prog-fill{box-shadow:0 0 8px rgba(103,232,249,.4)}
+
+
+/* =========================================================
+   GROK DASHBOARD GLASSMORPHISM UPGRADE
+   Applied after the existing stylesheet so the app keeps all
+   original layout, buttons, tabs, forms, and meal behavior.
+   ========================================================= */
+:root{
+  /* Foundation — deep navy */
+  --bg:#0D1B2A;
+  --s1:rgba(22,35,52,0.68);
+  --s2:rgba(30,47,66,0.68);
+  --s3:rgba(40,61,82,0.68);
+
+  /* Primary CTAs */
+  --cream-bg:#00D4FF;
+  --cream-text:#0D1B2A;
+  --cream-border:rgba(103,232,249,.6);
+
+  /* Cyan accent */
+  --gold:#00D4FF;
+  --gold-light:#67E8F9;
+  --gold-dim:rgba(103,232,249,.2);
+  --gold-line:rgba(103,232,249,.35);
+  --gold-glow:rgba(103,232,249,.08);
+
+  /* Text */
+  --t1:#E0F2FE;
+  --t2:#7DB8CC;
+  --t3:#2D4A5E;
+
+  /* Legacy aliases */
+  --sun:#67E8F9;--warm:#00D4FF;--earth:#0A3050;--cream:#0D1B2A;
+  --green:#34D399;--text:#E0F2FE;--muted:#7DB8CC;--white:#E0F2FE;
+  --card:#091520;--border:rgba(103,232,249,.18);--red:#F87171;--blue:#38BDF8;
+  --shadow:0 16px 48px rgba(0,0,0,.7);
+  --bronze:#00D4FF;--charcoal:#060F1A;--surface:#0D1B2A;
+  --amber:#00D4FF;--leather:#091520;--leather-light:#0D1B2A;
+  --warm-glow:rgba(103,232,249,.06);--candle:rgba(103,232,249,.04);
+
+  /* Glassmorphism Core */
+  --glass-blur:35px;
+  --glass-radius:28px;
+  --glass-shadow:0 8px 32px -4px rgb(103 232 249 / 0.28);
+  --glass-inner:linear-gradient(145deg, rgba(255,255,255,0.18), transparent);
+
+  /* Typography */
+  --font-display:'Playfair Display',Georgia,serif;
+  --font-body:'DM Sans','Segoe UI',system-ui,sans-serif;
+}
+
+body.light-mode{
+  --bg:#E2EEF6;
+  --s1:rgba(240,248,255,0.75);
+  --s2:rgba(224,238,248,0.75);
+  --s3:rgba(208,228,240,0.75);
+  --gold:#0099CC;
+  --gold-light:#22D3EE;
+  --gold-line:rgba(34,211,238,.4);
+  --gold-dim:rgba(34,211,238,.25);
+  --t1:#0F172A;
+  --t2:#334155;
+  --t3:#64748B;
+  --glass-shadow:0 8px 32px -4px rgb(103 232 249 / 0.18);
+  --glass-inner:linear-gradient(145deg, rgba(255,255,255,0.65), transparent);
+}
+
+.card, .dash-stat, .meal-card, .dash-greeting, .log-nudge, .dash-action,
+#ds-progress-line, .phase-banner, .info-box, .log-entry, .result-card,
+.welcome-card, .paywall-card, .budget-bar-wrap {
+  background:var(--s1) !important;
+  backdrop-filter:blur(var(--glass-blur)) !important;
+  -webkit-backdrop-filter:blur(var(--glass-blur)) !important;
+  border:1px solid var(--gold-line) !important;
+  border-radius:var(--glass-radius) !important;
+  box-shadow:var(--glass-shadow) !important;
+  position:relative;
+  overflow:hidden;
+}
+
+.card::before, .dash-stat::before, .meal-card::before, .dash-greeting::before,
+.log-nudge::before, .dash-action::before, .welcome-card::before, .paywall-card::before {
+  content:'';
+  position:absolute;
+  inset:0;
+  background:var(--glass-inner);
+  pointer-events:none;
+  border-radius:inherit;
+  z-index:1;
+}
+
+.card > *, .dash-stat > *, .meal-card > *, .dash-greeting > *,
+.log-nudge > *, .dash-action > *, .welcome-card > *, .paywall-card > *{
+  position:relative;
+  z-index:2;
+}
+
+#bottom-nav{
+  background:rgba(13,27,42,0.92) !important;
+  backdrop-filter:blur(35px) !important;
+  -webkit-backdrop-filter:blur(35px) !important;
+  border-top:1px solid var(--gold-line) !important;
+}
+body.light-mode #bottom-nav{background:rgba(226,238,246,0.92) !important;}
+
+#ds-progress-fill, .prog-fill, .day-tab.active, .tab.active .tab-icon svg{
+  background:linear-gradient(90deg, var(--gold), var(--gold-light)) !important;
+  box-shadow:0 0 12px var(--gold) !important;
+}
+
+.dash-greeting{min-height:220px;}
+body.light-mode .dash-greeting{border-top-color:rgba(34,211,238,.6) !important;}
+
+/* =========================================================
+   LOFTIN METHOD REFINEMENT PASS
+   This keeps the Grok glass concept, but makes it calmer,
+   more premium, less neon/gaming, and more luxury-native.
+   ========================================================= */
+:root{
+  --bg:#07111D;
+  --s1:rgba(10,24,38,0.68);
+  --s2:rgba(13,31,49,0.64);
+  --s3:rgba(18,42,63,0.62);
+  --gold:#16D7E8;
+  --gold-light:#7BEAF2;
+  --gold-line:rgba(123,234,242,.24);
+  --gold-dim:rgba(123,234,242,.14);
+  --gold-glow:rgba(123,234,242,.055);
+  --t1:#F3FBFF;
+  --t2:#9AB7C7;
+  --t3:#486475;
+  --cream-bg:#16D7E8;
+  --cream-text:#06111D;
+  --cream-border:rgba(123,234,242,.45);
+  --glass-blur:30px;
+  --glass-radius:24px;
+  --glass-shadow:0 18px 54px rgba(0,0,0,.52), 0 0 24px rgba(22,215,232,.07), inset 0 1px 0 rgba(255,255,255,.08);
+  --glass-inner:linear-gradient(145deg, rgba(255,255,255,.12), rgba(255,255,255,.025) 44%, transparent 100%);
+}
+
+body{
+  background:
+    radial-gradient(ellipse at 18% 8%, rgba(22,215,232,.09), transparent 38%),
+    radial-gradient(ellipse at 86% 22%, rgba(123,234,242,.055), transparent 42%),
+    linear-gradient(180deg, #081523 0%, #050D17 100%) !important;
+}
+body::before{
+  background:
+    radial-gradient(ellipse at 15% 50%,rgba(22,215,232,.045) 0%,transparent 55%),
+    radial-gradient(ellipse at 85% 20%,rgba(123,234,242,.035) 0%,transparent 50%) !important;
+}
+
+.dash-greeting{
+  border-top-color:rgba(123,234,242,.42) !important;
+  box-shadow:0 24px 70px rgba(0,0,0,.58), 0 0 34px rgba(22,215,232,.08), inset 0 1px 0 rgba(255,255,255,.11) !important;
+}
+.dash-greeting .greeting-time, h2, h3{
+  color:var(--gold-light) !important;
+  text-shadow:0 0 18px rgba(22,215,232,.16);
+}
+.dash-greeting .greeting-name, .meal-title{
+  letter-spacing:-.035em;
+}
+
+.dash-stat{
+  border-top-color:rgba(123,234,242,.34) !important;
+  min-height:100px;
+}
+.dash-stat .dv{
+  color:#FFFFFF !important;
+  text-shadow:0 10px 30px rgba(0,0,0,.45);
+}
+.dash-stat .dl{
+  color:var(--gold-light) !important;
+}
+
+.meal-card{
+  border-left:2px solid rgba(22,215,232,.55) !important;
+  background:linear-gradient(145deg, rgba(16,34,53,.72), rgba(7,17,29,.66)) !important;
+}
+.meal-card.alt{
+  border-left-color:rgba(123,234,242,.7) !important;
+}
+.meal-cal{
+  background:none !important;
+  box-shadow:none !important;
+  color:var(--gold-light) !important;
+  text-shadow:0 0 18px rgba(22,215,232,.22);
+}
+
+#ds-progress-fill, .prog-fill{
+  background:linear-gradient(90deg, #13D7DF, #7BEAF2) !important;
+  box-shadow:0 0 10px rgba(22,215,232,.42), 0 0 22px rgba(123,234,242,.12) !important;
+}
+.day-tab.active{
+  background:linear-gradient(145deg, rgba(22,215,232,.2), rgba(123,234,242,.08)) !important;
+  box-shadow:0 8px 24px rgba(0,0,0,.32), 0 0 14px rgba(22,215,232,.12) !important;
+  color:#F3FBFF !important;
+}
+#bottom-nav .tab.active .tab-icon svg{
+  background:none !important;
+  box-shadow:none !important;
+  stroke:var(--gold-light) !important;
+  filter:drop-shadow(0 0 10px rgba(22,215,232,.35));
+}
+#bottom-nav .tab.active .tab-label{
+  color:var(--gold-light) !important;
+  text-shadow:0 0 12px rgba(22,215,232,.24);
+}
+
+body.light-mode{
+  --bg:#E9F3F8;
+  --s1:rgba(255,255,255,0.72);
+  --s2:rgba(239,249,253,0.72);
+  --s3:rgba(222,239,247,0.72);
+  --gold:#078FB7;
+  --gold-light:#13BFD3;
+  --gold-line:rgba(7,143,183,.24);
+  --gold-dim:rgba(7,143,183,.14);
+  --t1:#0B1723;
+  --t2:#415567;
+  --t3:#738496;
+  --glass-shadow:0 16px 42px rgba(15,43,60,.10), inset 0 1px 0 rgba(255,255,255,.72);
+  --glass-inner:linear-gradient(145deg, rgba(255,255,255,.74), rgba(255,255,255,.18) 52%, transparent 100%);
+  background:linear-gradient(180deg,#EDF7FB 0%,#DDEDF5 100%) !important;
+}
+body.light-mode .meal-card{
+  background:linear-gradient(145deg, rgba(255,255,255,.78), rgba(238,248,253,.68)) !important;
+}
+body.light-mode .meal-cal{
+  color:var(--gold) !important;
+  text-shadow:none;
+}
 </style>
 <!-- Google tag (gtag.js) -->
 <script>

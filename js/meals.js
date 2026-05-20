@@ -618,13 +618,20 @@ function buildDayHTML(i,plan,showSwap){
   var _proWarning='';
   if(_dPro>0&&_dPro<_proFloor){
     // Find the lowest-protein meal to give a specific suggestion
-    var _weakest=null;
-    if(_slotProData.length){
-      _weakest=_slotProData.slice().sort(function(a,b){return a.pro-b.pro;})[0];
+    // Skipped meals are the primary cause — check those first
+    var _skippedLabels=[];
+    if(firstSkipped)_skippedLabels.push('First Meal');
+    if(dinnerSkipped)_skippedLabels.push('Main Meal');
+    if(dessertSkipped)_skippedLabels.push('Final Meal');
+    var _proTip;
+    if(_skippedLabels.length>0){
+      _proTip='You skipped your '+_skippedLabels.join(' and ')+' — that\'s where most of your protein comes from. Try eating it or logging an alternative.';
+    } else {
+      var _weakest=_slotProData.length?_slotProData.slice().sort(function(a,b){return a.pro-b.pro;})[0]:null;
+      _proTip=_weakest
+        ?'Your '+_weakest.label+' ('+_weakest.name+') is your lowest-protein meal — consider swapping it for a higher-protein option.'
+        :'Consider a higher-protein swap or add egg whites to a meal.';
     }
-    var _proTip=_weakest
-      ?'Your '+_weakest.label+' ('+_weakest.name+') is your lowest-protein meal — consider swapping it for a higher-protein option.'
-      :'Consider a higher-protein swap or add egg whites to a meal.';
     _proWarning='<div style="margin-top:8px;padding:8px 12px;background:rgba(192,100,60,.08);border-left:2px solid rgba(192,100,60,.5);border-radius:0 6px 6px 0;font-size:.7rem;color:rgba(210,130,90,.95);letter-spacing:.03em;font-family:var(--font-body);line-height:1.5">'+
       '⚠️ Today\'s protein is on the low side ('+_dPro+'g of '+_proFloor+'g+ recommended). '+_proTip+
     '</div>';

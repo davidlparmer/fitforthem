@@ -1098,6 +1098,220 @@ body.light-mode .logo span{
   color:#23425A !important;
 }
 
+
+
+/* ── LIGHT THEME GLOW / DEPTH PASS v3 ──
+   Goal: make the light theme feel closer to the dark theme's depth and glow,
+   while staying elegant and readable.
+*/
+
+body.light-mode{
+  background:#ECF3F8 !important;
+  --t1:#17324A !important;
+  --t2:#678397 !important;
+  --t3:#8DA5B5 !important;
+  --gold:#1B84AE !important;
+  --gold-light:#54C3E7 !important;
+  --gold-line:rgba(27,132,174,.20) !important;
+  --gold-dim:rgba(27,132,174,.12) !important;
+}
+
+/* New light background image with slightly stronger presence */
+body.light-mode::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:0;
+  background:
+    linear-gradient(180deg, rgba(236,243,248,.16) 0%, rgba(236,243,248,.28) 18%, rgba(236,243,248,.42) 100%),
+    url("loftin-light-depth-bg-v3.png") center top / cover no-repeat !important;
+  opacity:1 !important;
+  filter:saturate(1.02) contrast(1.03) brightness(.98) !important;
+}
+
+/* This is what creates the "same family" glow feeling as dark mode */
+body.light-mode::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:0;
+  background:
+    radial-gradient(ellipse at 50% 165px, rgba(84,195,231,.23) 0%, rgba(84,195,231,.12) 24%, rgba(84,195,231,.04) 42%, transparent 60%),
+    radial-gradient(ellipse at 22% 365px, rgba(27,132,174,.13) 0%, rgba(27,132,174,.06) 28%, transparent 44%),
+    radial-gradient(ellipse at 79% 400px, rgba(84,195,231,.12) 0%, rgba(84,195,231,.05) 26%, transparent 42%),
+    radial-gradient(ellipse at 50% 760px, rgba(27,132,174,.11) 0%, rgba(27,132,174,.05) 30%, transparent 52%),
+    radial-gradient(ellipse at 50% 980px, rgba(84,195,231,.09) 0%, transparent 46%),
+    linear-gradient(180deg, rgba(255,255,255,.05), rgba(225,237,245,.18));
+  opacity:.98 !important;
+  mix-blend-mode:normal !important;
+}
+
+/* Let the background/glow breathe through the light cards a bit more */
+body.light-mode .dash-greeting,
+body.light-mode .dash-stat,
+body.light-mode .meal-card,
+body.light-mode .card,
+body.light-mode .log-nudge,
+body.light-mode .dash-action,
+body.light-mode .budget-bar-wrap,
+body.light-mode .info-box,
+body.light-mode .result-card,
+body.light-mode .drink-card,
+body.light-mode .stat,
+body.light-mode .food-card,
+body.light-mode .macro{
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+}
+
+/* Hero card: cleaner, premium, no smeared text */
+body.light-mode .dash-greeting{
+  background:linear-gradient(155deg, rgba(255,255,255,.64), rgba(241,248,252,.54)) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.78),
+    0 14px 34px rgba(94,126,148,.12),
+    0 0 0 1px rgba(27,132,174,.06),
+    inset 0 1px 0 rgba(255,255,255,.60),
+    0 0 42px rgba(84,195,231,.12) !important;
+}
+
+body.light-mode .dash-greeting::before{
+  background:radial-gradient(circle,rgba(84,195,231,.16) 0%,rgba(84,195,231,.06) 40%,transparent 68%) !important;
+}
+
+body.light-mode .dash-greeting .greeting-name{
+  color:#17324A !important;
+  text-shadow:none !important;
+}
+
+body.light-mode .dash-greeting .greeting-date,
+body.light-mode .log-nudge .nudge-sub{
+  color:#688397 !important;
+}
+
+/* Stats and general cards keep airy depth */
+body.light-mode .dash-stat,
+body.light-mode .meal-card,
+body.light-mode .card,
+body.light-mode .log-nudge,
+body.light-mode .dash-action,
+body.light-mode .budget-bar-wrap,
+body.light-mode .info-box,
+body.light-mode .result-card,
+body.light-mode .drink-card,
+body.light-mode .stat{
+  background:linear-gradient(155deg, rgba(255,255,255,.68), rgba(241,248,252,.58)) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.72),
+    0 10px 24px rgba(94,126,148,.10),
+    inset 0 1px 0 rgba(255,255,255,.55) !important;
+}
+
+/* Meal titles should complement light theme */
+body.light-mode .meal-title{
+  color:#235F7F !important;
+  text-shadow:none !important;
+}
+
+body.light-mode .meal-cal{
+  color:#1B84AE !important;
+  text-shadow:none !important;
+}
+
+/* Bottom navigation accent: richer blue for visibility */
+body.light-mode #bottom-nav{
+  background:rgba(236,243,248,.82) !important;
+  border-top-color:rgba(27,132,174,.16) !important;
+  backdrop-filter:blur(28px);
+  -webkit-backdrop-filter:blur(28px);
+}
+
+body.light-mode #bottom-nav .tab.active .tab-label,
+body.light-mode #bottom-nav .tab.active .tab-icon svg{
+  color:#1B84AE !important;
+  stroke:#1B84AE !important;
+}
+
+body.light-mode #bottom-nav .tab:not(.active) .tab-label{
+  color:#7B94A7 !important;
+}
+
+body.light-mode #bottom-nav .tab:not(.active) .tab-icon svg{
+  stroke:#8EA5B4 !important;
+}
+
+/* Macro tiles should fit the theme */
+body.light-mode .food-card{
+  background:linear-gradient(160deg, rgba(255,255,255,.67), rgba(241,248,252,.60)) !important;
+  border-color:rgba(27,132,174,.12) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.70),
+    0 10px 26px rgba(94,126,148,.10) !important;
+}
+
+body.light-mode .food-name{
+  color:#17324A !important;
+}
+
+body.light-mode .food-desc{
+  color:#6D8799 !important;
+}
+
+body.light-mode .macro{
+  background:linear-gradient(180deg, rgba(255,255,255,.72), rgba(235,245,250,.66)) !important;
+  border:1px solid rgba(27,132,174,.10) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.60),
+    0 4px 12px rgba(101,131,150,.06) !important;
+}
+
+body.light-mode .macro .mv{
+  color:#1C6F95 !important;
+  font-weight:800 !important;
+  text-shadow:none !important;
+}
+
+body.light-mode .macro .ml{
+  color:#7D97A9 !important;
+  font-weight:700 !important;
+  letter-spacing:.06em !important;
+}
+
+/* Supporting labels */
+body.light-mode h2,
+body.light-mode h3,
+body.light-mode label,
+body.light-mode .dash-greeting .greeting-time,
+body.light-mode .dash-stat .dl,
+body.light-mode .stat .lbl,
+body.light-mode .meal-subtitle,
+body.light-mode .nav-links a,
+body.light-mode #bottom-nav .tab-label,
+body.light-mode .dash-action .da-icon,
+body.light-mode .section-title,
+body.light-mode .budget-bar-label,
+body.light-mode .prog-label{
+  color:#6C879B !important;
+}
+
+/* Keep the active day tabs as already improved */
+body.light-mode .day-tab{
+  color:#5C788E !important;
+  background:rgba(255,255,255,.52) !important;
+  border:1px solid rgba(27,132,174,.18) !important;
+}
+
+body.light-mode .day-tab.active{
+  color:#F7FBFF !important;
+  background:linear-gradient(180deg,#4ABEE2,#1B84AE) !important;
+  border-color:rgba(27,132,174,.56) !important;
+  box-shadow:
+    0 8px 24px rgba(27,132,174,.18),
+    inset 0 1px 0 rgba(255,255,255,.28) !important;
+}
+
 </style>
 <!-- Google tag (gtag.js) -->
 <script>

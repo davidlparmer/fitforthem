@@ -638,6 +638,106 @@ body.light-mode .nav-links a:hover{
 /* ── PROGRESS BAR GLOW ── */
 #ds-progress-fill{box-shadow:0 0 10px rgba(103,232,249,.55),0 0 20px rgba(103,232,249,.2)}
 .prog-fill{box-shadow:0 0 8px rgba(103,232,249,.4)}
+
+
+/* ── LOFTIN DEPTH BACKGROUND PNG ── */
+/* Place loftin-depth-bg.png in the same folder as app.html. */
+body{
+  background:#06101C !important;
+  overflow-x:hidden;
+}
+
+/* Static PNG atmosphere behind the app */
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:0;
+  background:
+    linear-gradient(180deg, rgba(6,16,28,.10) 0%, rgba(6,16,28,.28) 42%, rgba(6,16,28,.62) 100%),
+    url("loftin-depth-bg.png") center top / cover no-repeat !important;
+  opacity:.78;
+  filter:saturate(1.05) contrast(1.08) brightness(.72) !important;
+  transform:translateZ(0);
+}
+
+/* Extra soft glow fields that sit behind cards, not attached to them */
+body::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:0;
+  background:
+    radial-gradient(ellipse at 50% 155px, rgba(103,232,249,.105) 0%, rgba(103,232,249,.045) 34%, transparent 62%),
+    radial-gradient(ellipse at 22% 345px, rgba(0,212,255,.075) 0%, transparent 46%),
+    radial-gradient(ellipse at 78% 430px, rgba(103,232,249,.065) 0%, transparent 44%),
+    radial-gradient(ellipse at 50% 690px, rgba(0,212,255,.055) 0%, transparent 52%),
+    linear-gradient(180deg, rgba(4,11,20,.08), rgba(4,11,20,.38));
+  opacity:.88;
+  mix-blend-mode:screen;
+}
+
+/* Keep all app content above the background layers */
+body > *{
+  position:relative;
+  z-index:1;
+}
+
+/* Make transparent/glass cards let the depth background do its job */
+.dash-greeting,
+.dash-stat,
+.meal-card,
+.card,
+.log-nudge,
+.dash-action,
+.budget-bar-wrap,
+.info-box{
+  background:linear-gradient(155deg, rgba(30,47,66,.72), rgba(9,21,32,.64)) !important;
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+}
+
+/* Bottom nav stays readable over the image */
+#bottom-nav{
+  background:rgba(6,16,28,.88) !important;
+  backdrop-filter:blur(28px);
+  -webkit-backdrop-filter:blur(28px);
+}
+
+/* Light mode keeps the same image but washes it way back */
+body.light-mode{
+  background:#E2EEF6 !important;
+}
+
+body.light-mode::before{
+  background:
+    linear-gradient(180deg, rgba(226,238,246,.78), rgba(226,238,246,.92)),
+    url("loftin-depth-bg.png") center top / cover no-repeat !important;
+  opacity:.36;
+  filter:saturate(.65) contrast(.92) brightness(1.22) !important;
+}
+
+body.light-mode::after{
+  background:
+    radial-gradient(ellipse at 50% 155px, rgba(0,153,204,.12) 0%, transparent 56%),
+    radial-gradient(ellipse at 50% 680px, rgba(0,153,204,.08) 0%, transparent 58%);
+  opacity:.36;
+  mix-blend-mode:normal;
+}
+
+body.light-mode .dash-greeting,
+body.light-mode .dash-stat,
+body.light-mode .meal-card,
+body.light-mode .card,
+body.light-mode .log-nudge,
+body.light-mode .dash-action,
+body.light-mode .budget-bar-wrap,
+body.light-mode .info-box{
+  background:rgba(255,255,255,.82) !important;
+}
+
 </style>
 <!-- Google tag (gtag.js) -->
 <script>

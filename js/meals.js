@@ -591,17 +591,19 @@ function buildDayHTML(i,plan,showSwap){
     }
     return null;
   }
+  // Per-slot protein tracking — identifies the weakest meal by name
+  var _slotProData=[];
   if(!firstSkipped){
     var _fm=customFirst?_customSlotMacros(customFirst,firstCal):_normalizeMacros(calcMealMacros(firstItems),firstCal);
-    if(_fm)_addMacros(_fm);
+    if(_fm){_addMacros(_fm);_slotProData.push({label:'First Meal',name:customFirst?customFirst.name:day.first.n,pro:_fm.pro||0});}
   }
   if(!dinnerSkipped){
     var _dm=customDinner?_customSlotMacros(customDinner,dinnerCal):_normalizeMacros(calcMealMacros(dinnerItems),dinnerCal);
-    if(_dm)_addMacros(_dm);
+    if(_dm){_addMacros(_dm);_slotProData.push({label:'Main Meal',name:customDinner?customDinner.name:dinnerTitleDisplay,pro:_dm.pro||0});}
   }
   if(!dessertSkipped){
     var _xm=customDessert?_customSlotMacros(customDessert,dessertCal):_normalizeMacros(calcMealMacros(dessertItems),dessertCal);
-    if(_xm)_addMacros(_xm);
+    if(_xm){_addMacros(_xm);_slotProData.push({label:'Final Meal',name:customDessert?customDessert.name:day.dessert.n,pro:_xm.pro||0});}
   }
   customOther.forEach(function(m){_addMacros(m);});
   _dPro=Math.round(_dPro);_dCarb=Math.round(_dCarb);_dFat=Math.round(_dFat);
@@ -615,8 +617,16 @@ function buildDayHTML(i,plan,showSwap){
   _proFloor=Math.max(_proFloor,75);
   var _proWarning='';
   if(_dPro>0&&_dPro<_proFloor){
+    // Find the lowest-protein meal to give a specific suggestion
+    var _weakest=null;
+    if(_slotProData.length){
+      _weakest=_slotProData.slice().sort(function(a,b){return a.pro-b.pro;})[0];
+    }
+    var _proTip=_weakest
+      ?'Your '+_weakest.label+' ('+_weakest.name+') is your lowest-protein meal — consider swapping it for a higher-protein option.'
+      :'Consider a higher-protein swap or add egg whites to a meal.';
     _proWarning='<div style="margin-top:8px;padding:8px 12px;background:rgba(192,100,60,.08);border-left:2px solid rgba(192,100,60,.5);border-radius:0 6px 6px 0;font-size:.7rem;color:rgba(210,130,90,.95);letter-spacing:.03em;font-family:var(--font-body);line-height:1.5">'+
-      '⚠️ Today\'s protein is on the low side ('+_dPro+'g of '+_proFloor+'g+ recommended). Consider a higher-protein swap or add egg whites to a meal.'+
+      '⚠️ Today\'s protein is on the low side ('+_dPro+'g of '+_proFloor+'g+ recommended). '+_proTip+
     '</div>';
   }
 

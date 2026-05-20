@@ -738,6 +738,172 @@ body.light-mode .info-box{
   background:rgba(255,255,255,.82) !important;
 }
 
+
+
+/* ── LIGHT THEME REFINEMENT: SOFTER BLUE TEXT + VISIBLE DAY TABS + DEPTH BACKGROUND ── */
+
+body.light-mode{
+  --t1:#11263A !important;
+  --t2:#5E778B !important;
+  --t3:#88A0B1 !important;
+  --label-soft:#607B90 !important;
+  --label-cool:#6E8DA3 !important;
+  --label-dim:rgba(96,123,144,.82) !important;
+  --accent-readable:#1A8FBC !important;
+  --gold:#1C93BE !important;
+  --gold-light:#53C1E5 !important;
+  --gold-line:rgba(28,147,190,.22) !important;
+  --gold-dim:rgba(28,147,190,.14) !important;
+  --cream-bg:#1C93BE !important;
+  --cream-text:#F6FBFF !important;
+  --cream-border:rgba(28,147,190,.42) !important;
+  background:#EAF2F8 !important;
+}
+
+/* Light theme depth background PNG */
+body.light-mode::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:0;
+  background:
+    linear-gradient(180deg, rgba(234,242,248,.58) 0%, rgba(234,242,248,.72) 22%, rgba(234,242,248,.86) 100%),
+    url("loftin-light-depth-bg.png") center top / cover no-repeat !important;
+  opacity:.92 !important;
+  filter:saturate(.92) contrast(.96) brightness(1.01) !important;
+}
+
+/* Light atmospheric glows that sit behind cards, not attached to them */
+body.light-mode::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:0;
+  background:
+    radial-gradient(ellipse at 50% 175px, rgba(83,193,229,.18) 0%, rgba(83,193,229,.07) 28%, transparent 56%),
+    radial-gradient(ellipse at 18% 370px, rgba(28,147,190,.10) 0%, transparent 42%),
+    radial-gradient(ellipse at 82% 410px, rgba(83,193,229,.09) 0%, transparent 40%),
+    radial-gradient(ellipse at 50% 760px, rgba(28,147,190,.08) 0%, transparent 52%);
+  opacity:.80 !important;
+  mix-blend-mode:normal !important;
+}
+
+/* Make light theme text easier on the eyes */
+body.light-mode h2,
+body.light-mode h3,
+body.light-mode label,
+body.light-mode .dash-greeting .greeting-time,
+body.light-mode .dash-stat .dl,
+body.light-mode .stat .lbl,
+body.light-mode .meal-subtitle,
+body.light-mode .nav-links a,
+body.light-mode #bottom-nav .tab-label,
+body.light-mode .dash-action .da-icon,
+body.light-mode .section-title,
+body.light-mode .budget-bar-label,
+body.light-mode .prog-label,
+body.light-mode .welcome-tagline,
+body.light-mode .welcome-sub,
+body.light-mode .welcome-footer,
+body.light-mode .paywall-tagline,
+body.light-mode .paywall-feature,
+body.light-mode .paywall-note{
+  color:var(--label-soft) !important;
+}
+
+/* Headline and hero readability */
+body.light-mode .dash-greeting .greeting-name,
+body.light-mode .meal-title,
+body.light-mode .log-nudge .nudge-text,
+body.light-mode .dash-action .da-label,
+body.light-mode .paywall-price,
+body.light-mode .welcome-q{
+  color:var(--t1) !important;
+}
+
+body.light-mode .dash-greeting .greeting-date,
+body.light-mode .log-nudge .nudge-sub{
+  color:var(--t2) !important;
+}
+
+/* Days of the week — visible in light theme */
+body.light-mode .day-tab{
+  color:#5C788E !important;
+  background:rgba(255,255,255,.52) !important;
+  border:1px solid rgba(28,147,190,.18) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6) !important;
+}
+
+body.light-mode .day-tab:hover{
+  color:#3D6278 !important;
+  background:rgba(255,255,255,.72) !important;
+  border-color:rgba(28,147,190,.24) !important;
+}
+
+body.light-mode .day-tab.active{
+  color:#F7FBFF !important;
+  background:linear-gradient(180deg,#48BBE0,#1C93BE) !important;
+  border-color:rgba(28,147,190,.56) !important;
+  box-shadow:
+    0 8px 24px rgba(28,147,190,.18),
+    inset 0 1px 0 rgba(255,255,255,.28) !important;
+}
+
+body.light-mode .day-tab.today:not(.active){
+  color:#1C93BE !important;
+  background:rgba(28,147,190,.08) !important;
+  border-color:rgba(28,147,190,.28) !important;
+  font-weight:700 !important;
+}
+
+/* Light cards keep depth but stay airy */
+body.light-mode .dash-greeting,
+body.light-mode .dash-stat,
+body.light-mode .meal-card,
+body.light-mode .card,
+body.light-mode .log-nudge,
+body.light-mode .dash-action,
+body.light-mode .budget-bar-wrap,
+body.light-mode .info-box{
+  background:linear-gradient(155deg, rgba(255,255,255,.78), rgba(240,248,255,.70)) !important;
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.66),
+    0 10px 28px rgba(78,114,135,.10),
+    inset 0 1px 0 rgba(255,255,255,.58) !important;
+}
+
+/* Keep key values crisp but not harsh */
+body.light-mode .dash-stat .dv,
+body.light-mode .meal-cal,
+body.light-mode .stat .val,
+body.light-mode .result-card .name{
+  color:#17324A !important;
+}
+
+/* Active bottom nav stays visible */
+body.light-mode #bottom-nav .tab.active .tab-label{
+  color:#1C93BE !important;
+}
+
+body.light-mode #bottom-nav .tab:not(.active) .tab-label{
+  color:#6B8598 !important;
+}
+
+body.light-mode #bottom-nav .tab:not(.active) .tab-icon svg{
+  stroke:#7A93A6 !important;
+}
+
+body.light-mode nav,
+body.light-mode #bottom-nav{
+  background:rgba(234,242,248,.78) !important;
+  backdrop-filter:blur(24px);
+  -webkit-backdrop-filter:blur(24px);
+}
+
 </style>
 <!-- Google tag (gtag.js) -->
 <script>

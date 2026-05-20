@@ -14,7 +14,7 @@
 <link rel="apple-touch-startup-image" href="/icon-512.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 :root{
@@ -46,8 +46,8 @@
   --amber:#00D4FF;--leather:#091520;--leather-light:#0D1B2A;
   --warm-glow:rgba(103,232,249,.06);--candle:rgba(103,232,249,.04);
   /* Typography */
-  --font-display:'Manrope','Inter','Segoe UI',system-ui,sans-serif;
-  --font-body:'Inter','Segoe UI',system-ui,sans-serif;
+  --font-display:'Playfair Display',Georgia,serif;
+  --font-body:'DM Sans','Segoe UI',system-ui,sans-serif;
 }
 body{font-family:var(--font-body);background:var(--bg);color:var(--t1);min-height:100vh;letter-spacing:-.005em;padding-top:env(safe-area-inset-top)}body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse at 15% 50%,rgba(0,212,255,.04) 0%,transparent 55%),radial-gradient(ellipse at 85% 20%,rgba(103,232,249,.04) 0%,transparent 50%)}body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:0}
 body>*{position:relative;z-index:1}
@@ -415,88 +415,127 @@ body.light-mode .badge.work{background:rgba(2,132,199,.12);color:var(--blue)}
 
 
 
-/* ── MODERN TYPOGRAPHY + CINEMATIC GLOW UPGRADE ── */
-body{
-  text-rendering:optimizeLegibility;
+/* ── LOFTIN METHOD COLOR REFINEMENT: READABLE SMALL TEXT + SOFT GLOW ── */
+/* Keeps the existing font style. Only refines small accent-label colors. */
+
+:root{
+  --label-cool:#9CCFE0;
+  --label-soft:#8FB8C8;
+  --label-dim:rgba(156,207,224,.72);
+  --accent-readable:#67E8F9;
 }
 
 body::before{
   background:
-    radial-gradient(circle at 12% 18%, rgba(0,212,255,.10) 0%, transparent 28%),
-    radial-gradient(circle at 85% 12%, rgba(103,232,249,.08) 0%, transparent 24%),
-    radial-gradient(circle at 50% 100%, rgba(0,212,255,.05) 0%, transparent 36%) !important;
-  filter: blur(18px);
+    radial-gradient(circle at 14% 18%, rgba(0,212,255,.09) 0%, transparent 28%),
+    radial-gradient(circle at 88% 12%, rgba(103,232,249,.07) 0%, transparent 25%),
+    radial-gradient(circle at 50% 96%, rgba(0,212,255,.045) 0%, transparent 36%) !important;
+  filter: blur(16px);
 }
 
-.logo,
-.paywall-logo,
-.greeting-name,
-.meal-title,
-.dash-stat .dv{
-  font-family:var(--font-display) !important;
-  letter-spacing:-0.03em !important;
-}
-
-h1,h2,h3{
-  font-family:var(--font-display) !important;
-  letter-spacing:.08em !important;
-}
-
-.dash-greeting .greeting-name{
-  font-weight:800 !important;
-}
-
-.dash-stat .dv{
-  font-weight:700 !important;
-}
-
-.meal-title{
-  font-weight:700 !important;
-}
-
-body,
+/* Small labels that were feeling too gold/cyan-heavy */
+h2,
+h3,
 label,
-button,
-input,
-select,
-textarea,
-.nav-links a,
-.day-tab,
+.dash-greeting .greeting-time,
+.dash-stat .dl,
+.stat .lbl,
 .meal-subtitle,
-.dl,
-.stat .lbl{
-  font-family:var(--font-body) !important;
+.day-tab,
+.nav-links a,
+#bottom-nav .tab-label,
+.dash-action .da-icon,
+.section-title,
+.budget-bar-label,
+.prog-label,
+.tut-step{
+  color:var(--label-soft) !important;
 }
 
-.card,
-.meal-card,
-.dash-stat,
-.dash-action,
-.log-nudge{
-  backdrop-filter:blur(18px);
-  -webkit-backdrop-filter:blur(18px);
+/* Active/important small labels get a clearer icy accent instead of harsh gold */
+.day-tab.active,
+#bottom-nav .tab.active .tab-label,
+.nav-links a.active,
+.nav-links a:hover,
+.mobile-menu-panel a.active,
+.mobile-menu-panel a:hover,
+h2 strong,
+h3 strong{
+  color:var(--accent-readable) !important;
 }
 
+/* Keep major numbers, CTAs, and progress accents bright enough to guide the eye */
+.dash-stat .dv,
+.meal-cal,
+.stat .val,
+.result-card .name,
+.logo,
+.welcome-logo,
+.paywall-logo{
+  color:var(--t1) !important;
+}
+
+.logo span,
+.welcome-logo span{
+  color:var(--label-soft) !important;
+}
+
+/* Subtle glow depth without changing layout or font */
 .dash-greeting{
   box-shadow:
-    0 24px 80px rgba(0,0,0,.58),
-    0 0 0 1px rgba(103,232,249,.08),
-    inset 0 1px 0 rgba(255,255,255,.05),
-    0 0 80px rgba(0,212,255,.05);
+    0 2px 0 rgba(103,232,249,.10),
+    0 28px 80px rgba(0,0,0,.62),
+    inset 0 1px 0 rgba(103,232,249,.16),
+    0 0 70px rgba(0,212,255,.045) !important;
 }
 
-.dash-stat{
+.dash-stat,
+.dash-action,
+.meal-card,
+.card{
   box-shadow:
-    0 10px 32px rgba(0,0,0,.45),
-    inset 0 1px 0 rgba(255,255,255,.04),
-    0 0 30px rgba(0,212,255,.04);
+    0 1px 0 rgba(103,232,249,.06),
+    0 12px 36px rgba(0,0,0,.48),
+    inset 0 1px 0 rgba(103,232,249,.08) !important;
 }
 
-.prog-fill,
-#ds-progress-fill{
+#ds-progress-fill,
+.prog-fill{
   box-shadow:
-    0 0 12px rgba(0,212,255,.45),
-    0 0 24px rgba(0,212,255,.16);
+    0 0 10px rgba(103,232,249,.42),
+    0 0 22px rgba(0,212,255,.14) !important;
+}
+
+/* Light mode readability */
+body.light-mode{
+  --label-cool:#256B83;
+  --label-soft:#475569;
+  --label-dim:rgba(71,85,105,.78);
+  --accent-readable:#0284A8;
+}
+
+body.light-mode h2,
+body.light-mode h3,
+body.light-mode label,
+body.light-mode .dash-greeting .greeting-time,
+body.light-mode .dash-stat .dl,
+body.light-mode .stat .lbl,
+body.light-mode .meal-subtitle,
+body.light-mode .day-tab,
+body.light-mode .nav-links a,
+body.light-mode #bottom-nav .tab-label,
+body.light-mode .dash-action .da-icon,
+body.light-mode .section-title,
+body.light-mode .budget-bar-label,
+body.light-mode .prog-label{
+  color:var(--label-soft) !important;
+}
+
+body.light-mode .day-tab.active,
+body.light-mode #bottom-nav .tab.active .tab-label,
+body.light-mode .nav-links a.active,
+body.light-mode .nav-links a:hover{
+  color:#F0F8FF !important;
 }
 
 /* ── PROGRESS BAR GLOW ── */

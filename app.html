@@ -596,7 +596,7 @@ body.light-mode .nav-links a:hover{
   -webkit-mask-composite:xor;
   mask-composite:exclude;
   transform:translate(-120%,120%);
-  animation:loftinBorderShineOnce 1.85s cubic-bezier(.22,.61,.36,1) .65s 1 both;
+  animation:loftinBorderShineOnce 3.4s cubic-bezier(.22,.61,.36,1) .9s 1 both;
 }
 
 /* Hero gets the most visible shine; stat cards stay quieter */
@@ -617,7 +617,7 @@ body.light-mode .nav-links a:hover{
 
 .dash-stat::after{
   animation-delay:.95s;
-  animation-duration:1.65s;
+  animation-duration:3.1s;
   background:
     linear-gradient(
       35deg,
@@ -633,7 +633,7 @@ body.light-mode .nav-links a:hover{
 
 .log-nudge::after{
   animation-delay:1.15s;
-  animation-duration:1.75s;
+  animation-duration:3.2s;
 }
 
 @keyframes loftinBorderShineOnce{
@@ -641,11 +641,11 @@ body.light-mode .nav-links a:hover{
     opacity:0;
     transform:translate(-120%,120%);
   }
-  18%{
-    opacity:.95;
+  22%{
+    opacity:.72;
   }
-  72%{
-    opacity:.75;
+  78%{
+    opacity:.58;
   }
   100%{
     opacity:0;

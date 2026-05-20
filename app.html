@@ -538,6 +538,131 @@ body.light-mode .nav-links a:hover{
   color:#F0F8FF !important;
 }
 
+
+
+/* ── PREMIUM ONE-TIME DIAGONAL BORDER SHINE ── */
+/* Subtle bottom-left → top-right shine. Runs once when the dashboard loads. */
+
+.dash-greeting,
+.dash-stat,
+.log-nudge{
+  position:relative;
+  overflow:hidden;
+}
+
+/* Keep the existing stat divider line intact by moving it into ::before instead of fighting ::after */
+.dash-stat::after{
+  display:none !important;
+}
+
+.dash-stat::before{
+  content:"";
+  display:block;
+  position:absolute;
+  left:30%;
+  right:30%;
+  bottom:10px;
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(103,232,249,.55),transparent);
+  pointer-events:none;
+}
+
+/* Border sweep layer */
+.dash-greeting::after,
+.dash-stat::after,
+.log-nudge::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  padding:1px;
+  pointer-events:none;
+  z-index:3;
+  opacity:0;
+  background:
+    linear-gradient(
+      35deg,
+      transparent 0%,
+      transparent 35%,
+      rgba(103,232,249,.10) 43%,
+      rgba(255,255,255,.68) 50%,
+      rgba(103,232,249,.14) 57%,
+      transparent 65%,
+      transparent 100%
+    );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+  transform:translate(-120%,120%);
+  animation:loftinBorderShineOnce 1.85s cubic-bezier(.22,.61,.36,1) .65s 1 both;
+}
+
+/* Hero gets the most visible shine; stat cards stay quieter */
+.dash-greeting::after{
+  padding:1.25px;
+  background:
+    linear-gradient(
+      35deg,
+      transparent 0%,
+      transparent 36%,
+      rgba(103,232,249,.12) 43%,
+      rgba(255,255,255,.78) 50%,
+      rgba(103,232,249,.16) 57%,
+      transparent 65%,
+      transparent 100%
+    );
+}
+
+.dash-stat::after{
+  animation-delay:.95s;
+  animation-duration:1.65s;
+  background:
+    linear-gradient(
+      35deg,
+      transparent 0%,
+      transparent 38%,
+      rgba(103,232,249,.08) 45%,
+      rgba(255,255,255,.42) 50%,
+      rgba(103,232,249,.10) 56%,
+      transparent 64%,
+      transparent 100%
+    );
+}
+
+.log-nudge::after{
+  animation-delay:1.15s;
+  animation-duration:1.75s;
+}
+
+@keyframes loftinBorderShineOnce{
+  0%{
+    opacity:0;
+    transform:translate(-120%,120%);
+  }
+  18%{
+    opacity:.95;
+  }
+  72%{
+    opacity:.75;
+  }
+  100%{
+    opacity:0;
+    transform:translate(120%,-120%);
+  }
+}
+
+/* Respect reduced-motion settings */
+@media (prefers-reduced-motion: reduce){
+  .dash-greeting::after,
+  .dash-stat::after,
+  .log-nudge::after{
+    animation:none !important;
+    opacity:0 !important;
+  }
+}
+
 /* ── PROGRESS BAR GLOW ── */
 #ds-progress-fill{box-shadow:0 0 10px rgba(103,232,249,.55),0 0 20px rgba(103,232,249,.2)}
 .prog-fill{box-shadow:0 0 8px rgba(103,232,249,.4)}

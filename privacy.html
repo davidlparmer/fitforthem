@@ -8,26 +8,41 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0e0c0a;
-      --s1: #1a1714;
-      --t1: #f0ebe4;
-      --t2: #a89e94;
-      --t3: #6b6259;
-      --gold: #C8A04A;
-      --gold-line: rgba(184,150,60,.25);
+      --bg: #0D1B2A;
+      --s1: #162334;
+      --t1: #E0F2FE;
+      --t2: #7DB8CC;
+      --t3: #4A7A94;
+      --gold: #00D4FF;
+      --gold-light: #67E8F9;
+      --gold-line: rgba(103,232,249,.18);
       --font-display: 'Playfair Display', serif;
       --font-body: 'DM Sans', sans-serif;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background: var(--bg);
+      background: #0D1B2A;
       color: var(--t1);
       font-family: var(--font-body);
       font-size: 1rem;
       line-height: 1.7;
       padding: 0 20px;
     }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        linear-gradient(180deg, rgba(13,27,42,.18) 0%, rgba(13,27,42,.42) 100%),
+        url('loftin-depth-bg.png') center top / cover no-repeat;
+      pointer-events: none;
+      z-index: 0;
+      opacity: .72;
+      filter: saturate(1.05) contrast(1.08) brightness(.72);
+    }
     .wrap {
+      position: relative;
+      z-index: 1;
       max-width: 720px;
       margin: 0 auto;
       padding: 60px 0 80px;

@@ -150,12 +150,15 @@ function renderWeeklyGrid() {
     // Today-only custom swaps do NOT change baseTotal — buildDayHTML still uses the
     // template cal when computing effectiveScale, even if a custom meal is displayed.
     // Using the custom cal here would produce a different scale than the phone shows.
-    var firstC = (mealPrefs && mealPrefs[dIdx] && mealPrefs[dIdx].first)
-      ? (mealPrefs[dIdx].first.cal || 0)
-      : ((dayPlan.first && dayPlan.first.c) || 0);
-
-    var dessertC = (mealPrefs && mealPrefs[dIdx] && mealPrefs[dIdx].dessert)
-      ? (mealPrefs[dIdx].dessert.cal || 0)
+    // Guard: only use mealPrefs cal if it's a valid non-zero value
+    // Stale/broken pref entries with cal=0 inflate the scale and cause wrong calories
+    var _firstPref  = mealPrefs && mealPrefs[dIdx] && mealPrefs[dIdx].first;
+    var _dessertPref = mealPrefs && mealPrefs[dIdx] && mealPrefs[dIdx].dessert;
+    var firstC  = (_firstPref  && _firstPref.cal)
+      ? _firstPref.cal
+      : ((dayPlan.first   && dayPlan.first.c)   || 0);
+    var dessertC = (_dessertPref && _dessertPref.cal)
+      ? _dessertPref.cal
       : ((dayPlan.dessert && dayPlan.dessert.c) || 0);
     var dinnerC = (dayPlan.dinner && dayPlan.dinner.c) || 0;
     if (typeof getResolvedDinner === 'function') {
@@ -253,7 +256,8 @@ function renderWeeklyGrid() {
       var rawIngredients = slotData.i || [];
       var scaledIngredients = _scaleGridIngredients(rawIngredients, dayScales[dIdx]);
 
-      var isSwapped = !!permPref && !isMain;
+      // Only show Custom label when pref has valid meal data (cal > 0)
+      var isSwapped = !!permPref && !!permPref.cal && !isMain;
       var cellContent = scaledIngredients.map(function(ing) {
         return '<div style="font-size:.72rem;color:var(--t1);padding:1px 0;line-height:1.4">' +
           ing + '</div>';

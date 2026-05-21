@@ -164,7 +164,7 @@ function renderWeeklyGrid() {
     }
     var baseTotal = firstC + dinnerC + dessertC;
     var scale = baseTotal > 0 ? planCal / baseTotal : 1;
-    var isWknd = dIdx >= 4;
+    var isWknd = true; // drinking available any day
     var drinkLevel = drinkingDays && drinkingDays[dIdx];
     var isDrinking = isWknd && drinkLevel && drinkLevel !== false;
     var drinkReserve = 0;

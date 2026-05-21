@@ -1,4 +1,4 @@
-// Fit For Them — Netlify Function
+// Loftin Method — Netlify Function
 // Handles Claude AI calls and Google Places API calls server-side
 
 exports.handler = async function(event, context) {
@@ -8,12 +8,25 @@ exports.handler = async function(event, context) {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
+  // ── Origin validation — only allow requests from the app ──
+  const allowedOrigins = [
+    'https://fitforthem.app',
+    'https://staging--fitforthem.netlify.app'
+  ];
+  const origin = event.headers.origin || event.headers.Origin || '';
+  const isAllowedOrigin = allowedOrigins.includes(origin);
+
   const headers = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': isAllowedOrigin ? origin : allowedOrigins[0],
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Content-Type': 'application/json'
   };
+
+  // Block requests from unknown origins (stops external API abuse)
+  if (origin && !isAllowedOrigin) {
+    return { statusCode: 403, headers, body: JSON.stringify({ error: 'Forbidden' }) };
+  }
 
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers, body: '' };
@@ -22,23 +35,6 @@ exports.handler = async function(event, context) {
   try {
     const body = JSON.parse(event.body);
     const action = body.action || 'claude';
-
-    // ── DEBUG — check what env vars are available ────────────────
-    if (action === 'debug') {
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({
-          hasAnthropicKey: !!process.env.ANTHROPIC_API_KEY,
-          anthropicKeyLength: process.env.ANTHROPIC_API_KEY ? process.env.ANTHROPIC_API_KEY.length : 0,
-          anthropicKeyPrefix: process.env.ANTHROPIC_API_KEY ? process.env.ANTHROPIC_API_KEY.substring(0, 10) : 'NOT SET',
-          hasGoogleKey: !!process.env.GOOGLE_PLACES_KEY,
-          googleKeyLength: process.env.GOOGLE_PLACES_KEY ? process.env.GOOGLE_PLACES_KEY.length : 0,
-          nodeVersion: process.version,
-          allEnvKeys: Object.keys(process.env).filter(k => k.includes('ANTHROPIC') || k.includes('GOOGLE') || k.includes('API'))
-        })
-      };
-    }
 
     // ── NEARBY RESTAURANTS ──────────────────────────────────────
     if (action === 'nearby') {
@@ -69,9 +65,13 @@ exports.handler = async function(event, context) {
 
     // ── CLAUDE AI (with retry) ───────────────────────────────────
     if (action === 'claude' || body.prompt) {
-      const { prompt } = body;
+      const { prompt, deviceId } = body;
       if (!prompt) {
         return { statusCode: 400, headers, body: JSON.stringify({ error: 'No prompt provided' }) };
+      }
+      // Require a deviceId — all legitimate app requests include one
+      if (!deviceId) {
+        return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized' }) };
       }
 
       const apiKey = process.env.ANTHROPIC_API_KEY;

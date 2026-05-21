@@ -8,23 +8,25 @@ exports.handler = async function(event, context) {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
-  // ── Origin validation — only allow requests from the app ──
+  // ── Origin validation ──────────────────────────────────────────
+  // NOTE: iOS PWAs in standalone mode send Origin: null or no Origin header.
+  // We allow empty/null origins — the $50 Anthropic spend cap is the hard limit.
+  // We only block requests that explicitly claim a foreign origin.
   const allowedOrigins = [
     'https://fitforthem.app',
     'https://staging--fitforthem.netlify.app'
   ];
   const origin = event.headers.origin || event.headers.Origin || '';
-  const isAllowedOrigin = allowedOrigins.includes(origin);
 
   const headers = {
-    'Access-Control-Allow-Origin': isAllowedOrigin ? origin : allowedOrigins[0],
+    'Access-Control-Allow-Origin': allowedOrigins.includes(origin) ? origin : allowedOrigins[0],
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Content-Type': 'application/json'
   };
 
-  // Block requests from unknown origins (stops external API abuse)
-  if (origin && !isAllowedOrigin) {
+  // Only block if a specific non-empty foreign origin is declared
+  if (origin && origin !== 'null' && !allowedOrigins.includes(origin)) {
     return { statusCode: 403, headers, body: JSON.stringify({ error: 'Forbidden' }) };
   }
 
@@ -69,10 +71,8 @@ exports.handler = async function(event, context) {
       if (!prompt) {
         return { statusCode: 400, headers, body: JSON.stringify({ error: 'No prompt provided' }) };
       }
-      // Require a deviceId — all legitimate app requests include one
-      if (!deviceId) {
-        return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized' }) };
-      }
+      // deviceId is logged for abuse detection but not required yet —
+      // fridge.js and restaurants.js will be updated to send it in a future pass.
 
       const apiKey = process.env.ANTHROPIC_API_KEY;
       if (!apiKey) {

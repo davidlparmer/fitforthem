@@ -230,17 +230,17 @@ function renderMacroBar(macros, style) {
   if (style === 'row') {
     // Horizontal pill row — used in restaurant and fridge cards
     return '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">' +
-      _macroPill(macros.pro  + 'g', 'Protein', 'rgba(184,150,60,.15)',  'var(--gold-light)') +
-      _macroPill(macros.carb + 'g', 'Carbs',   'rgba(74,144,184,.12)',  '#7AB8D4') +
-      _macroPill(macros.fat  + 'g', 'Fat',      'rgba(180,100,60,.12)', '#C8785A') +
+      _macroPill(macros.pro  + 'g', 'Protein', 'rgba(103,232,249,.12)', 'var(--gold-light)') +
+      _macroPill(macros.carb + 'g', 'Carbs',   'rgba(56,189,248,.10)',  '#38BDF8') +
+      _macroPill(macros.fat  + 'g', 'Fat',      'rgba(249,115,22,.10)', '#F97316') +
     '</div>';
   }
 
   // Compact inline bar — used inside meal cards
-  return '<div style="display:flex;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid rgba(184,150,60,.08)">' +
-    _macroChip(macros.pro  + 'g', 'PRO', '#B8963C') +
-    _macroChip(macros.carb + 'g', 'CARB', '#4A90B8') +
-    _macroChip(macros.fat  + 'g', 'FAT', '#A0624A') +
+  return '<div style="display:flex;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--gold-line)">' +
+    _macroChip(macros.pro  + 'g', 'PRO', 'var(--gold)') +
+    _macroChip(macros.carb + 'g', 'CARB', '#38BDF8') +
+    _macroChip(macros.fat  + 'g', 'FAT', '#F97316') +
   '</div>';
 }
 

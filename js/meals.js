@@ -101,17 +101,17 @@ function buildDayHTML(i,plan,showSwap){
 
   if(i===todayIdx){
     var coachMsg='Follow the plan. The results are already decided.';
-    var coachStyle='font-size:.78rem;color:var(--t2);font-style:italic;margin-bottom:14px;padding:10px 14px;border-left:1px solid rgba(184,150,60,.25);letter-spacing:.01em;line-height:1.6';
+    var coachStyle='font-size:.78rem;color:var(--t2);font-style:italic;margin-bottom:14px;padding:10px 14px;border-left:1px solid var(--gold-line);letter-spacing:.01em;line-height:1.6';
 
     if(dow===5){// Friday
       coachMsg='Your plan is already adjusted for tonight. Enjoy it.';
-      coachStyle='font-size:.78rem;color:var(--t2);font-style:italic;margin-bottom:14px;padding:10px 14px;border-left:1px solid rgba(184,150,60,.25);letter-spacing:.01em;line-height:1.6';
+      coachStyle='font-size:.78rem;color:var(--t2);font-style:italic;margin-bottom:14px;padding:10px 14px;border-left:1px solid var(--gold-line);letter-spacing:.01em;line-height:1.6';
     } else if(dow===6){// Saturday
       coachMsg='Still on track. The weekend is part of the system.';
-      coachStyle='font-size:.78rem;color:var(--t2);font-style:italic;margin-bottom:14px;padding:10px 14px;border-left:1px solid rgba(184,150,60,.25);letter-spacing:.01em;line-height:1.6';
+      coachStyle='font-size:.78rem;color:var(--t2);font-style:italic;margin-bottom:14px;padding:10px 14px;border-left:1px solid var(--gold-line);letter-spacing:.01em;line-height:1.6';
     } else if(dow===0){// Sunday
       coachMsg='Reset day. One clean finish before the week begins.';
-      coachStyle='font-size:.78rem;color:var(--t2);font-style:italic;margin-bottom:14px;padding:10px 14px;border-left:1px solid rgba(184,150,60,.25);letter-spacing:.01em;line-height:1.6';
+      coachStyle='font-size:.78rem;color:var(--t2);font-style:italic;margin-bottom:14px;padding:10px 14px;border-left:1px solid var(--gold-line);letter-spacing:.01em;line-height:1.6';
     } else {
       var streak=calcStreak();
       var weekday=dow;
@@ -455,7 +455,7 @@ function buildDayHTML(i,plan,showSwap){
 
   var skipBtn=function(slot){
     return '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'+
-      '<button onclick="showMealSwap('+i+',\''+slot+'\')" style="background:none;border:1px solid rgba(184,150,60,.4);color:var(--gold);border-radius:8px;padding:6px 14px;font-size:.78rem;cursor:pointer;font-weight:600">Swap Meal</button>'+
+      '<button onclick="showMealSwap('+i+',\''+slot+'\')" style="background:none;border:1px solid var(--gold-line);color:var(--gold);border-radius:8px;padding:6px 14px;font-size:.78rem;cursor:pointer;font-weight:600">Swap Meal</button>'+
       '<button onclick="skipMeal('+i+',\''+slot+'\')" style="background:none;border:1px solid var(--muted);color:var(--muted);border-radius:8px;padding:6px 14px;font-size:.78rem;cursor:pointer;font-weight:600">Skip</button>'+
       '<button onclick="showQuickLog('+i+',\''+slot+'\')" style="background:none;border:1px solid var(--warm);color:var(--warm);border-radius:8px;padding:6px 14px;font-size:.78rem;cursor:pointer;font-weight:600">Ate something else?</button>'+
     '</div>';
@@ -608,7 +608,7 @@ function buildDayHTML(i,plan,showSwap){
   customOther.forEach(function(m){_addMacros(m);});
   _dPro=Math.round(_dPro);_dCarb=Math.round(_dCarb);_dFat=Math.round(_dFat);
   var _macroSummary=(_dPro||_dCarb||_dFat)
-    ?'<span style="color:rgba(184,150,60,.2)">·</span><span>'+_dPro+'g protein · '+_dCarb+'g carbs · '+_dFat+'g fat</span>'
+    ?'<span style="color:var(--gold-line)">·</span><span>'+_dPro+'g protein · '+_dCarb+'g carbs · '+_dFat+'g fat</span>'
     :'';
 
   // Protein floor warning — 0.45g per lb body weight, minimum floor of 75g
@@ -637,11 +637,11 @@ function buildDayHTML(i,plan,showSwap){
     '</div>';
   }
 
-  html+='<div style="font-size:.62rem;color:rgba(154,138,106,.6);margin-top:12px;padding:10px 0;border-top:1px solid rgba(184,150,60,.08);display:flex;gap:16px;letter-spacing:.08em;text-transform:uppercase;font-family:var(--font-body);flex-wrap:wrap"><span>'+totalFoodCal+' cal'+(alcCal?' + '+alcCal+' drinks':'')+'</span><span style="color:rgba(184,150,60,.2)">·</span><span>'+daySteps.toLocaleString()+' steps'+(S.walkType==='incline'?' · '+S.incline+'% / '+S.speed+' mph':'')+'</span>'+_macroSummary+'</div>'+_proWarning;
+  html+='<div style="font-size:.62rem;color:var(--t2);margin-top:12px;padding:10px 0;border-top:1px solid var(--gold-line);display:flex;gap:16px;letter-spacing:.08em;text-transform:uppercase;font-family:var(--font-body);flex-wrap:wrap"><span>'+totalFoodCal+' cal'+(alcCal?' + '+alcCal+' drinks':'')+'</span><span style="color:var(--gold-line)">·</span><span>'+daySteps.toLocaleString()+' steps'+(S.walkType==='incline'?' · '+S.incline+'% / '+S.speed+' mph':'')+'</span>'+_macroSummary+'</div>'+_proWarning;
 
   // Invisible coaching — completion state for today
   if(i===todayIdx){
-    html+='<div style="margin-top:14px;padding:16px 20px;background:linear-gradient(135deg,rgba(240,230,208,.09),rgba(240,230,208,.05));border:1px solid rgba(184,150,60,.25);border-top:1px solid rgba(184,150,60,.4);border-radius:10px;font-size:.65rem;color:rgba(212,175,106,.9);letter-spacing:.14em;text-transform:uppercase;font-family:var(--font-body);font-weight:600;text-align:center;line-height:2">'+
+    html+='<div style="margin-top:14px;padding:16px 20px;background:linear-gradient(135deg,rgba(103,232,249,.06),rgba(103,232,249,.03));border:1px solid var(--gold-line);border-top:1px solid rgba(103,232,249,.25);border-radius:10px;font-size:.65rem;color:var(--gold-light);letter-spacing:.14em;text-transform:uppercase;font-family:var(--font-body);font-weight:600;text-align:center;line-height:2">'+
       'Eat these meals &nbsp;·&nbsp; Hit '+daySteps.toLocaleString()+' steps &nbsp;·&nbsp; Close the app &nbsp;·&nbsp; Live your life'+
     '</div>';
   }
@@ -812,7 +812,7 @@ function showMealSwap(dayIdx, slot){
   }
   opts.forEach(function(opt){
     var hasPref=mealPrefs[dayIdx]&&mealPrefs[dayIdx][slot]&&mealPrefs[dayIdx][slot].key===opt.key;
-    html+='<div onclick="confirmMealSwap(\''+opt.key+'\')" style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:'+(hasPref?'rgba(184,150,60,.1)':'var(--s2)')+';border:1px solid '+(hasPref?'rgba(184,150,60,.5)':'var(--gold-line)')+';border-radius:12px;cursor:pointer;margin-bottom:10px;transition:all .2s">'+
+    html+='<div onclick="confirmMealSwap(\''+opt.key+'\')" style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:'+(hasPref?'rgba(103,232,249,.08)':'var(--s2)')+';border:1px solid '+(hasPref?'rgba(103,232,249,.4)':'var(--gold-line)')+';border-radius:12px;cursor:pointer;margin-bottom:10px;transition:all .2s">'+
 
       '<div style="flex:1"><div style="font-size:.95rem;font-weight:700;color:var(--t1);font-family:var(--font-display)">'+opt.name+(hasPref?' <span style="font-size:.65rem;font-weight:700;color:var(--gold);letter-spacing:.08em;text-transform:uppercase;font-family:var(--font-body)">Current Default</span>':'')+'</div>'+
       '<div style="font-size:.75rem;color:var(--t2);margin-top:3px">'+opt.cal+' cal base</div></div>'+
@@ -849,7 +849,7 @@ function confirmMealSwap(optKey){
       '<div style="font-size:1.1rem;font-weight:700;color:var(--t1);font-family:var(--font-display);margin-bottom:6px">'+chosen.name+'</div>'+
       '<div style="font-size:.82rem;color:var(--t2);margin-bottom:24px">Make this your permanent '+slot+' on '+dayLabel+'s?</div>'+
       '<div style="display:flex;flex-direction:column;gap:10px">'+
-        '<button onclick="applyMealSwap(\''+optKey+'\',true)" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--s3),var(--s2));border:1px solid var(--gold-line);border-top:1px solid rgba(184,150,60,.4);border-radius:12px;color:var(--gold-light);font-size:.88rem;font-weight:700;cursor:pointer;font-family:var(--font-body)">Yes — Every '+dayLabel+' from now on</button>'+
+        '<button onclick="applyMealSwap(\''+optKey+'\',true)" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--s3),var(--s2));border:1px solid var(--gold-line);border-top:1px solid rgba(103,232,249,.3);border-radius:12px;color:var(--gold-light);font-size:.88rem;font-weight:700;cursor:pointer;font-family:var(--font-body)">Yes — Every '+dayLabel+' from now on</button>'+
         '<button onclick="applyMealSwap(\''+optKey+'\',false)" style="width:100%;padding:14px;background:none;border:1px solid rgba(255,255,255,.1);border-radius:12px;color:var(--t2);font-size:.88rem;font-weight:600;cursor:pointer;font-family:var(--font-body)">Just today</button>'+
         '<button onclick="closeMealSwap()" style="width:100%;padding:10px;background:none;border:none;color:var(--muted);font-size:.82rem;cursor:pointer">Cancel</button>'+
       '</div>'+

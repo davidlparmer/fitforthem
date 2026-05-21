@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Loftin Method — Quiet system. Visible standard.</title>
 <meta name="description" content="A precision nutrition and movement system for real fat loss — without supplements, complicated tracking, or programs that don't fit real life.">
-<meta name="theme-color" content="#0C0B09">
+<meta name="theme-color" content="#0D1B2A">
 <link rel="icon" href="icon-512.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,45 +15,52 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
 :root{
-  --bg:#0C0B09;
-  --bg2:#0F0E0B;
-  --card:#151310;
-  --card2:#1A1814;
-  --gold:#C8A04A;
-  --gold-light:#D4AF6A;
-  --gold-dim:rgba(200,160,74,.2);
-  --gold-line:rgba(200,160,74,.13);
-  --gold-glow:rgba(200,160,74,.06);
-  --t1:#EDE0C8;
-  --t2:#8A7A5A;
-  --t3:#3A3020;
+  --bg:#0D1B2A;
+  --bg2:#091520;
+  --card:#162334;
+  --card2:#1E2F42;
+  --gold:#00D4FF;
+  --gold-light:#67E8F9;
+  --gold-dim:rgba(103,232,249,.2);
+  --gold-line:rgba(103,232,249,.15);
+  --gold-glow:rgba(103,232,249,.06);
+  --t1:#E0F2FE;
+  --t2:#7DB8CC;
+  --t3:#2D4A5E;
   --font-display:'Playfair Display',Georgia,serif;
   --font-body:'DM Sans','Segoe UI',system-ui,sans-serif;
 }
 html{scroll-behavior:smooth}
 body{
   font-family:var(--font-body);
-  background:var(--bg) url('texture-bg.png') center center / cover fixed;
+  background:#0D1B2A;
   color:var(--t1);
   overflow-x:hidden;
 }
 body::before{
   content:'';position:fixed;inset:0;
-  background:rgba(10,9,7,.74);
+  background:
+    linear-gradient(180deg,rgba(13,27,42,.18) 0%,rgba(13,27,42,.42) 100%),
+    url('loftin-depth-bg.png') center top / cover no-repeat;
   pointer-events:none;z-index:0;
+  opacity:.78;
+  filter:saturate(1.05) contrast(1.08) brightness(.72);
 }
 body>*{position:relative;z-index:1}
 body::after{
   content:'';position:fixed;inset:0;
-  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
-  opacity:.4;pointer-events:none;z-index:999;
+  background:
+    radial-gradient(ellipse at 50% 18%, rgba(103,232,249,.07) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 55%, rgba(0,212,255,.045) 0%, transparent 48%),
+    radial-gradient(ellipse at 20% 70%, rgba(103,232,249,.04) 0%, transparent 50%);
+  pointer-events:none;z-index:0;
 }
 
 /* NAV */
 nav{
   position:fixed;top:0;left:0;width:100%;z-index:100;
   padding:16px 24px;
-  background:rgba(10,9,7,.94);
+  background:rgba(13,27,42,.95);
   backdrop-filter:blur(24px);
   border-bottom:1px solid var(--gold-line);
 }
@@ -75,7 +82,7 @@ nav{
 }
 .hero-glow{
   position:absolute;width:700px;height:700px;
-  background:radial-gradient(circle,rgba(200,160,74,.07) 0%,transparent 65%);
+  background:radial-gradient(circle,rgba(103,232,249,.06) 0%,transparent 65%);
   top:-150px;right:-200px;pointer-events:none;
 }
 .hero-content{
@@ -186,7 +193,7 @@ section{padding:96px 24px}
 .who-dot.no{background:var(--t3)}
 
 /* BADGES */
-.badge-item:hover img{transform:translateY(-3px);filter:drop-shadow(0 10px 28px rgba(200,160,74,.4))}
+.badge-item:hover img{transform:translateY(-3px);filter:drop-shadow(0 10px 28px rgba(103,232,249,.4))}
 /* WAITLIST */
 .ws-title{font-family:var(--font-display);font-size:1.1rem;color:var(--gold);margin-bottom:8px}
 .ws-body{font-size:.86rem;color:var(--t2);font-weight:300;line-height:1.65}
@@ -198,7 +205,7 @@ section{padding:96px 24px}
 }
 .final-glow{
   position:absolute;width:600px;height:600px;
-  background:radial-gradient(circle,rgba(200,160,74,.06) 0%,transparent 65%);
+  background:radial-gradient(circle,rgba(103,232,249,.06) 0%,transparent 65%);
   top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;
 }
 .final-rule{width:30px;height:1px;background:var(--gold);margin:0 auto 24px}

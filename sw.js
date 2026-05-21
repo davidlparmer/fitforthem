@@ -1,7 +1,7 @@
-// Fit For Them — Service Worker
+// Loftin Method — Service Worker
 // Update this version string whenever you deploy a new version
 // The browser will detect the change and refresh the cache automatically
-const CACHE_VERSION = 'fft-v160';
+const CACHE_VERSION = 'fft-v162';
 const CACHE_NAME = CACHE_VERSION;
 
 const STATIC_ASSETS = [
@@ -31,6 +31,9 @@ const STATIC_ASSETS = [
   '/js/app-handlers.js',
   '/icon-192.png',
   '/icon-512.png',
+  '/logo-mark.png',
+  '/loftin-depth-bg.png',
+  '/loftin-light-depth-bg-v3.png',
   '/manifest.json'
 ];
 

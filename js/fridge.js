@@ -63,7 +63,7 @@ async function searchSwapIngredient(){
     // Calculate grams needed to match target calories
     var calPer100g=data.cal_per_100g||0;
     if(calPer100g<=0){
-      el.innerHTML='<div class="error-box">⚠️ Couldn\'t get nutrition data. Try again.</div>';
+      el.innerHTML='<div class="error-box">⚠️ Couldn\'t get nutrition data. Try again. <span onclick="location.reload()" style="color:var(--gold);cursor:pointer;font-weight:600">Reload app</span></div>';
       return;
     }
 
@@ -82,7 +82,7 @@ async function searchSwapIngredient(){
       '<button class="btn" onclick="confirmIngredientSwap(\''+data.name.replace(/\x27/g,"\\'")+' '+neededGrams+'g\','+actualCal+')" style="margin-top:10px;background:var(--green)"> Swap '+swapContext.originalItem.split(' ')[0]+' → '+neededGrams+'g '+data.name+'</button>'+
     '</div>';
   }catch(err){
-    el.innerHTML='<div class="error-box">⚠️ Try again.</div>';
+    el.innerHTML='<div class="error-box">⚠️ Something went wrong. Try again. <span onclick="location.reload()" style="color:var(--gold);cursor:pointer;font-weight:600">Reload app</span></div>';
   }
 }
 
@@ -381,7 +381,7 @@ async function buildMealFromModal(){
     }
 
     el.innerHTML=html;
-  }catch(err){el.innerHTML='<div class="error-box">⚠️ Try again.</div>';}
+  }catch(err){el.innerHTML='<div class="error-box">⚠️ Something went wrong. Try again. <span onclick="location.reload()" style="color:var(--gold);cursor:pointer;font-weight:600">Reload app</span></div>';}
 }
 
 async function buildMeal(){
@@ -408,6 +408,6 @@ async function buildMeal(){
       '<button class="btn-outline" onclick="addIngredientsToGroceryList(lastBuiltMeal?lastBuiltMeal.ingredients:[])" style="margin-top:8px;width:100%;padding:10px"> Add Ingredients to Grocery List</button>'+
     '</div>';
     el.innerHTML=html;
-  }catch(err){el.innerHTML='<div class="error-box">⚠️ Try again.</div>';}
+  }catch(err){el.innerHTML='<div class="error-box">⚠️ Something went wrong. Try again. <span onclick="location.reload()" style="color:var(--gold);cursor:pointer;font-weight:600">Reload app</span></div>';}
 }
 

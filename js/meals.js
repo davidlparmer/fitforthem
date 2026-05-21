@@ -170,13 +170,13 @@ function buildDayHTML(i,plan,showSwap){
   // Determine gain vs deficit from phase name
   var isGainMode=(planMode==='moderate_gain'||planMode==='mild_gain'||planMode==='landing_gain');
   var laneMode=isGainMode?'gain':'cut';
-  var laneRatios=(typeof getLaneRatios==='function')?getLaneRatios(planSex,laneMode):{first:0.275,dinner:0.525,dessert:0.200};
-
-  // Apply drink reserve to food budget before splitting by ratio
+  // ⚠️ SYNC NOTE: slot targets come from getSlotCalorieTargets() in engine.js.
+  // app-handlers.js renderWeeklyGrid calls the same function — do not edit inline.
   var foodCal=isWknd&&isDrinking?cal-drinkReserve:cal;
-  var targetFirstCal=Math.round(foodCal*laneRatios.first);
-  var targetDinnerCal=Math.round(foodCal*laneRatios.dinner);
-  var targetDessertCal=foodCal-targetFirstCal-targetDinnerCal;// remainder avoids rounding drift
+  var _slotTargets=getSlotCalorieTargets(plan,isDrinking?drinkReserve:0);
+  var targetFirstCal=_slotTargets.first;
+  var targetDinnerCal=_slotTargets.dinner;
+  var targetDessertCal=_slotTargets.dessert;
 
   // drinkScale: used for restaurant/quick-log cal display on drink nights
   var drinkScale=isWknd&&isDrinking?(cal-drinkReserve)/cal:1.0;

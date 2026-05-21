@@ -397,16 +397,22 @@ function getSlotRatios(plan) {
   return { first: 0.275, dinner: 0.525, dessert: 0.20 };
 }
 
+// ── Single source of truth for slot calorie targets ──────────────
+// Called by meals.js buildDayHTML AND app-handlers.js renderWeeklyGrid.
+// If you change this function, both files update automatically.
+// IMPORTANT: dessert uses remainder (not direct multiply) to prevent rounding drift.
 function getSlotCalorieTargets(plan, drinkReserve) {
   var p = plan || currentPlan;
   var cal = (p && p.cal) ? p.cal : 0;
   var reserve = drinkReserve || 0;
   var foodCal = cal - reserve;
   var ratios = getSlotRatios(p);
+  var tFirst  = Math.round(foodCal * ratios.first);
+  var tDinner = Math.round(foodCal * ratios.dinner);
   return {
-    first:   Math.round(foodCal * ratios.first),
-    dinner:  Math.round(foodCal * ratios.dinner),
-    dessert: Math.round(foodCal * ratios.dessert),
+    first:   tFirst,
+    dinner:  tDinner,
+    dessert: foodCal - tFirst - tDinner, // remainder — avoids rounding drift
     extra:   Math.round(cal * 0.15)
   };
 }

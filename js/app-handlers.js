@@ -144,38 +144,50 @@ function renderWeeklyGrid() {
   }
 
   // ── PRECOMPUTE effectiveScale PER DAY ────────────────────────
-  var dayScales = plan.map(function(dayPlan, dIdx) {
-    // Use the same baseTotal logic as buildDayHTML on the phone dashboard.
-    // Permanent pref cals substitute the template cal (buildDayHTML applies mealPrefs first).
-    // Today-only custom swaps do NOT change baseTotal — buildDayHTML still uses the
-    // template cal when computing effectiveScale, even if a custom meal is displayed.
-    // Using the custom cal here would produce a different scale than the phone shows.
-    // Guard: only use mealPrefs cal if it's a valid non-zero value
-    // Stale/broken pref entries with cal=0 inflate the scale and cause wrong calories
-    var _firstPref  = mealPrefs && mealPrefs[dIdx] && mealPrefs[dIdx].first;
-    var _dessertPref = mealPrefs && mealPrefs[dIdx] && mealPrefs[dIdx].dessert;
-    var firstC  = (_firstPref  && _firstPref.cal)
-      ? _firstPref.cal
-      : ((dayPlan.first   && dayPlan.first.c)   || 0);
-    var dessertC = (_dessertPref && _dessertPref.cal)
-      ? _dessertPref.cal
-      : ((dayPlan.dessert && dayPlan.dessert.c) || 0);
-    var dinnerC = (dayPlan.dinner && dayPlan.dinner.c) || 0;
-    if (typeof getResolvedDinner === 'function') {
-      var rd = getResolvedDinner(dIdx);
-      if (rd && rd.c) dinnerC = rd.c;
-    }
-    var baseTotal = firstC + dinnerC + dessertC;
-    var scale = baseTotal > 0 ? planCal / baseTotal : 1;
-    var isWknd = true; // drinking available any day
+  // ── PER-SLOT SCALES: mirrors buildDayHTML exactly ──────────────
+  // Phone uses getLaneRatios + per-slot targets. iPad must do the same —
+  // a single blunt day scale causes calories to diverge from the phone.
+  var planSex  = currentPlan.sex || 'male';
+  var planMode = currentPlan.phase || '';
+  var isGainMode = planMode === 'moderate_gain' || planMode === 'mild_gain' || planMode === 'landing_gain';
+  var laneRatios = (typeof getLaneRatios === 'function')
+    ? getLaneRatios(planSex, isGainMode ? 'gain' : 'cut')
+    : { first: 0.275, dinner: 0.525, dessert: 0.200 };
+
+  var daySlotScales = plan.map(function(dayPlan, dIdx) {
+    // Drink reserve — any day can be a drinking day
     var drinkLevel = drinkingDays && drinkingDays[dIdx];
-    var isDrinking = isWknd && drinkLevel && drinkLevel !== false;
+    var isDrinking = drinkLevel && drinkLevel !== false;
     var drinkReserve = 0;
     if (isDrinking && typeof DRINK_RESERVES !== 'undefined') {
       drinkReserve = DRINK_RESERVES[drinkLevel] || 0;
     }
-    var drinkScale = isDrinking ? (planCal - drinkReserve) / planCal : 1;
-    return scale * drinkScale;
+
+    // Food budget after drink reserve (same as buildDayHTML)
+    var foodCal = isDrinking ? planCal - drinkReserve : planCal;
+
+    // Slot targets using exact same ratios as phone
+    var targetFirst   = Math.round(foodCal * laneRatios.first);
+    var targetDinner  = Math.round(foodCal * laneRatios.dinner);
+    var targetDessert = foodCal - targetFirst - targetDinner;
+
+    // Base calories per slot — guard against stale/zero mealPrefs
+    var _fp = mealPrefs && mealPrefs[dIdx] && mealPrefs[dIdx].first;
+    var _dp = mealPrefs && mealPrefs[dIdx] && mealPrefs[dIdx].dessert;
+    var firstBase   = (_fp && _fp.cal)   ? _fp.cal   : ((dayPlan.first   && dayPlan.first.c)   || 0);
+    var dessertBase = (_dp && _dp.cal)   ? _dp.cal   : ((dayPlan.dessert && dayPlan.dessert.c) || 0);
+    var dinnerBase  = (dayPlan.dinner && dayPlan.dinner.c) || 0;
+    if (typeof getResolvedDinner === 'function') {
+      var rd = getResolvedDinner(dIdx);
+      if (rd && rd.c) dinnerBase = rd.c;
+    }
+
+    // Per-slot scale: targetSlotCal / slotBaseCal (exactly as buildDayHTML)
+    return {
+      first:   firstBase   > 0 ? targetFirst   / firstBase   : 1,
+      dinner:  dinnerBase  > 0 ? targetDinner  / dinnerBase  : 1,
+      dessert: dessertBase > 0 ? targetDessert / dessertBase : 1
+    };
   });
 
   var days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
@@ -254,9 +266,8 @@ function renderWeeklyGrid() {
       }
 
       var rawIngredients = slotData.i || [];
-      var scaledIngredients = _scaleGridIngredients(rawIngredients, dayScales[dIdx]);
+      var scaledIngredients = _scaleGridIngredients(rawIngredients, daySlotScales[dIdx][slot.key]);
 
-      // Only show Custom label when pref has valid meal data (cal > 0)
       var isSwapped = !!permPref && !!permPref.cal && !isMain;
       var cellContent = scaledIngredients.map(function(ing) {
         return '<div style="font-size:.72rem;color:var(--t1);padding:1px 0;line-height:1.4">' +

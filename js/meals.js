@@ -1129,7 +1129,26 @@ function buildDashDayTabs(){
 
 function renderDashDay(i){
   var el=document.getElementById('dash-day-content');if(!el||!currentPlan.cal)return;
+  // Capture which meal cards are open before re-render
+  var openSlots=[];
+  el.querySelectorAll('.meal-card').forEach(function(card){
+    var body=card.querySelector('.meal-body');
+    if(body&&body.classList.contains('open')){
+      openSlots.push(card.getAttribute('data-slotlabel'));
+    }
+  });
   el.innerHTML=buildDayHTML(i,currentPlan,false);
+  // Restore open state after re-render
+  if(openSlots.length){
+    el.querySelectorAll('.meal-card').forEach(function(card){
+      var label=card.getAttribute('data-slotlabel');
+      if(openSlots.indexOf(label)>=0){
+        var body=card.querySelector('.meal-body');
+        var arrow=card.querySelector('.meal-expand');
+        if(body){body.classList.add('open');if(arrow)arrow.textContent='▲';}
+      }
+    });
+  }
   document.querySelectorAll('#dash-day-content .meal-header').forEach(function(h){h.onclick=function(){toggleMeal(h);};});
 }
 

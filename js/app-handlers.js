@@ -164,7 +164,12 @@ function renderWeeklyGrid() {
   // Phone runs computeAllDayScales() and syncs fft_day_scales every 15 seconds.
   // iPad uses those exact scale factors so ingredient grams match the phone perfectly.
   // Falls back to independent calculation only if phone scales haven't arrived yet.
+  var _phoneIngredients = null;
   var _phoneScales = null;
+  try {
+    var _pi = localStorage.getItem('fft_computed_ingredients');
+    if (_pi) _phoneIngredients = JSON.parse(_pi);
+  } catch(e) {}
   try {
     var _ps = localStorage.getItem('fft_day_scales');
     if (_ps) _phoneScales = JSON.parse(_ps);

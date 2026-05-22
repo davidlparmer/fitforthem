@@ -130,6 +130,23 @@ function _scaleGridIngredients(items, effectiveScale) {
     if (name.indexOf('soy')   >= 0 && scaledG > 36) scaledG = 36;
     return m[1] + scaledG + 'g';
   });
+  // Mirror meals.js potato-ratio rule: sour cream = potato*0.12, cheese = potato*0.09
+  var potatoG = 0;
+  scaled.forEach(function(item) {
+    var m = item.match(/^(.*?)(\d+)(g)$/);
+    if (m && m[1].toLowerCase().indexOf('potato') >= 0) potatoG = parseInt(m[2]);
+  });
+  if (potatoG > 0) {
+    scaled = scaled.map(function(item) {
+      var m = item.match(/^(.*?)(\d+)(g)$/);
+      if (!m) return item;
+      var n = m[1].toLowerCase();
+      if (n.indexOf('sour') >= 0) return m[1] + Math.round(potatoG * 0.12) + 'g';
+      if (n.indexOf('cheese') >= 0 || n.indexOf('mozz') >= 0) return m[1] + Math.round(potatoG * 0.09) + 'g';
+      return item;
+    });
+  }
+  return scaled;
 }
 
 function renderWeeklyGrid() {
@@ -164,12 +181,7 @@ function renderWeeklyGrid() {
   // Phone runs computeAllDayScales() and syncs fft_day_scales every 15 seconds.
   // iPad uses those exact scale factors so ingredient grams match the phone perfectly.
   // Falls back to independent calculation only if phone scales haven't arrived yet.
-  var _phoneIngredients = null;
   var _phoneScales = null;
-  try {
-    var _pi = localStorage.getItem('fft_computed_ingredients');
-    if (_pi) _phoneIngredients = JSON.parse(_pi);
-  } catch(e) {}
   try {
     var _ps = localStorage.getItem('fft_day_scales');
     if (_ps) _phoneScales = JSON.parse(_ps);
@@ -295,13 +307,7 @@ function renderWeeklyGrid() {
       }
 
       var rawIngredients = slotData.i || [];
-      // Use phone's pre-computed strings if available — exact mirror, no recalculation
-      var scaledIngredients;
-      if (_phoneIngredients && _phoneIngredients[String(dIdx)] && _phoneIngredients[String(dIdx)][slot.key]) {
-        scaledIngredients = _phoneIngredients[String(dIdx)][slot.key];
-      } else {
-        scaledIngredients = _scaleGridIngredients(rawIngredients, daySlotScales[dIdx][slot.key]);
-      }
+      var scaledIngredients = _scaleGridIngredients(rawIngredients, daySlotScales[dIdx][slot.key]);
 
       var isSwapped = !!permPref && !!permPref.cal && !isMain;
       var cellContent = scaledIngredients.map(function(ing) {

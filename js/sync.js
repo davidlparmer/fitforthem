@@ -45,16 +45,7 @@ function buildSavePayload(){
         }
         return undefined;
       })(),
-      // Final ingredient strings — phone's exact output including potato ratios,
-      // honey formula, caps. iPad renders these directly — zero recalculation.
-      fft_computed_ingredients: (function(){
-        if(window.FFT_IS_IPAD) return undefined;
-        if(typeof computeAllIngredients==='function'){
-          var ci=computeAllIngredients();
-          return ci?JSON.stringify(ci):undefined;
-        }
-        return undefined;
-      })(),
+
     }
   };
 }
@@ -273,9 +264,7 @@ function pullGroupData(callback) {
       try {
         if (d.fft_day_scales) localStorage.setItem('fft_day_scales', d.fft_day_scales);
       } catch(e) {}
-      try {
-        if (d.fft_computed_ingredients) localStorage.setItem('fft_computed_ingredients', d.fft_computed_ingredients);
-      } catch(e) {}
+
 
       // Weight log — iPad never logs, just take server value
       try {

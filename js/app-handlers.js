@@ -1,4 +1,14 @@
 // ─────────────────────────────────────────────────────────────
+// iPad sync age display helper
+var _ipadLastSync = Date.now();
+function _ipadSyncAge() {
+  var s = Math.round((Date.now() - _ipadLastSync) / 1000);
+  if (s < 10) return 'just now';
+  if (s < 60) return s + 's ago';
+  return Math.round(s/60) + 'm ago';
+}
+// Called by pullGroupData callback to reset the clock
+function _markIpadSynced() { _ipadLastSync = Date.now(); }
 // app-handlers.js — Loftin Method App-Level UI Handlers
 // Weekly grid (iPad landscape), Recipes page, Dinner theme UI.
 // Load order: last — after all other modules.
@@ -128,6 +138,12 @@ function renderWeeklyGrid() {
 
   var planCal = currentPlan && currentPlan.cal ? currentPlan.cal : 0;
   if (!planCal) return;
+
+  // Update last-synced time shown in grid header
+  try {
+    var syncEl = document.getElementById('ipad-sync-time');
+    if (syncEl) syncEl.textContent = 'Synced ' + _ipadSyncAge();
+  } catch(e) {}
 
   // ── PLAN NAME ────────────────────────────────────────────────
   var displayName = (typeof userName !== 'undefined' && userName)

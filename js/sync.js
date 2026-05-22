@@ -43,7 +43,7 @@ function _scheduleGroupSync() {
   clearTimeout(_groupSyncDebounceTimer);
   _groupSyncDebounceTimer = setTimeout(function() {
     _doGroupSync();
-  }, 2000);
+  }, 500); // 500ms: iPad sees phone changes within seconds
 }
 
 function saveAllData(){
@@ -162,7 +162,7 @@ var _syncPending = false; // true when a sync was requested while one was alread
 function startBackgroundSync() {
   if (_bgSyncInterval) return;
   _doGroupSync();
-  _bgSyncInterval = setInterval(_doGroupSync, 60 * 1000);
+  _bgSyncInterval = setInterval(_doGroupSync, 15 * 1000); // iPad: 15s keeps grid current
 }
 
 // pullGroupData — fetches the group slot and updates local state.
@@ -239,6 +239,8 @@ function pullGroupData(callback) {
 
       // Re-render grid with latest data
       _refreshWeeklyGridIfOpen();
+      // Reset the "synced X ago" clock on the grid
+      if (typeof _markIpadSynced === 'function') _markIpadSynced();
       if(callback)callback(true);
       return;
     }
@@ -274,6 +276,30 @@ function pullGroupData(callback) {
 function stopBackgroundSync() {
   if (_bgSyncInterval) { clearInterval(_bgSyncInterval); _bgSyncInterval = null; }
 }
+
+// Public — call this for high-priority changes (drink level, meal swap)
+// Bypasses the debounce so iPad sees the change within the next pull cycle.
+function syncGroupNow() {
+  if (window.FFT_IS_IPAD) return;
+  clearTimeout(_groupSyncDebounceTimer);
+  _doGroupSync();
+}
+
+// iOS PWA: visibilitychange is unreliable from background/sleep.
+// pageshow fires more reliably when the user returns to the app.
+// Both pull fresh data immediately on foreground so the iPad is never stale.
+(function() {
+  function _onForeground() {
+    if (typeof pullGroupData === 'function' && localStorage.getItem('fft_group_id')) {
+      pullGroupData(function() {});
+    }
+  }
+  window.addEventListener('pageshow', function(e) {
+    // e.persisted = true means restored from bfcache (common on iOS)
+    _onForeground();
+  });
+  window.addEventListener('focus', _onForeground);
+})();
 
 function _doGroupSync() {
   var deviceId = getDeviceId();

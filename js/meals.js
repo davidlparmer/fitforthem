@@ -40,6 +40,8 @@ function setDrinkLevel(dayIdx, level) {
     document.cookie = 'fft_drinks=' + encodeURIComponent(dd) + ';expires=' + exp.toUTCString() + ';path=/;SameSite=Lax';
   } catch(e) {}
   if (typeof saveAllData === 'function') saveAllData();
+  // Immediately push to group sync so iPad sees drink change within seconds
+  if (typeof syncGroupNow === 'function') syncGroupNow();
   refreshCurrentView(dayIdx);
   updateDashboard();
 }
@@ -170,13 +172,13 @@ function buildDayHTML(i,plan,showSwap){
   // Determine gain vs deficit from phase name
   var isGainMode=(planMode==='moderate_gain'||planMode==='mild_gain'||planMode==='landing_gain');
   var laneMode=isGainMode?'gain':'cut';
-  // ⚠️ SYNC NOTE: slot targets come from getSlotCalorieTargets() in engine.js.
-  // app-handlers.js renderWeeklyGrid calls the same function — do not edit inline.
+  // ⚠️ SYNC DEPENDENCY — see HANDOFF.md section 1
+  // If you change this calculation, update app-handlers.js renderWeeklyGrid to match.
+  var laneRatios=(typeof getLaneRatios==='function')?getLaneRatios(planSex,laneMode):{first:0.275,dinner:0.525,dessert:0.200};
   var foodCal=isWknd&&isDrinking?cal-drinkReserve:cal;
-  var _slotTargets=getSlotCalorieTargets(plan,isDrinking?drinkReserve:0);
-  var targetFirstCal=_slotTargets.first;
-  var targetDinnerCal=_slotTargets.dinner;
-  var targetDessertCal=_slotTargets.dessert;
+  var targetFirstCal=Math.round(foodCal*laneRatios.first);
+  var targetDinnerCal=Math.round(foodCal*laneRatios.dinner);
+  var targetDessertCal=foodCal-targetFirstCal-targetDinnerCal;
 
   // drinkScale: used for restaurant/quick-log cal display on drink nights
   var drinkScale=isWknd&&isDrinking?(cal-drinkReserve)/cal:1.0;

@@ -1763,8 +1763,12 @@ if('serviceWorker' in navigator){
     <div>
       <div style="font-family:var(--font-display);font-size:1.1rem;font-weight:700;color:var(--gold-light)" id="wg-plan-name">Weekly Meal Plan</div>
       <div style="font-size:.7rem;color:var(--t3);margin-top:2px;letter-spacing:.06em;text-transform:uppercase">Tap any Main Meal to swap · Rotate to portrait to exit</div>
+      <div style="font-size:.65rem;color:var(--t3);margin-top:4px" id="ipad-sync-time">Synced just now</div>
     </div>
-    <button onclick="closeWeeklyGrid()" style="background:none;border:1px solid var(--gold-line);color:var(--t2);border-radius:8px;padding:8px 14px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:var(--font-body);letter-spacing:.06em">✕ Close</button>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button onclick="if(typeof pullGroupData==='function')pullGroupData(function(){})" style="background:none;border:1px solid var(--gold-line);color:var(--gold);border-radius:8px;padding:8px 14px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:var(--font-body);letter-spacing:.06em">↺ Refresh</button>
+      <button onclick="closeWeeklyGrid()" style="background:none;border:1px solid var(--gold-line);color:var(--t2);border-radius:8px;padding:8px 14px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:var(--font-body);letter-spacing:.06em">✕ Close</button>
+    </div>
   </div>
 
   <!-- Grid container -->

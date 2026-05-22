@@ -89,6 +89,101 @@ function computeAllDayScales() {
   } catch(e) { return null; }
 }
 
+// Computes final formatted ingredient strings for all 7 days —
+// same logic as buildDayHTML: potato ratios, honey formula, caps.
+// Synced to iPad so it shows identical strings with zero recalculation.
+function computeAllIngredients() {
+  try {
+    var activePlan = getActivePlan();
+    if (!activePlan || !currentPlan || !currentPlan.cal) return null;
+    var planSex = currentPlan.sex || 'male';
+    var planMode = currentPlan.phase || '';
+    var isGainMode = planMode==='moderate_gain'||planMode==='mild_gain'||planMode==='landing_gain';
+    var laneRatios = (typeof getLaneRatios==='function')
+      ? getLaneRatios(planSex, isGainMode?'gain':'cut')
+      : {first:0.275, dinner:0.525, dessert:0.200};
+    var BASE_YOGURT_G=280, BASE_HONEY_G=30;
+    function scaleItems(items, scale) {
+      return (items||[]).map(function(item) {
+        var mC=item.match(/^(Biscoff cookies)\s+(\d+(?:\.\d+)?)$/i);
+        if(mC){return 'Biscoff cookies '+Math.max(0.5,Math.round(parseFloat(mC[2])*scale*2)/2);}
+        var leg=item.match(/^(.*?\s)\d+\s*\((\d+)g\)$/);
+        if(leg)return leg[1].trimRight()+' '+Math.round(parseInt(leg[2])*scale)+'g';
+        var m=item.match(/^(.*?)(\d+)(g)$/);
+        return m?m[1]+Math.round(parseInt(m[2])*scale)+'g':item;
+      });
+    }
+    var result = {};
+    for (var i = 0; i < 7; i++) {
+      var day = activePlan[i];
+      if (!day) continue;
+      var drinkLevel = drinkingDays&&drinkingDays[i]&&drinkingDays[i]!==false?drinkingDays[i]:false;
+      var isDrinking = !!drinkLevel;
+      var drinkReserve = isDrinking&&typeof DRINK_RESERVES!=='undefined'?(DRINK_RESERVES[drinkLevel]||0):0;
+      var foodCal = isDrinking ? currentPlan.cal - drinkReserve : currentPlan.cal;
+      var tFirst   = Math.round(foodCal * laneRatios.first);
+      var tDinner  = Math.round(foodCal * laneRatios.dinner);
+      var tDessert = foodCal - tFirst - tDinner;
+      var _fp=mealPrefs&&mealPrefs[i]&&mealPrefs[i].first;
+      var _dp=mealPrefs&&mealPrefs[i]&&mealPrefs[i].dessert;
+      var fBase=(_fp&&_fp.cal)?_fp.cal:((day.first&&day.first.c)||0);
+      var xBase=(_dp&&_dp.cal)?_dp.cal:((day.dessert&&day.dessert.c)||0);
+      var dBase=(day.dinner&&day.dinner.c)||0;
+      if(typeof getResolvedDinner==='function'){var rd=getResolvedDinner(i);if(rd&&rd.c)dBase=rd.c;}
+      var fS=fBase>0?tFirst/fBase:1;
+      var dS=dBase>0?tDinner/dBase:1;
+      var xS=xBase>0?tDessert/xBase:1;
+      // First slot
+      var firstItems=scaleItems(day.first&&day.first.i,fS).map(function(item){
+        var wm=item.match(/^(Whole\s+eggs?\s*)(\d+)(g)$/i)||item.match(/^(Eggs?\s*)(\d+)(g)$/i);
+        if(wm&&typeof eggsGtoCount==='function')return eggsGtoCount(parseInt(wm[2]));
+        return item;
+      });
+      var fPotG=0;
+      firstItems.forEach(function(it){var m=it.match(/^(.*?)(\d+)(g)$/);if(m&&m[1].toLowerCase().indexOf('potato')>=0)fPotG=parseInt(m[2]);});
+      if(fPotG>0)firstItems=firstItems.map(function(it){
+        var m=it.match(/^(.*?)(\d+)(g)$/);if(!m)return it;var n=m[1].toLowerCase();
+        if(n.indexOf('sour')>=0)return m[1]+Math.round(fPotG*0.12)+'g';
+        if(n.indexOf('cheese')>=0||n.indexOf('mozz')>=0)return m[1]+Math.round(fPotG*0.09)+'g';
+        return it;
+      });
+      // Dinner slot
+      var dinnerItems=scaleItems(day.dinner&&day.dinner.i,dS).map(function(item){
+        var m=item.match(/^(.*?)(\d+)(g)$/);if(!m)return item;
+        var n=m[1].toLowerCase();var g=parseInt(m[2]);
+        if(n.indexOf('honey')>=0&&g>42)return m[1]+'42g';
+        if(n.indexOf('soy')>=0&&g>36)return m[1]+'36g';
+        return item;
+      });
+      var dPotG=0;
+      dinnerItems.forEach(function(it){var m=it.match(/^(.*?)(\d+)(g)$/);if(m&&m[1].toLowerCase().indexOf('potato')>=0)dPotG=parseInt(m[2]);});
+      if(dPotG>0)dinnerItems=dinnerItems.map(function(it){
+        var m=it.match(/^(.*?)(\d+)(g)$/);if(!m)return it;var n=m[1].toLowerCase();
+        if(n.indexOf('sour')>=0)return m[1]+Math.round(dPotG*0.12)+'g';
+        if(n.indexOf('cheese')>=0||n.indexOf('mozz')>=0)return m[1]+Math.round(dPotG*0.09)+'g';
+        return it;
+      });
+      // Dessert slot
+      var dessertItems=(day.dessert&&day.dessert.i||[]).map(function(item){
+        var mC=item.match(/^(Biscoff cookies)\s+(\d+(?:\.\d+)?)$/i);
+        if(mC)return 'Biscoff cookies '+Math.max(0.5,Math.round(parseFloat(mC[2])*xS*2)/2);
+        var m=item.match(/^(.*?)(\d+)(g)$/);if(!m)return item;
+        var n=m[1].toLowerCase();var baseG=parseInt(m[2]);
+        if(n.indexOf('yogurt')>=0||n.indexOf('greek')>=0)return m[1]+Math.round(baseG*xS)+'g';
+        if(n.indexOf('honey')>=0){
+          var sY=Math.round(BASE_YOGURT_G*xS);
+          var hG=BASE_HONEY_G+Math.round(((sY-BASE_YOGURT_G)/50)*5);
+          if(isDrinking)hG=25;
+          return m[1]+hG+'g';
+        }
+        return m[1]+Math.round(baseG*xS)+'g';
+      });
+      result[i]={first:firstItems,dinner:dinnerItems,dessert:dessertItems};
+    }
+    return result;
+  } catch(e) { return null; }
+}
+
 // Format ingredient with optional store unit conversion in parentheses
 function eggsGtoCount(grams){
   var count=Math.max(1,Math.round(grams/50));

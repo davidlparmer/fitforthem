@@ -290,7 +290,13 @@ function renderWeeklyGrid() {
       }
 
       var rawIngredients = slotData.i || [];
-      var scaledIngredients = _scaleGridIngredients(rawIngredients, daySlotScales[dIdx][slot.key]);
+      // Use phone's pre-computed strings if available — exact mirror, no recalculation
+      var scaledIngredients;
+      if (_phoneIngredients && _phoneIngredients[String(dIdx)] && _phoneIngredients[String(dIdx)][slot.key]) {
+        scaledIngredients = _phoneIngredients[String(dIdx)][slot.key];
+      } else {
+        scaledIngredients = _scaleGridIngredients(rawIngredients, daySlotScales[dIdx][slot.key]);
+      }
 
       var isSwapped = !!permPref && !!permPref.cal && !isMain;
       var cellContent = scaledIngredients.map(function(ing) {

@@ -161,7 +161,7 @@ async function buildMealFromModal(){
       'Rules:\n'+
       '1. Show ONE Best Match — most satiating, MAXIMIZING calories up to '+budget+' cal\n'+
       '2. Show up to 2 Alternates only if they use different ingredients or approach\n'+
-      '3. All measurements must be in grams (round to nearest 5g), except eggs (count)\n'+
+      '3. Use natural human-readable units — e.g. "2 slices", "1 cup", "3 eggs", "1 tbsp". For ingredients without a natural unit (chicken, beef, potato, rice, oats, broccoli etc.) use grams rounded to nearest 5g. Never use grams for foods people normally count or measure in cups/spoons/slices/pieces.\n'+
       '4. Never fake precision — round to practical amounts\n'+
       '5. Include step-by-step cooking instructions\n'+
       '6. Prioritize protein sources first, use potatoes/rice/oats as the calorie dial to reach '+budget+' cal\n'+
@@ -289,7 +289,7 @@ async function buildMeal(){
   var el=document.getElementById('builder-results');
   el.innerHTML='<div class="loading"><div class="spinner"></div>Building your meal...</div>';
   try{
-    var data=await askClaude('Build a '+mealType+' meal using ONLY: '+ingredients+'. Target: '+budget+' cal. JSON: {"meal":"name","ingredients":[{"item":"name","amount":"amount","cal":0,"pro":0}],"totalCal":0,"totalPro":0,"instructions":["step1","step2"],"tip":"note"}');
+    var data=await askClaude('Build a '+mealType+' meal using ONLY: '+ingredients+'. Target: '+budget+' cal. Use natural serving units for amounts (e.g. "2 slices", "1 cup", "3 eggs", "1 tbsp") — only use grams for foods without a natural unit (chicken, beef, rice, potato). JSON: {"meal":"name","ingredients":[{"item":"name","amount":"2 slices or 150g","cal":0,"pro":0}],"totalCal":0,"totalPro":0,"instructions":["step1","step2"],"tip":"note"}');
     lastBuiltMeal=data;
     lastBuiltMeal.slot=mealType;
     var html='<div class="food-card best"><div class="best-badge top">Built for You</div><div class="food-name">'+data.meal+'</div>'+

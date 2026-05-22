@@ -1767,7 +1767,7 @@ if('serviceWorker' in navigator){
     </div>
     <div style="display:flex;align-items:center;gap:10px">
       <button onclick="if(typeof pullGroupData==='function')pullGroupData(function(){})" style="background:none;border:1px solid var(--gold-line);color:var(--gold);border-radius:8px;padding:8px 14px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:var(--font-body);letter-spacing:.06em">↺ Refresh</button>
-      <button onclick="closeWeeklyGrid()" style="background:none;border:1px solid var(--gold-line);color:var(--t2);border-radius:8px;padding:8px 14px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:var(--font-body);letter-spacing:.06em">✕ Close</button>
+      <button onclick="document.getElementById('ipad-link-screen').style.display='flex';document.getElementById('weekly-grid-overlay').style.display='none'" style="background:none;border:1px solid var(--gold-line);color:var(--t2);border-radius:8px;padding:8px 14px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:var(--font-body);letter-spacing:.06em">Re-link</button>
     </div>
   </div>
 

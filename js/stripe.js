@@ -36,6 +36,8 @@ async function iPadClaimLink(){
               'fft_custom','fft_summary_dismissed','fft_saved_meals','fft_drinking_days'];
     keys.forEach(function(k){if(d[k]){try{localStorage.setItem(k,d[k]);}catch(e){}}}); 
     status.innerHTML='<span style="color:var(--gold)">Linked. Loading your plan…</span>';
+    // Persist fft_group_id to device blob so reinstalls don't break sync
+    if (typeof saveAllData === 'function') saveAllData();
     setTimeout(function(){window.location.reload();},800);
   }catch(err){
     status.textContent='Connection error. Check your network and try again.';
@@ -284,7 +286,7 @@ var subStatus='none';
         // pullGroupData handles the re-render internally via _refreshWeeklyGridIfOpen.
         setInterval(function(){
           pullGroupData(function(){});
-        }, 30*1000);
+        }, 15*1000); // 15s keeps grid current (was 30s)
       });
       return; // ← critical: never fall through to phone boot below
     }

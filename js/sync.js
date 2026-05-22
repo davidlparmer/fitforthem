@@ -107,8 +107,10 @@ function restoreFromServer(callback){
       }catch(e){}
       // Restore groupId to localStorage so _doGroupSync can pass it as body fallback
       try{
-        if(d.groupId && !localStorage.getItem('fft_group_id')){
-          localStorage.setItem('fft_group_id', d.groupId);
+        // Check both d.groupId (server top-level) and d.fft_group_id (blob key)
+        var _gid = d.groupId || d.fft_group_id;
+        if(_gid && !localStorage.getItem('fft_group_id')){
+          localStorage.setItem('fft_group_id', _gid);
         }
       }catch(e){}
       try{

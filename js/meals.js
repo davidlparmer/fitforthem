@@ -46,6 +46,49 @@ function setDrinkLevel(dayIdx, level) {
   updateDashboard();
 }
 
+// Computes the exact scale factors the phone uses for every day/slot.
+// Synced to the iPad so it can render identical gram amounts without
+// running any independent calculation.
+function computeAllDayScales() {
+  try {
+    var activePlan = getActivePlan();
+    if (!activePlan || !currentPlan || !currentPlan.cal) return null;
+    var planSex = currentPlan.sex || 'male';
+    var planMode = currentPlan.phase || '';
+    var isGainMode = planMode==='moderate_gain'||planMode==='mild_gain'||planMode==='landing_gain';
+    var laneRatios = (typeof getLaneRatios==='function')
+      ? getLaneRatios(planSex, isGainMode?'gain':'cut')
+      : {first:0.275, dinner:0.525, dessert:0.200};
+    var scales = {};
+    for (var i = 0; i < 7; i++) {
+      var dp = activePlan[i];
+      if (!dp) continue;
+      var drinkLevel = drinkingDays&&drinkingDays[i]&&drinkingDays[i]!==false ? drinkingDays[i] : false;
+      var isDrinking = !!drinkLevel;
+      var drinkReserve = isDrinking&&typeof DRINK_RESERVES!=='undefined' ? (DRINK_RESERVES[drinkLevel]||0) : 0;
+      var foodCal = isDrinking ? currentPlan.cal - drinkReserve : currentPlan.cal;
+      var tFirst   = Math.round(foodCal * laneRatios.first);
+      var tDinner  = Math.round(foodCal * laneRatios.dinner);
+      var tDessert = foodCal - tFirst - tDinner;
+      var _fp = mealPrefs&&mealPrefs[i]&&mealPrefs[i].first;
+      var _dp2 = mealPrefs&&mealPrefs[i]&&mealPrefs[i].dessert;
+      var firstBase   = (_fp&&_fp.cal)   ? _fp.cal   : ((dp.first&&dp.first.c)||0);
+      var dessertBase = (_dp2&&_dp2.cal) ? _dp2.cal  : ((dp.dessert&&dp.dessert.c)||0);
+      var dinnerBase  = (dp.dinner&&dp.dinner.c)||0;
+      if (typeof getResolvedDinner==='function') {
+        var rd = getResolvedDinner(i);
+        if (rd&&rd.c) dinnerBase = rd.c;
+      }
+      scales[i] = {
+        first:   firstBase   > 0 ? tFirst   / firstBase   : 1,
+        dinner:  dinnerBase  > 0 ? tDinner  / dinnerBase  : 1,
+        dessert: dessertBase > 0 ? tDessert / dessertBase : 1
+      };
+    }
+    return scales;
+  } catch(e) { return null; }
+}
+
 // Format ingredient with optional store unit conversion in parentheses
 function eggsGtoCount(grams){
   var count=Math.max(1,Math.round(grams/50));

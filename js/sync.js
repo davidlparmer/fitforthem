@@ -35,6 +35,16 @@ function buildSavePayload(){
       // Phone's actual in-memory cal — overrides any migration differences on iPad
       fft_effective_cal: (typeof currentPlan!=='undefined'&&currentPlan&&currentPlan.cal)
         ? String(currentPlan.cal) : undefined,
+      // Phone's computed scale factors per day/slot — iPad renders these directly,
+      // no independent calculation. Guarantees gram-perfect mirror of the phone.
+      fft_day_scales: (function(){
+        if(window.FFT_IS_IPAD) return undefined;
+        if(typeof computeAllDayScales==='function'){
+          var s=computeAllDayScales();
+          return s?JSON.stringify(s):undefined;
+        }
+        return undefined;
+      })(),
     }
   };
 }
@@ -245,6 +255,14 @@ function pullGroupData(callback) {
         if (d.fft_drinking_days) {
           drinkingDays = JSON.parse(d.fft_drinking_days);
           localStorage.setItem('fft_drinking_days', d.fft_drinking_days);
+        }
+      } catch(e) {}
+
+      // Phone-computed scale factors — store for use in renderWeeklyGrid
+      // This replaces all independent iPad calculation with the phone's exact values
+      try {
+        if (d.fft_day_scales) {
+          localStorage.setItem('fft_day_scales', d.fft_day_scales);
         }
       } catch(e) {}
 

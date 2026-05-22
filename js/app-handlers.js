@@ -160,10 +160,16 @@ function renderWeeklyGrid() {
   }
 
   // ── PRECOMPUTE effectiveScale PER DAY ────────────────────────
-  // ⚠️ SYNC DEPENDENCY — see HANDOFF.md section 1
-  // This slot target calculation must mirror buildDayHTML in meals.js exactly.
-  // If you change ratios or drink logic in meals.js, update this block to match.
-  // Future improvement: extract into getSlotCalorieTargets() shared function.
+  // ── iPad renders phone's pre-computed scales — no independent calculation ──
+  // Phone runs computeAllDayScales() and syncs fft_day_scales every 15 seconds.
+  // iPad uses those exact scale factors so ingredient grams match the phone perfectly.
+  // Falls back to independent calculation only if phone scales haven't arrived yet.
+  var _phoneScales = null;
+  try {
+    var _ps = localStorage.getItem('fft_day_scales');
+    if (_ps) _phoneScales = JSON.parse(_ps);
+  } catch(e) {}
+
   var planSex  = currentPlan.sex || 'male';
   var planMode = currentPlan.phase || '';
   var isGainMode = planMode === 'moderate_gain' || planMode === 'mild_gain' || planMode === 'landing_gain';
@@ -172,6 +178,13 @@ function renderWeeklyGrid() {
     : { first: 0.275, dinner: 0.525, dessert: 0.200 };
 
   var daySlotScales = plan.map(function(dayPlan, dIdx) {
+    // Use phone's computed scales if available — exact mirror, no recalculation
+    if (_phoneScales) {
+      var _s = _phoneScales[String(dIdx)] || _phoneScales[dIdx];
+      if (_s && _s.first !== undefined && _s.dinner !== undefined && _s.dessert !== undefined) {
+        return { first: _s.first, dinner: _s.dinner, dessert: _s.dessert };
+      }
+    }
     var drinkLevel = drinkingDays && drinkingDays[dIdx];
     var isDrinking = drinkLevel && drinkLevel !== false;
     var drinkReserve = 0;

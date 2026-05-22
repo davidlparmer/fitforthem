@@ -48,6 +48,15 @@ function _scheduleGroupSync() {
 
 function saveAllData(){
   if(!localStorage.getItem('fft_name'))return;
+  // Flush in-memory currentPlan to localStorage before syncing.
+  // The phone may modify currentPlan.cal in memory (migrations, adjustments)
+  // without immediately saving to localStorage. This ensures the iPad always
+  // gets the exact same planCal the phone uses for its display calculation.
+  try{
+    if(typeof currentPlan!=='undefined'&&currentPlan&&currentPlan.cal){
+      localStorage.setItem('fft_plan',JSON.stringify(currentPlan));
+    }
+  }catch(e){}
   var payload=JSON.stringify(buildSavePayload());
   if(navigator.sendBeacon){
     var blob=new Blob([payload],{type:'application/json'});

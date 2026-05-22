@@ -109,7 +109,8 @@ function closeWeeklyGrid() {
 
 // ── INGREDIENT SCALING HELPER ─────────────────────────────────
 function _scaleGridIngredients(items, effectiveScale) {
-  return items.map(function(item) {
+  // Step 1: scale all ingredients linearly
+  var scaled = items.map(function(item) {
     var mCookie = item.match(/^(Biscoff cookies)\s+(\d+(?:\.\d+)?)$/i);
     if (mCookie) {
       var baseCount = parseFloat(mCookie[2]);
@@ -130,7 +131,8 @@ function _scaleGridIngredients(items, effectiveScale) {
     if (name.indexOf('soy')   >= 0 && scaledG > 36) scaledG = 36;
     return m[1] + scaledG + 'g';
   });
-  // Mirror meals.js potato-ratio rule: sour cream = potato*0.12, cheese = potato*0.09
+  // Step 2: potato-ratio override — mirrors meals.js buildDayHTML exactly
+  // sour cream = potato * 0.12, cheese/mozz = potato * 0.09
   var potatoG = 0;
   scaled.forEach(function(item) {
     var m = item.match(/^(.*?)(\d+)(g)$/);
@@ -176,17 +178,8 @@ function renderWeeklyGrid() {
     planNameEl.style.width = '100%';
   }
 
-  // ── PRECOMPUTE effectiveScale PER DAY ────────────────────────
-  // ── iPad renders phone's pre-computed scales — no independent calculation ──
-  // Phone runs computeAllDayScales() and syncs fft_day_scales every 15 seconds.
-  // iPad uses those exact scale factors so ingredient grams match the phone perfectly.
-  // Falls back to independent calculation only if phone scales haven't arrived yet.
-  var _phoneScales = null;
-  try {
-    var _ps = localStorage.getItem('fft_day_scales');
-    if (_ps) _phoneScales = JSON.parse(_ps);
-  } catch(e) {}
-
+  // ── SYNC DEPENDENCY — see HANDOFF.md section 1 ─────────────────
+  // This calculation mirrors buildDayHTML in meals.js. Keep in sync.
   var planSex  = currentPlan.sex || 'male';
   var planMode = currentPlan.phase || '';
   var isGainMode = planMode === 'moderate_gain' || planMode === 'mild_gain' || planMode === 'landing_gain';
@@ -195,13 +188,6 @@ function renderWeeklyGrid() {
     : { first: 0.275, dinner: 0.525, dessert: 0.200 };
 
   var daySlotScales = plan.map(function(dayPlan, dIdx) {
-    // Use phone's computed scales if available — exact mirror, no recalculation
-    if (_phoneScales) {
-      var _s = _phoneScales[String(dIdx)] || _phoneScales[dIdx];
-      if (_s && _s.first !== undefined && _s.dinner !== undefined && _s.dessert !== undefined) {
-        return { first: _s.first, dinner: _s.dinner, dessert: _s.dessert };
-      }
-    }
     var drinkLevel = drinkingDays && drinkingDays[dIdx];
     var isDrinking = drinkLevel && drinkLevel !== false;
     var drinkReserve = 0;

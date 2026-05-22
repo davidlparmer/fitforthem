@@ -1561,23 +1561,6 @@ if('serviceWorker' in navigator){
 </div>
 
 <!-- INGREDIENT SWAP MODAL -->
-<div id="ingredient-swap-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999">
-  <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5)" onclick="closeIngredientSwap()"></div>
-  <div style="position:absolute;bottom:0;left:0;width:100%;background:var(--card);border-radius:20px 20px 0 0;padding:24px 20px;max-height:75vh;overflow-y:auto">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-      <div style="font-size:1.1rem;font-weight:700;color:var(--earth)"> Swap Ingredient</div>
-      <button onclick="closeIngredientSwap()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--muted)">✕</button>
-    </div>
-    <div id="swap-current" style="font-size:.84rem;color:var(--muted);margin-bottom:16px;padding:8px 12px;background:var(--cream);border-radius:8px"></div>
-    <label>Replace with:</label>
-    <div style="display:flex;gap:8px;margin-top:6px;margin-bottom:14px">
-      <input type="text" id="swap-input" placeholder="e.g. strawberries, almond milk..." style="flex:1">
-      <button class="btn-sm" onclick="searchSwapIngredient()">Search</button>
-    </div>
-    <div id="swap-results"></div>
-  </div>
-</div>
-
 <!-- CELEBRATION OVERLAY -->
 
 

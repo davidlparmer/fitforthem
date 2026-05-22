@@ -421,25 +421,7 @@ function buildDayHTML(i,plan,showSwap){
   var dinnerCal=targetDinnerCal;
   var dessertCal=targetDessertCal;
 
-  // Apply any ingredient swaps saved for this day
-  if(!window.ingredientSwaps)window.ingredientSwaps={};
-  ['first','dinner','dessert'].forEach(function(slot){
-    var items=slot==='first'?firstItems:slot==='dinner'?dinnerItems:dessertItems;
-    for(var idx=0;idx<items.length;idx++){
-      var key='fft_ingswap_'+i+'_'+slot+'_'+idx;
-      var saved=window.ingredientSwaps[key];
-      if(!saved){
-        try{var raw=localStorage.getItem(key);if(raw)saved=JSON.parse(raw);}catch(e){}
-      }
-      if(saved){
-        items[idx]=saved.ingredient;
-        // Update cal for this slot
-        if(slot==='first')firstCal=Math.max(50,firstCal+(saved.cal-Math.round(day.first.c*firstIngScale/day.first.i.length)));
-        if(slot==='dinner')dinnerCal=Math.max(50,dinnerCal+(saved.cal-Math.round(day.dinner.c*dinnerIngScale/day.dinner.i.length)));
-        if(slot==='dessert')dessertCal=Math.max(50,dessertCal+(saved.cal-Math.round(day.dessert.c*dessertIngScale/day.dessert.i.length)));
-      }
-    }
-  });
+
   var alcCal=isWknd&&isDrinking?drinkReserve:0;
   var totalFoodCal=firstCal+dinnerCal+dessertCal;
 
@@ -606,9 +588,7 @@ function buildDayHTML(i,plan,showSwap){
   } else if(customFirst){
     html+=renderCustomMeal(customFirst,'First Meal');
   } else {
-    var hasFirstSwap=Object.keys(window.ingredientSwaps||{}).some(function(k){return k.startsWith('fft_ingswap_'+i+'_first_');});
-    var firstCustomBadge=hasFirstSwap?'<span class="badge custom" style="margin-left:6px">Custom</span>':'';
-    html+=mealCard('','','First Meal · Break your fast when ready',fn+fTag+firstCustomBadge,
+    html+=mealCard('','','First Meal · Break your fast when ready',fn+fTag,
       '<ul>'+firstItems.map(function(x,idx){
         var gramsMatch=x.match(/(\d+)g/);
         var grams=gramsMatch?parseInt(gramsMatch[1]):100;
@@ -616,10 +596,7 @@ function buildDayHTML(i,plan,showSwap){
         var eggMatch=x.match(/^(\d+)\s*eggs?$/i);
         if(eggMatch){grams=parseInt(eggMatch[1])*50;}
         var name=x.replace(/\d+g/,'').replace(/^\d+\s*eggs?$/i,'Eggs').trim();
-        return '<li style="display:flex;justify-content:space-between;align-items:center">'+
-          '<span>'+formatIngredient(x)+'</span>'+
-          '<button onclick="showIngredientSwap('+i+',\'first\','+idx+',\''+x.replace(/\x27/g,"\\'")+'\',\''+name.replace(/\x27/g,"\\'")+'\','+grams+')" style="background:none;border:none;color:var(--warm);font-size:.72rem;cursor:pointer;padding:2px 6px;font-weight:600;white-space:nowrap">swap</button>'+
-        '</li>';
+        return '<li>'+formatIngredient(x)+'</li>';
       }).join('')+'</ul>'+renderMacroBar(_normalizeMacros(calcMealMacros(firstItems),firstCal),'bar')+firstCookSteps+skipBtn('first'),firstCal,true);
   }
 
@@ -642,17 +619,12 @@ function buildDayHTML(i,plan,showSwap){
     }
     html+=overBudgetWarning+renderCustomMeal(customDinner,'Main Meal');
   } else {
-    var hasDinnerSwap=Object.keys(window.ingredientSwaps||{}).some(function(k){return k.startsWith('fft_ingswap_'+i+'_dinner_');});
-    var dinnerCustomBadge=hasDinnerSwap?'<span class="badge custom" style="margin-left:6px">Custom</span>':'';
-    html+=mealCard('alt','4–6 hrs after first meal · make this','Main Meal',dinnerTitleDisplay+dinnerCustomBadge,
+    html+=mealCard('alt','4–6 hrs after first meal · make this','Main Meal',dinnerTitleDisplay,
       '<ul>'+dinnerItems.map(function(x,idx){
         var gramsMatch=x.match(/(\d+)g/);
         var grams=gramsMatch?parseInt(gramsMatch[1]):100;
         var name=x.replace(/\d+g/,'').trim();
-        return '<li style="display:flex;justify-content:space-between;align-items:center">'+
-          '<span>'+formatIngredient(x)+'</span>'+
-          '<button onclick="showIngredientSwap('+i+',\'dinner\','+idx+',\''+x.replace(/\x27/g,"\\'")+'\',\''+name.replace(/\x27/g,"\\'")+'\','+grams+')" style="background:none;border:none;color:var(--warm);font-size:.72rem;cursor:pointer;padding:2px 6px;font-weight:600;white-space:nowrap">swap</button>'+
-        '</li>';
+        return '<li>'+formatIngredient(x)+'</li>';
       }).join('')+'</ul>'+renderMacroBar(_normalizeMacros(calcMealMacros(dinnerItems),dinnerCal),'bar')+dinnerCookSteps+skipBtn('dinner'),dinnerCal,true);
   }
 
@@ -661,17 +633,12 @@ function buildDayHTML(i,plan,showSwap){
   } else if(customDessert){
     html+=renderCustomMeal(customDessert,'Final Meal');
   } else {
-    var hasDessertSwap=Object.keys(window.ingredientSwaps||{}).some(function(k){return k.startsWith('fft_ingswap_'+i+'_dessert_');});
-    var dessertCustomBadge=hasDessertSwap?'<span class="badge custom" style="margin-left:6px">Custom</span>':'';
-    html+=mealCard('dessert','1–2 hrs after dinner · make this','Final Meal',dessertName+dessertCustomBadge,
+    html+=mealCard('dessert','1–2 hrs after dinner · make this','Final Meal',dessertName,
       '<ul>'+dessertItems.map(function(x,idx){
         var gramsMatch=x.match(/(\d+)g/);
         var grams=gramsMatch?parseInt(gramsMatch[1]):100;
         var name=x.replace(/\d+g/,'').trim();
-        return '<li style="display:flex;justify-content:space-between;align-items:center">'+
-          '<span>'+formatIngredient(x)+'</span>'+
-          '<button onclick="showIngredientSwap('+i+',\'dessert\','+idx+',\''+x.replace(/\x27/g,"\\'")+'\',\''+name.replace(/\x27/g,"\\'")+'\','+grams+')" style="background:none;border:none;color:var(--warm);font-size:.72rem;cursor:pointer;padding:2px 6px;font-weight:600;white-space:nowrap">swap</button>'+
-        '</li>';
+        return '<li>'+formatIngredient(x)+'</li>';
       }).join('')+'</ul>'+renderMacroBar(_normalizeMacros(calcMealMacros(dessertItems),dessertCal),'bar')+dessertCookSteps+skipBtn('dessert'),dessertCal,true);
   }
 

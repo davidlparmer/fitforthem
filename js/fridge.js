@@ -2,117 +2,11 @@
 // fridge.js — Loftin Method My Fridge & Ingredient Swap
 // Fridge modal meal builder, ingredient swap system, extra cal calc.
 // Globals used: currentPlan, customMeals, proteinSwaps, mealPrefs,
-//               currentDayIdx, swapContext, lastBuiltMeal (declared here)
+//               currentDayIdx, lastBuiltMeal (declared here)
 // Depends on: engine.js (buildRotation, calcSteps)
 // ─────────────────────────────────────────────────────────────
 
 // ── INGREDIENT SWAP ───────────────────────────────────────────
-var swapContext={dayIdx:null, slot:null, ingredientIdx:null, originalItem:null, originalCal:null};
-
-async function showIngredientSwap(dayIdx, slot, ingredientIdx, ingredientText, ingredientName, grams){
-  swapContext={dayIdx:dayIdx, slot:slot, ingredientIdx:ingredientIdx, originalItem:ingredientText, originalCal:0, originalGrams:grams||100};
-  document.getElementById('swap-current').innerHTML='Looking up <strong>'+ingredientText+'</strong>...';
-  document.getElementById('swap-input').value='';
-  document.getElementById('swap-results').innerHTML='';
-  document.getElementById('ingredient-swap-modal').style.display='block';
-  document.body.style.overflow='hidden';
-
-  // Look up actual calories for this ingredient
-  // Eggs: use direct calculation ~70 cal per large egg (USDA)
-  var isEgg=ingredientName.toLowerCase().indexOf('egg')>=0||ingredientText.match(/^\d+\s*eggs?$/i);
-  if(isEgg){
-    var eggG=grams||100;
-    var eggCal=Math.round((eggG/50)*70);// ~70 cal per 50g egg
-    swapContext.originalCal=eggCal;
-    document.getElementById('swap-current').innerHTML='Swapping: <strong>'+ingredientText+'</strong> (~'+eggCal+' cal)';
-  } else {
-    try{
-      var data=await askClaude('Calories for '+ingredientName+' at '+(grams||100)+'g. JSON: {"cal":'+(grams||100)+'}');
-      swapContext.originalCal=data.cal||Math.round((grams||100)*1.5);
-      document.getElementById('swap-current').innerHTML='Swapping: <strong>'+ingredientText+'</strong> (~'+swapContext.originalCal+' cal)';
-    }catch(e){
-      // Fallback estimate
-      swapContext.originalCal=Math.round((grams||100)*1.5);
-      document.getElementById('swap-current').innerHTML='Swapping: <strong>'+ingredientText+'</strong>';
-    }
-  }
-
-  setTimeout(function(){document.getElementById('swap-input').focus();},300);
-}
-
-function closeIngredientSwap(){
-  document.getElementById('ingredient-swap-modal').style.display='none';
-  document.body.style.overflow='';
-}
-
-async function searchSwapIngredient(){
-  var q=document.getElementById('swap-input').value.trim();
-  if(!q){alert('What do you want to swap it with?');return;}
-  var el=document.getElementById('swap-results');
-  el.innerHTML='<div class="loading"><div class="spinner"></div>Finding '+q+'...</div>';
-
-  // Get original grams and estimate original cal per gram
-  var gramsMatch=swapContext.originalItem.match(/(\d+)g/);
-  var originalGrams=gramsMatch?parseInt(gramsMatch[1]):100;
-  var targetCal=swapContext.originalCal; // calories we need to match
-
-  try{
-    // First get cal per 100g of the new ingredient
-    var data=await askClaude('Nutrition for '+q+' per 100g cooked/raw (whichever is typical). JSON: {"name":"'+q+'","cal_per_100g":0,"pro_per_100g":0,"carb_per_100g":0,"fat_per_100g":0,"cooking_note":"how to prepare briefly"}');
-
-    // Calculate grams needed to match target calories
-    var calPer100g=data.cal_per_100g||0;
-    if(calPer100g<=0){
-      el.innerHTML='<div class="error-box">⚠️ Couldn\'t get nutrition data. Try again. <span onclick="location.reload()" style="color:var(--gold);cursor:pointer;font-weight:600">Reload app</span></div>';
-      return;
-    }
-
-    var neededGrams=Math.round((targetCal/calPer100g)*100);
-    var actualCal=Math.round(calPer100g*neededGrams/100);
-    var actualPro=Math.round((data.pro_per_100g||0)*neededGrams/100);
-
-    el.innerHTML='<div class="food-card best">'+
-      '<div class="best-badge top">Calorie Matched</div>'+
-      '<div class="food-name">'+data.name+' '+neededGrams+'g</div>'+
-      '<div class="coach-note" style="margin-bottom:10px">To replace <strong>'+swapContext.originalItem+'</strong> at the same calories, cook <strong>'+neededGrams+'g of '+data.name+'</strong>.'+(data.cooking_note?' '+data.cooking_note:'')+'</div>'+
-      '<div class="food-macros">'+
-        '<div class="macro"><div class="mv">'+actualCal+'</div><div class="ml">Cal</div></div>'+
-        '<div class="macro"><div class="mv">'+actualPro+'g</div><div class="ml">Protein</div></div>'+
-      '</div>'+
-      '<button class="btn" onclick="confirmIngredientSwap(\''+data.name.replace(/\x27/g,"\\'")+' '+neededGrams+'g\','+actualCal+')" style="margin-top:10px;background:var(--green)"> Swap '+swapContext.originalItem.split(' ')[0]+' → '+neededGrams+'g '+data.name+'</button>'+
-    '</div>';
-  }catch(err){
-    el.innerHTML='<div class="error-box">⚠️ Something went wrong. Try again. <span onclick="location.reload()" style="color:var(--gold);cursor:pointer;font-weight:600">Reload app</span></div>';
-  }
-}
-
-function confirmIngredientSwap(newIngredient, newCal){
-  if(swapContext.dayIdx===null)return;
-
-  // Save swap to both memory and localStorage
-  if(!window.ingredientSwaps)window.ingredientSwaps={};
-  var swapKey='fft_ingswap_'+swapContext.dayIdx+'_'+swapContext.slot+'_'+swapContext.ingredientIdx;
-  var swapData={ingredient:newIngredient, cal:newCal};
-  window.ingredientSwaps[swapKey]=swapData;
-  try{localStorage.setItem(swapKey, JSON.stringify(swapData));}catch(e){}
-
-  closeIngredientSwap();
-
-  // Force full re-render of the day
-  setTimeout(function(){
-    buildDashDayTabs();
-    renderDashDay(swapContext.dayIdx);
-    // Show success banner
-    var el=document.getElementById('dash-loss');
-    if(el){
-      el.className='adj-banner good';
-      el.innerHTML='<strong> Swapped!</strong> '+newIngredient+' is now in your '+swapContext.slot+'.';
-      el.classList.remove('hidden');
-      setTimeout(function(){el.classList.add('hidden');el.innerHTML='';},4000);
-    }
-  },100);
-}
-// ── END INGREDIENT SWAP ────────────────────────────────────────
 
 function showExtraCalModal(){
   document.getElementById('extra-cal-modal').style.display='block';

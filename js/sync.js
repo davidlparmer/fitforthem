@@ -32,6 +32,9 @@ function buildSavePayload(){
       fft_group_id:localStorage.getItem('fft_group_id'),
       fft_dinner_theme:localStorage.getItem('fft_dinner_theme'),
       fft_drinking_days: window.FFT_IS_IPAD ? undefined : localStorage.getItem('fft_drinking_days'),
+      // Phone's actual in-memory cal — overrides any migration differences on iPad
+      fft_effective_cal: (typeof currentPlan!=='undefined'&&currentPlan&&currentPlan.cal)
+        ? String(currentPlan.cal) : undefined,
     }
   };
 }
@@ -219,6 +222,11 @@ function pullGroupData(callback) {
         if (d.fft_plan) {
           currentPlan = JSON.parse(d.fft_plan);
           if (typeof runPlanMigration === 'function') runPlanMigration();
+          // Force exact phone cal — eliminates migration or adjustment divergence
+          if (d.fft_effective_cal) {
+            var _ec = parseInt(d.fft_effective_cal);
+            if (_ec > 0) currentPlan.cal = _ec;
+          }
         }
       } catch(e) {}
       try {

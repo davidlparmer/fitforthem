@@ -1,5 +1,5 @@
 // netlify/functions/create-checkout.js
-// Creates a Stripe Checkout session with 7-day free trial
+// Creates a Stripe Checkout session — charged immediately (app gives 7-day free trial before paywall)
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
@@ -21,7 +21,6 @@ exports.handler = async function(event) {
         quantity: 1,
       }],
       subscription_data: {
-        trial_period_days: 7,
         metadata: { deviceId },
       },
       metadata: { deviceId },

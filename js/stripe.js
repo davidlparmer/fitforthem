@@ -341,12 +341,12 @@ async function startCheckout(){
       window.location.href=data.url;
     } else {
       btn.disabled=false;
-      btn.textContent='Start Free Trial →';
+      btn.textContent='Subscribe · $19.99/month →';
       alert('Something went wrong. Please try again.');
     }
   }catch(e){
     btn.disabled=false;
-    btn.textContent='Start Free Trial →';
+    btn.textContent='Subscribe · $19.99/month →';
     alert('Something went wrong. Please try again.');
   }
 }

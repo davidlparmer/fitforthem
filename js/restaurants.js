@@ -17,14 +17,15 @@ var RESTAURANT_QUALITY={
 // Easy to expand: add a new rule object to the array.
 var RESTAURANT_CAL_FLOORS = [
   { keywords: ['fries','french fries','onion rings'],                    floor: 350, label: 'fried side'     },
-  { keywords: ['loaded potato','loaded baked'],                          floor: 550, label: 'loaded potato'  },
+  { keywords: ['loaded mashed','loaded potato','loaded baked'],          floor: 500, label: 'loaded potato'  },
+  { keywords: ['mashed potato','mashed potatoes'],                       floor: 300, label: 'mashed potatoes'},
   { keywords: ['baked potato'],                                          floor: 250, label: 'baked potato'   },
   { keywords: ['pasta','alfredo','carbonara','linguine','spaghetti',
                'fettuccine','penne','rigatoni','lasagna'],               floor: 700, label: 'pasta entrée'   },
   { keywords: ['burrito','quesadilla'],                                  floor: 650, label: 'burrito'        },
   { keywords: ['wrap'],                                                  floor: 450, label: 'wrap'           },
   { keywords: ['burger','cheeseburger','hamburger'],                     floor: 500, label: 'burger'         },
-  { keywords: ['ribeye','prime rib','porterhouse','t-bone'],             floor: 550, label: 'fatty steak'    },
+  { keywords: ['ribeye','prime rib','porterhouse','t-bone'],             floor: 850, label: 'fatty steak'    },
   { keywords: ['nachos'],                                                floor: 700, label: 'nachos'         },
   { keywords: ['cheesesteak','philly steak'],                            floor: 600, label: 'cheesesteak'   },
   { keywords: ['fish and chips','fish & chips'],                         floor: 700, label: 'fish and chips' },
@@ -47,6 +48,26 @@ function _applyRestaurantFloors(item) {
       if (!hit && name.indexOf(kw) >= 0 && cal < rule.floor) hit = rule;
     });
   });
+
+  // Weight-aware steak check: extract oz from name, apply 75 cal/oz floor.
+  // Catches "12 oz ribeye at 720 cal" — 12 × 75 = 900 minimum.
+  // 75 cal/oz is conservative for restaurant steaks (real ribeye runs 85-100/oz).
+  var ozMatch = name.match(/(\d+)\s*oz/);
+  if (ozMatch) {
+    var oz = parseInt(ozMatch[1]);
+    var isSteak = /steak|ribeye|sirloin|filet|strip|porterhouse|prime rib|t-bone/.test(name);
+    if (isSteak && oz >= 4) {
+      var steakFloor = oz * 75;
+      if (cal < steakFloor) {
+        item.cal    = steakFloor;
+        item.calLow = steakFloor;
+        if (item.calHigh && item.calHigh < steakFloor) item.calHigh = steakFloor + 200;
+        item.warningFlags = item.warningFlags || [];
+        item.warningFlags.push(oz+'oz steak — minimum '+steakFloor+' cal (75 cal/oz restaurant floor)');
+        hit = true; // skip catch-all below
+      }
+    }
+  }
 
   if (hit) {
     item.cal    = Math.max(cal, hit.floor);

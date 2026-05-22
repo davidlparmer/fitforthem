@@ -199,13 +199,25 @@ function renderWeeklyGrid() {
     var targetDinner  = Math.round(foodCal * laneRatios.dinner);
     var targetDessert = foodCal - targetFirst - targetDinner;
 
-    // Guard: only use mealPrefs cal if valid and non-zero
+    // Resolve base cal per slot — mirrors phone's renderCustomMeal priority:
+    // built-in today-swap cal → mealPref cal → template cal
     var _fp = mealPrefs && mealPrefs[dIdx] && mealPrefs[dIdx].first;
     var _dp = mealPrefs && mealPrefs[dIdx] && mealPrefs[dIdx].dessert;
-    var firstBase   = (_fp && _fp.cal)   ? _fp.cal   : ((dayPlan.first   && dayPlan.first.c)   || 0);
-    var dessertBase = (_dp && _dp.cal)   ? _dp.cal   : ((dayPlan.dessert && dayPlan.dessert.c) || 0);
-    var dinnerBase  = (dayPlan.dinner && dayPlan.dinner.c) || 0;
-    if (typeof getResolvedDinner === 'function') {
+
+    // Today-only swaps (built-in from SWAP_OPTIONS have mealKey, not restaurant/fridge)
+    var _cFirst = (customMeals||[]).filter(function(m){return m.day===dIdx&&m.slot==='first';})[0];
+    var _cDinner = (customMeals||[]).filter(function(m){return m.day===dIdx&&m.slot==='dinner';})[0];
+    var _cDessert = (customMeals||[]).filter(function(m){return m.day===dIdx&&m.slot==='dessert';})[0];
+    var _isBuiltIn = function(c){ return c && c.mealKey && (!c.notes || c.notes.indexOf('Eating out') !== 0); };
+
+    var firstBase = _isBuiltIn(_cFirst) ? _cFirst.cal
+      : ((_fp && _fp.cal) ? _fp.cal : ((dayPlan.first && dayPlan.first.c) || 0));
+    var dessertBase = _isBuiltIn(_cDessert) ? _cDessert.cal
+      : ((_dp && _dp.cal) ? _dp.cal : ((dayPlan.dessert && dayPlan.dessert.c) || 0));
+    var dinnerBase = (dayPlan.dinner && dayPlan.dinner.c) || 0;
+    if (_isBuiltIn(_cDinner)) {
+      dinnerBase = _cDinner.cal;
+    } else if (typeof getResolvedDinner === 'function') {
       var rd = getResolvedDinner(dIdx);
       if (rd && rd.c) dinnerBase = rd.c;
     }

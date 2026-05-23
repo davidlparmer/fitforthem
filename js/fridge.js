@@ -169,12 +169,16 @@ async function buildMealFromModal(){
       '8. Role of '+slotLabel+': '+(slot==='dinner'?'largest most satisfying meal':slot==='first'?'controlled, not too heavy, sustaining':slot==='dessert'?'sweet, satiating, closes eating window':'small satisfying snack')+'\n'+
       '9. Include a brief budget_note explaining how you hit the calorie target\n'+
       '10. Use standard ingredient names for best nutrition tracking: \'beef sirloin\' not \'steak\', \'chicken breast\' not \'chicken\', \'broccoli\' not \'mixed vegetables\'\n'+
-      '11. Name meals with simple food-based names only. Format: \'Chicken with Rice and Broccoli\' or \'Beef Sirloin and Potatoes\'. No hype words: no \'Power Bowl\', \'Shredded\', \'Bodybuilder\', \'Loaded\', \'Hearty\', \'Ultimate\', or fitness marketing language.\n\n'+
+      '11. Name meals with simple food-based names only. Format: \'Chicken with Rice and Broccoli\' or \'Beef Sirloin and Potatoes\'. No hype words: no \'Power Bowl\', \'Shredded\', \'Bodybuilder\', \'Loaded\', \'Hearty\', \'Ultimate\', or fitness marketing language.\n'+
+      '12. Calorie-dense ingredients — use exact values, never underestimate:\n'+
+      '    peanut butter: 94 cal/tbsp | butter: 102 cal/tbsp | olive oil: 119 cal/tbsp\n'+
+      '    almonds/nuts: 160-180 cal/oz | cheddar cheese: 115 cal/oz | cream cheese: 99 cal/tbsp\n'+
+      '    These are easy to underestimate — getting them wrong breaks the user\'s plan.\n\n'+
       'JSON format:\n'+
       '{"items":[{\n'+
       '  "rank":"best"|"alternate",\n'+
       '  "name":"meal name",\n'+
-      '  "ingredients":[{"item":"name","amount":"Xg or X eggs","cal":0,"pro":0}],\n'+
+      '  "ingredients":[{"item":"name","amount":"2 slices or 3 tbsp or 150g","cal":0,"pro":0}],\n'+
       '  "totalCal":0,\n'+
       '  "totalPro":0,\n'+
       '  "totalCarb":0,\n'+

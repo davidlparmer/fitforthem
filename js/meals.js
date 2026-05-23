@@ -1092,6 +1092,8 @@ function updateDashboard(){
   if(drinkLevel==='light')todaySteps=currentPlan.wStepsLight||currentPlan.wSteps||currentPlan.steps;
   else if(drinkLevel==='regular')todaySteps=currentPlan.wSteps||currentPlan.steps;
   else if(drinkLevel==='big')todaySteps=currentPlan.wStepsBig||currentPlan.wSteps||currentPlan.steps;
+  // Don't overwrite the live preview while the walk mode sheet is open
+  if(typeof _walkSheet!=='undefined'&&_walkSheet.open){return;}
   document.getElementById('ds-steps').textContent=todaySteps.toLocaleString();
   var drinkLabels={light:'Steps (Light Night)',regular:'Steps (Drinking Night)',big:'Steps (Big Night)'};
   document.getElementById('ds-steps-label').textContent=drinkLevel?drinkLabels[drinkLevel]:todayIsWeekend?'Steps (Weekend)':'Steps';

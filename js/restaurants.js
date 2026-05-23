@@ -11,81 +11,153 @@ var RESTAURANT_QUALITY={
   good:['mcdonalds','burger king','wendys','chick-fil-a','chickfila','popeyes','raising canes','in-n-out','five guys','shake shack','culvers','whataburger','sonic','steak n shake','waffle house','panera','chipotle','panda express','subway','jersey mikes'],
 };
 
-// ── RESTAURANT CALORIE GUARDRAIL ─────────────────────────────────────────────
-// Deterministic safety layer. Catches impossible AI outputs before reaching user.
-// Keyed by keywords in the meal name (lowercase). floor = minimum plausible cal.
-// Easy to expand: add a new rule object to the array.
-var RESTAURANT_CAL_FLOORS = [
-  { keywords: ['fries','french fries','onion rings'],                    floor: 350, label: 'fried side'     },
-  { keywords: ['loaded mashed','loaded potato','loaded baked'],          floor: 500, label: 'loaded potato'  },
-  { keywords: ['mashed potato','mashed potatoes'],                       floor: 300, label: 'mashed potatoes'},
-  { keywords: ['baked potato'],                                          floor: 250, label: 'baked potato'   },
-  { keywords: ['pasta','alfredo','carbonara','linguine','spaghetti',
-               'fettuccine','penne','rigatoni','lasagna'],               floor: 700, label: 'pasta entrée'   },
-  { keywords: ['burrito','quesadilla'],                                  floor: 650, label: 'burrito'        },
-  { keywords: ['wrap'],                                                  floor: 450, label: 'wrap'           },
-  { keywords: ['burger','cheeseburger','hamburger'],                     floor: 500, label: 'burger'         },
-  { keywords: ['ribeye','prime rib','porterhouse','t-bone'],             floor: 850, label: 'fatty steak'    },
-  { keywords: ['nachos'],                                                floor: 700, label: 'nachos'         },
-  { keywords: ['cheesesteak','philly steak'],                            floor: 600, label: 'cheesesteak'   },
-  { keywords: ['fish and chips','fish & chips'],                         floor: 700, label: 'fish and chips' },
-  { keywords: ['wings','chicken wings'],                                 floor: 600, label: 'wings'          },
+// ── RESTAURANT REALISM LAYER ─────────────────────────────────────────────────
+// Three-tier deterministic safety net that runs BEFORE rendering:
+//   1. Chain bias   — known heavy-pour chains inflate all estimates
+//   2. Keyword inflation — high-risk modifiers inflate the estimate
+//   3. Category floors — hard minimums for impossible outputs
+// To expand any tier: add a row to the relevant config object below.
+
+// Tier 1: Chains known to pour oils, butter, and oversized portions.
+// Multiplier applied to Claude's raw estimate before anything else.
+var RESTAURANT_CHAIN_BIAS = {
+  'five guys':           1.50,
+  'cheesecake factory':  1.45,
+  'buffalo wild wings':  1.35,
+  'texas roadhouse':     1.30,
+  'olive garden':        1.25,
+  "applebee's":          1.20,
+  'applebees':           1.20,
+  "chili's":             1.20,
+  'chilis':              1.20,
+  'outback':             1.25,
+  'longhorn':            1.25,
+  'red lobster':         1.20,
+  'ihop':                1.20,
+  'dennys':              1.15,
+};
+
+// Tier 2: Keywords in the item name that signal hidden calories.
+// inflate = fraction added to estimate (0.35 = add 35%).
+// Only the highest-matching inflate value is applied per item.
+var RESTAURANT_KEYWORD_INFLATION = [
+  { keywords: ['alfredo','carbonara','creamy','cream sauce','cream-based'], inflate: 0.45 },
+  { keywords: ['fried','crispy','battered','breaded','deep fried'],         inflate: 0.40 },
+  { keywords: ['loaded','queso','bacon','ranch','aioli','cheese sauce'],    inflate: 0.35 },
+  { keywords: ['large','double','combo','riblets','triple'],                inflate: 0.30 },
+  { keywords: ['cajun','buttery','butter sauce','glazed','smothered'],      inflate: 0.25 },
 ];
-// Any restaurant entrée under this is physically implausible
+
+// Tier 3: Hard calorie floors. Nothing in these categories can display below floor.
+// Listed most-specific first — first match wins.
+var RESTAURANT_CAL_FLOORS = [
+  { keywords: ['large cajun fries','large fries','large french fries'],     floor: 700,  label: 'large fries'      },
+  { keywords: ['fries','french fries','onion rings','tots'],                floor: 400,  label: 'fried side'       },
+  { keywords: ['loaded mashed','loaded potato','loaded baked'],             floor: 550,  label: 'loaded potato'    },
+  { keywords: ['mashed potato','mashed potatoes'],                          floor: 320,  label: 'mashed potatoes'  },
+  { keywords: ['baked potato'],                                             floor: 250,  label: 'baked potato'     },
+  { keywords: ['breadstick','bread stick'],                                 floor: 130,  label: 'breadstick'       },
+  { keywords: ['pasta','alfredo','carbonara','linguine','spaghetti',
+               'fettuccine','penne','rigatoni','lasagna','tortellini'],     floor: 900,  label: 'pasta entrée'     },
+  { keywords: ['burrito','quesadilla'],                                     floor: 700,  label: 'burrito'          },
+  { keywords: ['wrap'],                                                     floor: 500,  label: 'wrap'             },
+  { keywords: ['burger','cheeseburger','hamburger','bacon burger',
+               'double burger'],                                            floor: 700,  label: 'burger'           },
+  { keywords: ['ribeye','prime rib','porterhouse','t-bone'],               floor: 900,  label: 'fatty steak'      },
+  { keywords: ['nachos'],                                                   floor: 800,  label: 'nachos'           },
+  { keywords: ['cheesesteak','philly'],                                     floor: 650,  label: 'cheesesteak'      },
+  { keywords: ['fish and chips','fish & chips'],                            floor: 750,  label: 'fish and chips'   },
+  { keywords: ['wings','riblets','boneless wings'],                         floor: 700,  label: 'wings'            },
+  { keywords: ['pizza'],                                                    floor: 250,  label: 'pizza slice'      },
+  { keywords: ['cheesecake','chocolate cake','lava cake'],                  floor: 450,  label: 'dessert'          },
+];
+
+// Absolute minimum — no restaurant item can display below this
 var RESTAURANT_ITEM_MINIMUM = 150;
 
-// Runs on each item returned by Claude before rendering.
-// Adjusts cal/calLow upward if below a hard floor, appends a warning flag.
-function _applyRestaurantFloors(item) {
-  var name = (item.name||'').toLowerCase()+' '+(item.components||[]).map(function(c){return c.item||'';}).join(' ').toLowerCase();
+// Round to nearest 50 — restaurants don't warrant fake precision
+function _roundToFifty(n) { return Math.round(n / 50) * 50; }
+
+// Main realism function. Accepts restaurantName so chain bias can apply.
+function _applyRestaurantFloors(item, restaurantName) {
+  var name = (item.name||'').toLowerCase() + ' ' +
+             (item.components||[]).map(function(c){return c.item||'';}).join(' ').toLowerCase();
   var cal = item.cal || 0;
   if (!cal) return item;
+  item.warningFlags = item.warningFlags || [];
 
-  // Check category floors
+  // ── Tier 1: Chain bias ──────────────────────────────────────────────────
+  var chainKey = (restaurantName||'').toLowerCase().replace(/[^a-z\s']/g,'').trim();
+  var chainMult = 1;
+  Object.keys(RESTAURANT_CHAIN_BIAS).forEach(function(chain) {
+    if (chainKey.indexOf(chain) >= 0) chainMult = Math.max(chainMult, RESTAURANT_CHAIN_BIAS[chain]);
+  });
+  if (chainMult > 1) {
+    cal = Math.round(cal * chainMult);
+    item.warningFlags.push('Conservative estimate for ' + (restaurantName||'this chain'));
+  }
+
+  // ── Tier 2: Keyword inflation ────────────────────────────────────────────
+  var maxInflate = 0;
+  RESTAURANT_KEYWORD_INFLATION.forEach(function(rule) {
+    rule.keywords.forEach(function(kw) {
+      if (name.indexOf(kw) >= 0) maxInflate = Math.max(maxInflate, rule.inflate);
+    });
+  });
+  if (maxInflate > 0) {
+    cal = Math.round(cal * (1 + maxInflate));
+    item.warningFlags.push('Hidden calories adjusted for sauces, oils, and preparation');
+  }
+
+  // ── Tier 3: Category floors ──────────────────────────────────────────────
   var hit = null;
   RESTAURANT_CAL_FLOORS.forEach(function(rule) {
     rule.keywords.forEach(function(kw) {
       if (!hit && name.indexOf(kw) >= 0 && cal < rule.floor) hit = rule;
     });
   });
+  if (hit) {
+    cal = hit.floor;
+    item.warningFlags.push(hit.label + ' — minimum ' + hit.floor + ' cal floor applied');
+  }
 
-  // Weight-aware steak check: extract oz from name, apply 75 cal/oz floor.
-  // Catches "12 oz ribeye at 720 cal" — 12 × 75 = 900 minimum.
-  // 75 cal/oz is conservative for restaurant steaks (real ribeye runs 85-100/oz).
+  // ── Oz-aware steak floor (80 cal/oz — restaurant steaks run 85-100/oz) ──
   var ozMatch = name.match(/(\d+)\s*oz/);
   if (ozMatch) {
     var oz = parseInt(ozMatch[1]);
     var isSteak = /steak|ribeye|sirloin|filet|strip|porterhouse|prime rib|t-bone/.test(name);
     if (isSteak && oz >= 4) {
-      var steakFloor = oz * 75;
+      var steakFloor = oz * 80;
       if (cal < steakFloor) {
-        item.cal    = steakFloor;
-        item.calLow = steakFloor;
-        if (item.calHigh && item.calHigh < steakFloor) item.calHigh = steakFloor + 200;
-        item.warningFlags = item.warningFlags || [];
-        item.warningFlags.push(oz+'oz steak — minimum '+steakFloor+' cal (75 cal/oz restaurant floor)');
-        hit = true; // skip catch-all below
+        cal = steakFloor;
+        item.warningFlags.push(oz + 'oz steak — ' + steakFloor + ' cal minimum (80 cal/oz restaurant floor)');
       }
     }
   }
 
-  if (hit) {
-    item.cal    = Math.max(cal, hit.floor);
-    item.calLow = Math.max(item.calLow || cal, hit.floor);
-    if (item.calHigh && item.calHigh < item.calLow) item.calHigh = item.calLow + 150;
-    item.warningFlags = item.warningFlags || [];
-    item.warningFlags.push(hit.label+' — minimum '+hit.floor+' cal floor applied');
-  } else if (cal < RESTAURANT_ITEM_MINIMUM) {
-    // Catch-all: nothing at a restaurant is under 150 cal
-    item.cal    = RESTAURANT_ITEM_MINIMUM;
-    item.calLow = RESTAURANT_ITEM_MINIMUM;
-    item.warningFlags = item.warningFlags || [];
-    item.warningFlags.push('Calorie estimate too low — adjusted to restaurant minimum');
+  // ── Absolute minimum ────────────────────────────────────────────────────
+  if (cal < RESTAURANT_ITEM_MINIMUM) {
+    cal = RESTAURANT_ITEM_MINIMUM;
+    item.warningFlags.push('Calorie estimate adjusted to restaurant minimum');
   }
+
+  // ── Apply adjusted cal, build range, strip duplicate flags ──────────────
+  item.cal    = _roundToFifty(cal);
+  item.calLow = item.cal;
+
+  // Range: variance based on confidence — low confidence = wider range
+  var conf = item.confidence || 'medium';
+  var spreadPct = conf === 'high' ? 0.20 : conf === 'low' ? 0.55 : 0.35;
+  item.calHigh = _roundToFifty(Math.round(item.cal * (1 + spreadPct)));
+
+  // Deduplicate flags
+  item.warningFlags = item.warningFlags.filter(function(f, i, arr) {
+    return arr.indexOf(f) === i;
+  });
 
   return item;
 }
-// ── END GUARDRAIL ─────────────────────────────────────────────────────────────
+// ── END RESTAURANT REALISM LAYER ──────────────────────────────────────────────
 
 function getRestaurantQuality(name){
   var n=name.toLowerCase().replace(/[^a-z]/g,'');
@@ -332,13 +404,22 @@ async function searchRestaurant(){
       'Core mission: Find the most DELICIOUS, SATISFYING meal that spends as close to '+foodBudget+' cal as possible. '+
       'This is a restaurant treat — prioritize real, bold flavors. Not gym food. Not dry grilled chicken with steamed broccoli. '+
       'Think: a loaded protein + a satisfying starchy side + any sauce or topping that makes it great.\n\n'+
-      'RESTAURANT CALORIE REALITY — read before estimating:\n'+
-      'Restaurant meals run 20–40% higher than database values. Cooking fats, butter, sauces, and oversized portions are always present. Assume:\n'+
-      '- Grilled/sautéed items: add 80–150 cal for cooking fat\n'+
-      '- Any sauce, glaze, or dressing: add 50–200 cal\n'+
-      '- Restaurant portions are 30–50% larger than home portions\n'+
-      '- For fries, loaded potato, pasta, burritos, nachos: use the HIGH end of plausible range\n'+
-      'Be conservative. Overestimating protects the user. Underestimating breaks their plan.\n\n'+
+      'RESTAURANT CALORIE REALITY — apply before estimating anything:\n'+
+      'Nutrition databases undercount restaurant calories by 20–50%. Real restaurant food contains far more oil, butter, sauce, and portion size than any database records. DO NOT use database-derived clean numbers.\n\n'+
+      'Known heavy-pour chains — all estimates must be 30–50% above database values:\n'+
+      '- Five Guys: +50% (oil-soaked buns, oversized patties, massive fries)\n'+
+      '- Cheesecake Factory: +45% (portion sizes are extreme)\n'+
+      '- Buffalo Wild Wings, Texas Roadhouse, Olive Garden: +25–35%\n\n'+
+      'Category realism rules (never go below these):\n'+
+      '- Restaurant burger + fries combo: 1,400–2,200 cal\n'+
+      '- Sit-down bacon cheeseburger alone: 800–1,200 cal\n'+
+      '- Large fries (Five Guys, Chilis, BWW): 700–950 cal\n'+
+      '- Pasta entree at sit-down restaurant: 900–1,600 cal\n'+
+      '- Wings (10 count, sauced): 900–1,400 cal\n'+
+      '- Loaded/smothered anything: add 300–500 cal to base\n'+
+      '- Olive Garden breadstick: 140 cal EACH — not 13\n'+
+      '- 12oz ribeye at a steakhouse: 950–1,200 cal\n\n'+
+      'REQUIRED: Return calLow and calHigh as a RANGE for every item. Never return a single exact calorie number. Round all values to the nearest 50 — fake precision destroys trust.\n\n'+
       'Rules:\n'+
       '1. Show ONE Best Match — the most satisfying option using '+proteinName+' if available\n'+
       '2. Show up to 2 Alternates only if genuinely different\n'+
@@ -375,7 +456,8 @@ async function searchRestaurant(){
     var data=await askClaude(prompt);
     if(!data.items||!data.items.length){el.innerHTML='<div class="empty">No results found. Try a different spelling.</div>';return;}
     // Apply deterministic calorie floors before rendering
-    data.items=data.items.map(_applyRestaurantFloors);
+    var _rName=restaurant;
+    data.items=data.items.map(function(item){return _applyRestaurantFloors(item,_rName);});
 
     var html='';
     var bestItems=data.items.filter(function(i){return i.rank==='best';});
@@ -612,19 +694,28 @@ function renderFoodCard(item,isBest,calBudget,isToday,restaurant){
     badge+
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">'+
       '<div style="font-size:.98rem;font-weight:700;color:var(--t1);font-family:var(--font-display)">'+item.name+'</div>'+
-      '<div style="font-size:.9rem;font-weight:700;color:var(--gold-light);white-space:nowrap;margin-left:10px">'+(function(){
-        if(!item.confidence||item.confidence==='high'||!item.calLow||!item.calHigh)return item.cal+' cal';
-        if(item.confidence==='low')return 'Est. '+item.calLow+'\u2013'+item.calHigh+' cal';
-        return item.calLow+'\u2013'+item.calHigh+' cal';
-      }())+'</div>'+
+      '<div style="font-size:.9rem;font-weight:700;color:var(--gold-light);white-space:nowrap;margin-left:10px">'+(
+        (item.calLow&&item.calHigh&&item.calLow!==item.calHigh)
+          ? (item.calLow+'–'+item.calHigh+' cal')
+          : (item.cal+' cal')
+      )+'</div>'+
     '</div>'+
     (item.description||item.serving?'<div style="font-size:.78rem;color:var(--t2);margin-bottom:8px">'+(item.description||item.serving||'')+'</div>':'')+
     macroHTML+
     trustBadges+
-    (item.warningFlags&&item.warningFlags.length?
-      '<div style="margin:6px 0;padding:6px 10px;background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.25);border-radius:8px">'+
-        item.warningFlags.map(function(f){return '<div style="font-size:.68rem;color:rgba(249,115,22,.85);padding:1px 0">⚠ '+f+'</div>';}).join('')+
-      '</div>':'')+
+    (item.confidence||item.calLow?
+      '<div style="margin:8px 0 4px 0;display:flex;align-items:center;gap:8px">'+
+        '<span style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:20px;'+
+          (item.confidence==='high'
+            ?'background:rgba(0,180,80,.12);color:rgba(0,200,90,.9)'
+            :item.confidence==='low'
+            ?'background:rgba(249,115,22,.12);color:rgba(249,150,50,.9)'
+            :'background:rgba(184,150,60,.12);color:var(--gold-light)')+'">'+
+          (item.confidence==='high'?'Conservative Estimate':item.confidence==='low'?'High Variance':'Conservative Estimate')+
+        '</span>'+
+      '</div>'+
+      '<div style="font-size:.67rem;color:var(--t3);margin-bottom:6px;font-style:italic">Restaurant portions and preparation vary. Loftin Method uses conservative estimates.</div>'
+    :'')+
     mealBreakdown+
     (calBudget?'<div style="font-size:.72rem;color:'+(pct>=85?'var(--gold-light)':pct>=70?'var(--gold-light)':'var(--t3)')+';margin-top:6px;font-style:italic">'+fitNote+'</div>':'')+
     addBtn+

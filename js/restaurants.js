@@ -141,9 +141,29 @@ function _applyRestaurantFloors(item, restaurantName) {
     item.warningFlags.push('Calorie estimate adjusted to restaurant minimum');
   }
 
-  // ── Apply adjusted cal, build range, strip duplicate flags ──────────────
+  // ── Apply adjusted cal, sync macros, build range ────────────────────────
+  var originalCal = item.cal || cal;
   item.cal    = _roundToFifty(cal);
   item.calLow = item.cal;
+
+  // Sync macros proportionally to the inflation ratio.
+  // Without this: macros add up to 1,132 cal but total displays 2,150 — breaks trust.
+  var inflationRatio = originalCal > 0 ? (item.cal / originalCal) : 1;
+  if (inflationRatio > 1.05 && (item.pro || item.carb || item.fat)) {
+    item.pro  = Math.round((item.pro  || 0) * inflationRatio);
+    item.carb = Math.round((item.carb || 0) * inflationRatio);
+    item.fat  = Math.round((item.fat  || 0) * inflationRatio);
+  }
+
+  // Surface the inflation as a visible component so users understand why total > line items.
+  var prepAdjustment = item.cal - originalCal;
+  if (prepAdjustment > 100) {
+    item.components = item.components || [];
+    item.components.push({
+      item: 'Restaurant preparation (oils, butter, portion size)',
+      cal:  Math.round(prepAdjustment)
+    });
+  }
 
   // Range: variance based on confidence — low confidence = wider range
   var conf = item.confidence || 'medium';
@@ -415,19 +435,32 @@ async function searchRestaurant(){
       '    12oz ribeye at steakhouse: 950–1,250 cal\n\n'+
       'Return a calLow and calHigh RANGE. Never a single exact number. Round to nearest 50.\n\n'+
 
-      '── PHASE 2: BUDGET COMPARISON (use the calorie budget only here) ──\n'+
-      'User\'s '+slotLabel+' budget: '+foodBudget+' cal.\n'+
-      'Compare your Phase 1 realistic estimate against the budget and classify each meal:\n'+
-      '  "fits"          — realistic cal within 15% of budget (acceptable)\n'+
-      '  "slightly_above" — 15–40% over budget\n'+
-      '  "above"          — 40–80% over budget\n'+
-      '  "well_above"     — more than 80% over budget\n'+
-      'Write budgetAdvice as a specific, actionable recommendation:\n'+
-      '  fits:          "Good choice for your plan."\n'+
-      '  slightly_above: "Order sauce on the side and skip the loaded toppings to stay closer."\n'+
-      '  above:         "This is a heavy meal. Eat half, box the rest. Lighten your Final Meal tonight."\n'+
-      '  well_above:    "Well above your budget. See lighter options below, or split this entrée."\n'+
-      'IMPORTANT: Do NOT adjust the calorie estimate to make it fit. If the meal is heavy, say so.\n\n'+
+      '── PHASE 2: SMART RECOMMENDATION (use the budget here) ──\n'+
+      'User\'s '+slotLabel+' budget: '+foodBudget+' cal.\n\n'+
+      'PRIMARY GOAL: Find the most satisfying meal that realistically fits within '+foodBudget+' cal.\n'+
+      'The app is a nutrition coach — prioritize realistic adherence over maximum indulgence.\n\n'+
+      'RECOMMENDATION PRIORITY ORDER:\n'+
+      '1. Find the best realistic meal UNDER the budget\n'+
+      '2. If nothing fits cleanly, find the lightest realistic option with a clear modification strategy\n'+
+      '3. Only recommend an over-budget meal as a last resort, with explicit guidance\n\n'+
+      'CHAIN-SPECIFIC PIVOTS — apply these defaults before recommending anything:\n'+
+      '- Five Guys: prefer single patty + small/shared fries over double + large fries\n'+
+      '- Texas Roadhouse: prefer 6oz cuts over 12–16oz; plain potato over loaded\n'+
+      '- Olive Garden: prefer grilled salmon, herb chicken, or soup+salad over creamy pasta\n'+
+      '- Buffalo Wild Wings: prefer dry-rub smaller count over sauced platters\n'+
+      '- Cheesecake Factory: aggressively prefer grilled proteins and simple sides\n'+
+      '- Applebee\'s/Chili\'s: prefer grilled proteins, avoid loaded/smothered options by default\n\n'+
+      'budgetStatus classification:\n'+
+      '  "fits"           — within 15% of budget\n'+
+      '  "slightly_above" — 15–40% over\n'+
+      '  "above"          — 40–80% over\n'+
+      '  "well_above"     — more than 80% over\n'+
+      'budgetAdvice — specific and actionable:\n'+
+      '  fits:            "Good choice. Order as described."\n'+
+      '  slightly_above:  "Sauce on the side, skip loaded toppings — keeps you closer to target."\n'+
+      '  above:           "Heavy meal. Box half immediately. Lighten your Final Meal tonight."\n'+
+      '  well_above:      "Well above budget. Split this or choose a lighter option from alternates."\n'+
+      'IMPORTANT: Never adjust the calorie estimate to make a meal appear to fit. Honesty builds trust.\n\n'+
 
       'System context:\n'+
       '- Today\'s protein: '+proteinName+'\n'+
@@ -435,7 +468,7 @@ async function searchRestaurant(){
       '- User sex: '+planSex+'\n\n'+
 
       'Rules:\n'+
-      '1. Show ONE Best Match — most satisfying realistic option with '+proteinName+' if available\n'+
+      '1. Show ONE Best Match — best realistic option that fits or comes closest to budget with '+proteinName+'. Prefer lighter configurations over indulgent ones when both are genuine options.\n'+
       '2. Show up to 2 Alternates — lighter genuine alternatives, not just the same meal with a sauce swap\n'+
       '3. Each component needs its own calorie estimate\n'+
       '4. Include pro, carb, fat in grams\n'+
@@ -476,7 +509,8 @@ async function searchRestaurant(){
     bestItems.forEach(function(item){
       var itemKey='ri'+Date.now()+Math.random();
       var side=item.side_recommendation&&item.side_recommendation.item?item.side_recommendation:null;
-      var totalCal=item.combined_cal||(side?(item.cal+(side.cal||0)):item.cal);
+      var totalCal=(item.combined_cal>0?item.combined_cal:0)||(side?((item.cal||0)+(side.cal||0)):(item.cal||0));
+      if(!totalCal)totalCal=item.cal||0; // null guard — prevents Sonic-style zero-cal display
       window.restaurantCardItems[itemKey]={
         item:{name:item.name,cal:totalCal,pro:item.pro||0,carb:item.carb||0,fat:item.fat||0,
           meal:item.components?item.components.map(function(c){return c.item+' ~'+c.cal+' cal'}):[],
@@ -555,7 +589,8 @@ async function searchRestaurant(){
       altItems.slice(0,2).forEach(function(item){
         var itemKey='ri'+Date.now()+Math.random();
         var side=item.side_recommendation&&item.side_recommendation.item?item.side_recommendation:null;
-        var totalCal=item.combined_cal||(side?(item.cal+(side.cal||0)):item.cal);
+        var totalCal=(item.combined_cal>0?item.combined_cal:0)||(side?((item.cal||0)+(side.cal||0)):(item.cal||0));
+        if(!totalCal)totalCal=item.cal||0;
         window.restaurantCardItems[itemKey]={
           item:{name:item.name,cal:totalCal,pro:item.pro||0,carb:item.carb||0,fat:item.fat||0,
             meal:item.components?item.components.map(function(c){return c.item+' ~'+c.cal+' cal'}):[],

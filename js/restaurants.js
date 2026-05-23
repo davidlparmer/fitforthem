@@ -404,7 +404,13 @@ async function searchRestaurant(){
       '- User sex: '+planSex+'\n\n'+
 
       'Rules:\n'+
-      '1. Show ONE Best Match — best realistic option that fits or comes closest to budget with '+proteinName+'. Prefer lighter configurations over indulgent ones when both are genuine options.\n'+
+      '1. Show ONE Best Match — best realistic option that fits or comes closest to budget.\n'+
+      '   RESTAURANT IDENTITY RULE: If the restaurant is primarily known for a specific protein or experience\n'+
+      '   (steakhouse → steak, seafood restaurant → fish, burger joint → burger),\n'+
+      '   recommend what fits the restaurant identity even if it differs from today\'s protein ('+proteinName+').\n'+
+      '   Use today\'s protein as a guide only at non-specialty restaurants (diners, casual chains, fast food).\n'+
+      '   A 6oz sirloin at Texas Roadhouse is a smarter recommendation than grilled chicken.\n'+
+      '   Prefer lighter configurations — smaller cuts, plain sides, sauce control — but preserve the restaurant experience.\n'+
       '2. Show up to 2 Alternates — lighter genuine alternatives, not just the same meal with a sauce swap\n'+
       '3. Each component needs its own calorie estimate\n'+
       '4. Include pro, carb, fat in grams\n'+

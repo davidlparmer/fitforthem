@@ -392,48 +392,58 @@ async function searchRestaurant(){
 
   try{
     var prompt=
-      'You are a physique nutrition coach helping a user maximize their restaurant meal.\n\n'+
+      'You are a physique nutrition coach at '+restaurant+'. Your job has TWO phases. Complete them in order.\n\n'+
+
+      '── PHASE 1: REALISTIC ESTIMATION (ignore the calorie budget completely) ──\n'+
+      'Estimate what these restaurant meals actually contain. Do NOT look at the calorie budget yet.\n'+
+      'Nutrition databases undercount restaurant calories by 20–50%. Apply these realities:\n'+
+      '- Every grilled or sautéed item: add 80–150 cal for cooking oil and butter\n'+
+      '- Every sauce, glaze, or dressing: add 80–200 cal\n'+
+      '- Restaurant portions are 30–60% larger than home portions\n'+
+      '- Known heavy-pour chains:\n'+
+      '    Five Guys: all estimates ×1.5 (oil-soaked buns, massive patties, enormous fries)\n'+
+      '    Cheesecake Factory: ×1.45 (extreme portions, heavy sauces)\n'+
+      '    Buffalo Wild Wings, Texas Roadhouse, Olive Garden: ×1.25–1.35\n'+
+      '- Category minimums (never go below these):\n'+
+      '    Burger + large fries combo: 1,400–2,200 cal\n'+
+      '    Bacon cheeseburger alone: 850–1,200 cal\n'+
+      '    Large fries at Five Guys, BWW, Chilis: 750–950 cal\n'+
+      '    Pasta entrée: 950–1,600 cal\n'+
+      '    Wings 10-count sauced: 900–1,400 cal\n'+
+      '    Loaded or smothered anything: add 350–550 cal\n'+
+      '    Olive Garden breadstick: 140 cal each\n'+
+      '    12oz ribeye at steakhouse: 950–1,250 cal\n\n'+
+      'Return a calLow and calHigh RANGE. Never a single exact number. Round to nearest 50.\n\n'+
+
+      '── PHASE 2: BUDGET COMPARISON (use the calorie budget only here) ──\n'+
+      'User\'s '+slotLabel+' budget: '+foodBudget+' cal.\n'+
+      'Compare your Phase 1 realistic estimate against the budget and classify each meal:\n'+
+      '  "fits"          — realistic cal within 15% of budget (acceptable)\n'+
+      '  "slightly_above" — 15–40% over budget\n'+
+      '  "above"          — 40–80% over budget\n'+
+      '  "well_above"     — more than 80% over budget\n'+
+      'Write budgetAdvice as a specific, actionable recommendation:\n'+
+      '  fits:          "Good choice for your plan."\n'+
+      '  slightly_above: "Order sauce on the side and skip the loaded toppings to stay closer."\n'+
+      '  above:         "This is a heavy meal. Eat half, box the rest. Lighten your Final Meal tonight."\n'+
+      '  well_above:    "Well above your budget. See lighter options below, or split this entrée."\n'+
+      'IMPORTANT: Do NOT adjust the calorie estimate to make it fit. If the meal is heavy, say so.\n\n'+
+
       'System context:\n'+
-      '- Restaurant: '+restaurant+'\n'+
-      '- Meal slot: '+slotLabel+'\n'+
-      '- Calorie budget: '+foodBudget+' cal (SPEND THIS — do not leave calories on the table)\n'+
       '- Today\'s protein: '+proteinName+'\n'+
-      '- Plan mode: '+planMode+' ('+planLane+')\n'+
-      '- User sex: '+planSex+'\n'+
-      '- Day: '+dayName+'\n\n'+
-      'Core mission: Find the most DELICIOUS, SATISFYING meal that spends as close to '+foodBudget+' cal as possible. '+
-      'This is a restaurant treat — prioritize real, bold flavors. Not gym food. Not dry grilled chicken with steamed broccoli. '+
-      'Think: a loaded protein + a satisfying starchy side + any sauce or topping that makes it great.\n\n'+
-      'RESTAURANT CALORIE REALITY — apply before estimating anything:\n'+
-      'Nutrition databases undercount restaurant calories by 20–50%. Real restaurant food contains far more oil, butter, sauce, and portion size than any database records. DO NOT use database-derived clean numbers.\n\n'+
-      'Known heavy-pour chains — all estimates must be 30–50% above database values:\n'+
-      '- Five Guys: +50% (oil-soaked buns, oversized patties, massive fries)\n'+
-      '- Cheesecake Factory: +45% (portion sizes are extreme)\n'+
-      '- Buffalo Wild Wings, Texas Roadhouse, Olive Garden: +25–35%\n\n'+
-      'Category realism rules (never go below these):\n'+
-      '- Restaurant burger + fries combo: 1,400–2,200 cal\n'+
-      '- Sit-down bacon cheeseburger alone: 800–1,200 cal\n'+
-      '- Large fries (Five Guys, Chilis, BWW): 700–950 cal\n'+
-      '- Pasta entree at sit-down restaurant: 900–1,600 cal\n'+
-      '- Wings (10 count, sauced): 900–1,400 cal\n'+
-      '- Loaded/smothered anything: add 300–500 cal to base\n'+
-      '- Olive Garden breadstick: 140 cal EACH — not 13\n'+
-      '- 12oz ribeye at a steakhouse: 950–1,200 cal\n\n'+
-      'REQUIRED: Return calLow and calHigh as a RANGE for every item. Never return a single exact calorie number. Round all values to the nearest 50 — fake precision destroys trust.\n\n'+
+      '- Plan mode: '+planMode+'\n'+
+      '- User sex: '+planSex+'\n\n'+
+
       'Rules:\n'+
-      '1. Show ONE Best Match — the most satisfying option using '+proteinName+' if available\n'+
-      '2. Show up to 2 Alternates only if genuinely different\n'+
-      '3. Estimate conservatively first (restaurant reality), then maximize to hit '+foodBudget+' cal\n'+
-      '4. If the main dish leaves more than 100 cal under budget, you MUST include a side_recommendation to close the gap\n'+
-      '5. The side should be satiating — potato, rice, mac and cheese, extra protein, not a side salad\n'+
-      '6. Up to 50 cal OVER budget is acceptable — set over_budget: true\n'+
-      '7. If over by more than 50 cal, include a specific modification to bring it within budget\n'+
-      '8. Each component needs a calorie estimate\n'+
-      '9. REQUIRED: include pro, carb, fat in grams for every item\n'+
-      '10. Do not invent items not on the menu\n'+
-      '11. confidence: "high" = simple grilled protein, "medium" = standard item, "low" = fried/loaded/sauced\n'+
-      '12. warningFlags: list hidden calorie risks e.g. ["butter sauce ~120 cal","oversized portion"]\n\n'+
-      'JSON format (return ONLY this JSON, no other text):\n'+
+      '1. Show ONE Best Match — most satisfying realistic option with '+proteinName+' if available\n'+
+      '2. Show up to 2 Alternates — lighter genuine alternatives, not just the same meal with a sauce swap\n'+
+      '3. Each component needs its own calorie estimate\n'+
+      '4. Include pro, carb, fat in grams\n'+
+      '5. Do not invent items not on the menu\n'+
+      '6. confidence: "high" = simple grilled protein, "medium" = standard item, "low" = fried/loaded/sauced\n'+
+      '7. ordering_notes: practical tips like "sauce on the side" or "ask for no butter"\n\n'+
+
+      'JSON format (return ONLY this JSON):\n'+
       '{"restaurant":"name","items":[{'+
       '"rank":"best",'+
       '"name":"full meal name",'+
@@ -442,15 +452,12 @@ async function searchRestaurant(){
       '"calLow":0,'+
       '"calHigh":0,'+
       '"confidence":"medium",'+
-      '"warningFlags":[],'+
       '"pro":0,"carb":0,"fat":0,'+
-      '"components":[{"item":"Grilled sirloin","cal":350}],'+
-      '"side_recommendation":{"item":"Baked potato with butter","cal":280,"why":"Closes your gap and adds satiety"},'+
-      '"combined_cal":0,'+
-      '"ordering_notes":["sauce on the side","no butter on steak"],'+
-      '"why":"one sentence on why this is the best pick",'+
-      '"over_budget":false,'+
-      '"modification":""'+
+      '"components":[{"item":"item name","cal":0}],'+
+      '"budgetStatus":"fits|slightly_above|above|well_above",'+
+      '"budgetAdvice":"specific actionable recommendation",'+
+      '"ordering_notes":["sauce on the side"],'+
+      '"why":"one sentence on why this is the best pick"'+
       '}]}';
 
     var data=await askClaude(prompt);
@@ -463,19 +470,7 @@ async function searchRestaurant(){
     var bestItems=data.items.filter(function(i){return i.rank==='best';});
     var altItems=data.items.filter(function(i){return i.rank==='alternate';});
 
-    function budgetBadge(itemCal, side, budget){
-      var total = side ? (itemCal + (side.cal||0)) : itemCal;
-      var diff = total - budget;
-      if(diff > 50){
-        return '<span style="background:rgba(192,57,43,.15);color:#e07b6a;border-radius:20px;padding:3px 10px;font-size:.68rem;font-weight:700">'+diff+' cal over — see modification</span>';
-      } else if(diff > 0){
-        return '<span style="background:rgba(184,150,60,.15);color:var(--gold-light);border-radius:20px;padding:3px 10px;font-size:.68rem;font-weight:700">'+diff+' cal over — within grace range ✓</span>';
-      } else if(diff >= -80){
-        return '<span style="background:rgba(61,122,82,.15);color:#7ec99a;border-radius:20px;padding:3px 10px;font-size:.68rem;font-weight:700">On budget ✓</span>';
-      } else {
-        return '<span style="background:rgba(184,150,60,.1);color:var(--t3);border-radius:20px;padding:3px 10px;font-size:.68rem;font-weight:700">'+(Math.abs(diff))+' cal under budget</span>';
-      }
-    }
+    function budgetBadge(itemCal, side, budget){ return ''; } // handled by trustBadges in renderFoodCard
 
     // Best Match
     bestItems.forEach(function(item){
@@ -648,13 +643,27 @@ function showRestaurantSlotPicker(item,restaurant){window.showRestaurantSlotPick
 function renderFoodCard(item,isBest,calBudget,isToday,restaurant){
   var pct=calBudget?Math.min(Math.round((item.cal/calBudget)*100),150):0;
   var diff=Math.abs(item.cal-calBudget);
-  var fitNote=item.cal>calBudget?diff+' cal over budget':diff<=100?'Fits your calories':diff+' cal under budget';
 
-  var trustBadges=calBudget&&pct>=85?
-    '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0">'+
-      '<span style="font-size:.68rem;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(61,122,82,.15);color:var(--gold-light);letter-spacing:.04em">Fits your calories</span>'+
-      '<span style="font-size:.68rem;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(184,150,60,.12);color:var(--gold-light);letter-spacing:.04em">High satiety</span>'+
-    '</div>':'';
+  // Budget status badge — driven by AI's budgetStatus field, not a percentage calculation
+  var _bs = item.budgetStatus || '';
+  var _ba = item.budgetAdvice || '';
+  var trustBadges = _bs ? (function(){
+    var color = _bs==='fits'
+      ? 'background:rgba(0,180,80,.12);color:rgba(0,210,100,.9);border:1px solid rgba(0,180,80,.2)'
+      : _bs==='slightly_above'
+      ? 'background:rgba(184,150,60,.12);color:var(--gold-light);border:1px solid rgba(184,150,60,.2)'
+      : _bs==='above'
+      ? 'background:rgba(249,115,22,.12);color:rgba(249,150,50,.9);border:1px solid rgba(249,115,22,.2)'
+      : 'background:rgba(192,57,43,.12);color:#e07b6a;border:1px solid rgba(192,57,43,.2)';
+    var label = _bs==='fits' ? '✓ Fits your budget'
+      : _bs==='slightly_above' ? '⚠ Slightly over budget'
+      : _bs==='above' ? '⚠ Above budget'
+      : '🔴 Well above budget';
+    return '<div style="margin:8px 0">'+
+      '<span style="font-size:.68rem;font-weight:700;padding:4px 12px;border-radius:20px;letter-spacing:.04em;'+color+'">'+label+'</span>'+
+      (_ba?'<div style="font-size:.75rem;color:var(--t2);margin-top:6px;line-height:1.5;font-style:italic">'+_ba+'</div>':'')+
+    '</div>';
+  }()) : '';
 
   var mealBreakdown=item.meal&&item.meal.length?
     '<div style="margin:10px 0;padding:10px 12px;background:rgba(0,0,0,.2);border-radius:8px;border:1px solid var(--gold-line)">'+
@@ -717,7 +726,6 @@ function renderFoodCard(item,isBest,calBudget,isToday,restaurant){
       '<div style="font-size:.67rem;color:var(--t3);margin-bottom:6px;font-style:italic">Restaurant portions and preparation vary. Loftin Method uses conservative estimates.</div>'
     :'')+
     mealBreakdown+
-    (calBudget?'<div style="font-size:.72rem;color:'+(pct>=85?'var(--gold-light)':pct>=70?'var(--gold-light)':'var(--t3)')+';margin-top:6px;font-style:italic">'+fitNote+'</div>':'')+
     addBtn+
   '</div>';
 }

@@ -481,3 +481,186 @@ if (window.FFT_IS_IPAD) {
     }
   });
 }
+
+
+// ── WALK MODE SHEET ───────────────────────────────────────────────────────────
+// Lets users change walk type, speed, and incline without rebuilding their plan.
+// Steps update live on the hero card as they make selections.
+// "Use Today" stores a dated override in localStorage (clears automatically tomorrow).
+// "Set as Default" updates S + currentPlan step values and saves permanently.
+// engine.js and state.js are never touched by this feature.
+
+var _walkSheet = {
+  open: false,
+  type: 'flat',
+  speed: 2.5,
+  incline: 3,
+  burnTarget: 500,     // today's correct burn (accounts for drinking night)
+  origSteps: '',       // hero card value before sheet opened — restored on cancel
+  origLabel: ''
+};
+
+function openWalkSheet() {
+  if (!currentPlan || !currentPlan.cal || !currentPlan.wLbs || !currentPlan.hIn) return;
+
+  // Store current hero display to restore on cancel
+  var stepsEl = document.getElementById('ds-steps');
+  var labelEl = document.getElementById('ds-steps-label');
+  _walkSheet.origSteps = stepsEl ? stepsEl.textContent : '—';
+  _walkSheet.origLabel = labelEl ? labelEl.textContent : 'Steps';
+
+  // Determine today's correct burn target (drinking-aware)
+  var todayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+  var drinkLevel = (typeof drinkingDays !== 'undefined') ? (drinkingDays[todayIdx] || false) : false;
+  var bN = currentPlan.burnNormal || 500;
+  var bL = currentPlan.burnLight  || bN + 150;
+  var bD = currentPlan.burnDrink  || 750;
+  var bB = currentPlan.burnBig    || bN + 400;
+  _walkSheet.burnTarget = drinkLevel === 'light'   ? bL
+                        : drinkLevel === 'regular' ? bD
+                        : drinkLevel === 'big'     ? bB : bN;
+
+  // Initialise sheet selections from current S settings
+  _walkSheet.type    = (typeof S !== 'undefined' && S.walkType) ? S.walkType : 'flat';
+  _walkSheet.speed   = (typeof S !== 'undefined' && S.speed)   ? S.speed   : 2.5;
+  _walkSheet.incline = (typeof S !== 'undefined' && S.incline) ? S.incline : 3;
+
+  // Also check for a today-only override already active
+  try {
+    var _wt = JSON.parse(localStorage.getItem('fft_walk_today') || 'null');
+    var _td = new Date().toISOString().split('T')[0];
+    if (_wt && _wt.date === _td) {
+      _walkSheet.type    = _wt.walkType;
+      _walkSheet.speed   = _wt.speed;
+      _walkSheet.incline = _wt.incline;
+    }
+  } catch(e) {}
+
+  // Show overlay + sheet
+  document.getElementById('walk-sheet-overlay').style.display = 'block';
+  var sheet = document.getElementById('walk-sheet');
+  sheet.style.display = 'block';
+  setTimeout(function(){ sheet.style.transform = 'translateY(0)'; }, 10);
+  _walkSheet.open = true;
+
+  _walkSheetRender();
+  _walkSheetPreview();
+}
+
+function closeWalkSheet(cancelled) {
+  var sheet = document.getElementById('walk-sheet');
+  if (sheet) sheet.style.transform = 'translateY(100%)';
+  setTimeout(function(){
+    if (sheet) sheet.style.display = 'none';
+    var overlay = document.getElementById('walk-sheet-overlay');
+    if (overlay) overlay.style.display = 'none';
+  }, 350);
+  _walkSheet.open = false;
+
+  if (cancelled) {
+    // Restore original hero card display
+    var stepsEl = document.getElementById('ds-steps');
+    var labelEl = document.getElementById('ds-steps-label');
+    if (stepsEl) stepsEl.textContent = _walkSheet.origSteps;
+    if (labelEl) labelEl.textContent = _walkSheet.origLabel;
+  }
+}
+
+function _walkSheetRender() {
+  // Walk type buttons
+  ['flat','treadmill','incline'].forEach(function(t){
+    var btn = document.getElementById('wks-type-' + t);
+    if (btn) btn.classList.toggle('active', _walkSheet.type === t);
+  });
+  // Speed row visibility
+  var speedRow = document.getElementById('wks-speed-row');
+  if (speedRow) speedRow.style.display = (_walkSheet.type !== 'flat') ? 'block' : 'none';
+  // Incline row visibility
+  var incRow = document.getElementById('wks-incline-row');
+  if (incRow) incRow.style.display = (_walkSheet.type === 'incline') ? 'block' : 'none';
+  // Speed button active states
+  [2.0, 2.5, 3.0, 3.5].forEach(function(s){
+    var btn = document.getElementById('wks-speed-' + Math.round(s * 10));
+    if (btn) btn.classList.toggle('active', Math.abs(_walkSheet.speed - s) < 0.01);
+  });
+  // Incline button active states
+  [0,1,2,3,4,5,6].forEach(function(inc){
+    var btn = document.getElementById('wks-inc-' + inc);
+    if (btn) btn.classList.toggle('active', _walkSheet.incline === inc);
+  });
+}
+
+function _walkSheetPreview() {
+  if (!currentPlan.wLbs || !currentPlan.hIn) return;
+  var steps = calcSteps(
+    currentPlan.wLbs,
+    currentPlan.hIn,
+    _walkSheet.burnTarget,
+    _walkSheet.type,
+    _walkSheet.speed,
+    _walkSheet.incline
+  );
+  var stepsEl = document.getElementById('ds-steps');
+  if (stepsEl) stepsEl.textContent = steps.toLocaleString();
+  // Update label to reflect current mode preview
+  var modeLabels = {flat:'Steps (Outdoor)',treadmill:'Steps (Treadmill)',incline:'Steps (Incline)'};
+  var labelEl = document.getElementById('ds-steps-label');
+  if (labelEl) labelEl.textContent = modeLabels[_walkSheet.type] || 'Steps';
+}
+
+function walkSheetSetType(type) {
+  _walkSheet.type = type;
+  _walkSheetRender();
+  _walkSheetPreview();
+}
+
+function walkSheetSetSpeed(speed) {
+  _walkSheet.speed = parseFloat(speed);
+  _walkSheetRender();
+  _walkSheetPreview();
+}
+
+function walkSheetSetIncline(inc) {
+  _walkSheet.incline = parseInt(inc);
+  _walkSheetRender();
+  _walkSheetPreview();
+}
+
+function applyWalkToday() {
+  var today = new Date().toISOString().split('T')[0];
+  try {
+    localStorage.setItem('fft_walk_today', JSON.stringify({
+      walkType: _walkSheet.type,
+      speed:    _walkSheet.speed,
+      incline:  _walkSheet.incline,
+      date:     today
+    }));
+  } catch(e) {}
+  closeWalkSheet(false);
+}
+
+function applyWalkDefault() {
+  // Update S settings (in-memory, used by silentRecalc and future plan builds)
+  if (typeof S !== 'undefined') {
+    S.walkType = _walkSheet.type;
+    S.speed    = _walkSheet.speed;
+    S.incline  = _walkSheet.incline;
+  }
+  // Recalculate all four step variants in currentPlan
+  var w = currentPlan.wLbs, h = currentPlan.hIn;
+  var bN = currentPlan.burnNormal || 500;
+  var bL = currentPlan.burnLight  || bN + 150;
+  var bD = currentPlan.burnDrink  || 750;
+  var bB = currentPlan.burnBig    || bN + 400;
+  currentPlan.steps       = calcSteps(w, h, bN, S.walkType, S.speed, S.incline);
+  currentPlan.wStepsLight = calcSteps(w, h, bL, S.walkType, S.speed, S.incline);
+  currentPlan.wSteps      = calcSteps(w, h, bD, S.walkType, S.speed, S.incline);
+  currentPlan.wStepsBig   = calcSteps(w, h, bB, S.walkType, S.speed, S.incline);
+  // Clear any today-only override since default now matches
+  try { localStorage.removeItem('fft_walk_today'); } catch(e) {}
+  // Persist and sync
+  try { localStorage.setItem('fft_plan', JSON.stringify(currentPlan)); } catch(e) {}
+  if (typeof saveAllData === 'function') saveAllData();
+  closeWalkSheet(false);
+}
+// ── END WALK MODE SHEET ───────────────────────────────────────────────────────

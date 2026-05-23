@@ -1095,6 +1095,22 @@ function updateDashboard(){
   document.getElementById('ds-steps').textContent=todaySteps.toLocaleString();
   var drinkLabels={light:'Steps (Light Night)',regular:'Steps (Drinking Night)',big:'Steps (Big Night)'};
   document.getElementById('ds-steps-label').textContent=drinkLevel?drinkLabels[drinkLevel]:todayIsWeekend?'Steps (Weekend)':'Steps';
+  // Today-only walk override — check if user changed walk mode for today
+  // Recalculates steps using today's correct burn target and override walk settings
+  try{
+    var _wt=JSON.parse(localStorage.getItem('fft_walk_today')||'null');
+    var _td=new Date().toISOString().split('T')[0];
+    if(_wt&&_wt.date===_td&&currentPlan.wLbs&&currentPlan.hIn){
+      var _overrideBurn=currentPlan.burnNormal||500;
+      if(drinkLevel==='light')_overrideBurn=currentPlan.burnLight||_overrideBurn+150;
+      else if(drinkLevel==='regular')_overrideBurn=currentPlan.burnDrink||750;
+      else if(drinkLevel==='big')_overrideBurn=currentPlan.burnBig||_overrideBurn+400;
+      var _overrideSteps=calcSteps(currentPlan.wLbs,currentPlan.hIn,_overrideBurn,_wt.walkType,_wt.speed,_wt.incline);
+      document.getElementById('ds-steps').textContent=_overrideSteps.toLocaleString();
+      var _modeLabels={flat:'Steps (Outdoor)',treadmill:'Steps (Treadmill)',incline:'Steps (Incline)'};
+      document.getElementById('ds-steps-label').textContent=_modeLabels[_wt.walkType]||'Steps';
+    }
+  }catch(e){}
   // Show calorie burn target under steps
   var burnEl=document.getElementById('ds-steps-burn');
   if(burnEl){

@@ -86,15 +86,29 @@ function _applyRestaurantFloors(item, restaurantName) {
   if (!cal) return item;
   item.warningFlags = item.warningFlags || [];
 
-  // ── Tier 1: Chain bias ──────────────────────────────────────────────────
+  // ── Tier 1: Chain bias — scaled by meal complexity ────────────────────
+  // Simple grilled meals (salmon, plain sirloin) need moderate inflation.
+  // Heavy loaded/fried meals need full chain inflation.
+  // Flat multipliers on simple meals cause over-inflation (e.g. 6oz sirloin → 1,650 cal).
   var chainKey = (restaurantName||'').toLowerCase().replace(/[^a-z\s']/g,'').trim();
   var chainMult = 1;
   Object.keys(RESTAURANT_CHAIN_BIAS).forEach(function(chain) {
     if (chainKey.indexOf(chain) >= 0) chainMult = Math.max(chainMult, RESTAURANT_CHAIN_BIAS[chain]);
   });
   if (chainMult > 1) {
+    // Score meal complexity to determine how much chain bias to apply
+    var _highRisk = ['loaded','fried','crispy','creamy','alfredo','queso','ranch','bacon',
+                     'double','triple','large','cajun','smothered','buttery','battered','breaded'];
+    var _lowRisk  = ['grilled','plain','herb','steamed','baked','simple','light',
+                     'salmon','sirloin','filet','broccoli','vegetables','salad'];
+    var _hi=0, _lo=0;
+    _highRisk.forEach(function(kw){ if(name.indexOf(kw)>=0) _hi++; });
+    _lowRisk.forEach(function(kw){  if(name.indexOf(kw)>=0) _lo++; });
+    // complexityFactor: 1.0 = full bias, 0.5 = half, 0.3 = minimal
+    var complexityFactor = _hi > _lo ? 1.0 : _lo > _hi ? 0.3 : 0.6;
+    chainMult = 1 + (chainMult - 1) * complexityFactor;
     cal = Math.round(cal * chainMult);
-    item.warningFlags.push('Conservative estimate for ' + (restaurantName||'this chain'));
+    if (chainMult > 1.1) item.warningFlags.push('Conservative estimate for ' + (restaurantName||'this chain'));
   }
 
   // ── Tier 2: Keyword inflation ────────────────────────────────────────────
@@ -146,13 +160,15 @@ function _applyRestaurantFloors(item, restaurantName) {
   item.cal    = _roundToFifty(cal);
   item.calLow = item.cal;
 
-  // Sync macros proportionally to the inflation ratio.
-  // Without this: macros add up to 1,132 cal but total displays 2,150 — breaks trust.
-  var inflationRatio = originalCal > 0 ? (item.cal / originalCal) : 1;
-  if (inflationRatio > 1.05 && (item.pro || item.carb || item.fat)) {
-    item.pro  = Math.round((item.pro  || 0) * inflationRatio);
-    item.carb = Math.round((item.carb || 0) * inflationRatio);
-    item.fat  = Math.round((item.fat  || 0) * inflationRatio);
+  // Normalize macros so they always add up to the final displayed calorie total.
+  // The inflation ratio approach propagated Claude's original macro inconsistency.
+  // Normalization preserves the pro:carb:fat ratio from Claude but scales to match item.cal.
+  var _macroCal = (item.pro||0)*4 + (item.carb||0)*4 + (item.fat||0)*9;
+  if (_macroCal > 50 && item.cal > 0) {
+    var _normRatio = item.cal / _macroCal;
+    item.pro  = Math.round((item.pro  || 0) * _normRatio);
+    item.carb = Math.round((item.carb || 0) * _normRatio);
+    item.fat  = Math.round((item.fat  || 0) * _normRatio);
   }
 
   // Surface the inflation as a visible component so users understand why total > line items.
@@ -160,7 +176,7 @@ function _applyRestaurantFloors(item, restaurantName) {
   if (prepAdjustment > 100) {
     item.components = item.components || [];
     item.components.push({
-      item: 'Restaurant preparation (oils, butter, portion size)',
+      item: 'Typical restaurant cooking additions',
       cal:  Math.round(prepAdjustment)
     });
   }

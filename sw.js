@@ -1,7 +1,7 @@
 // Loftin Method — Service Worker
 // Update this version string whenever you deploy a new version
 // The browser will detect the change and refresh the cache automatically
-const CACHE_VERSION = 'fft-v187';
+const CACHE_VERSION = 'fft-v188';
 const CACHE_NAME = CACHE_VERSION;
 
 const STATIC_ASSETS = [

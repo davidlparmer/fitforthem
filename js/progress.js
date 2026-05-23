@@ -256,7 +256,9 @@ function renderProgress(){
     var last2=sorted[sorted.length-1].w;var prev2=sorted[sorted.length-2].w;
     var diff2=parseFloat((last2-prev2).toFixed(1));
     var cls,title,msg;
-    if(diff2<=-2){cls='low';title='Increase Calories';msg='Down '+Math.abs(diff2)+' lbs — add 100–150 cal to avoid rebound. The system is working faster than expected.';}
+    // Large single-day drops (2+ lbs) are almost always water weight — same as upward fluctuations.
+    // Never advise eating more based on a single weigh-in. The weekly trend section handles sustained changes.
+    if(diff2<=-2){cls='good';title='Big Drop — Water Weight';msg='Down '+Math.abs(diff2)+' lbs overnight — that\'s water, not fat. Stay on the plan exactly as-is. Nothing to change.';}
     else if(diff2<0){cls='good';title='Right on Track';msg='Down '+Math.abs(diff2)+' lbs. Keep everything exactly where it is — don\'t change a thing.';}
     else if(diff2===0){cls='flat';title='No Change — That\'s Fine';msg='Weight holding steady is normal. Add 1,000 steps or reduce 100 cal. One small adjustment is all it takes.';}
     else{cls='high';title='Normal Fluctuation';msg='Up '+diff2+' lbs — this is likely water weight, not fat. Stay on the plan, hit your steps. Nothing broke.';}

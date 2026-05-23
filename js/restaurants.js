@@ -364,6 +364,7 @@ async function searchRestaurant(){
       '- Simple grilled protein (6oz chicken/sirloin): 300–420 cal total including cooking fat\n'+
       '- Large restaurant burger patty: 500–700 cal\n'+
       '- Large fries (Five Guys, BWW, Chilis): 750–950 cal\n'+
+      '- Five Guys LITTLE fries: ~530 cal (portion naming is misleading — not actually small)\n'+
       '- Restaurant pasta entrée: 950–1,500 cal\n'+
       '- Wings 10-count sauced: 900–1,300 cal\n'+
       '- Breadstick (Olive Garden): 140 cal each\n'+

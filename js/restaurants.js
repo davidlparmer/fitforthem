@@ -11,44 +11,13 @@ var RESTAURANT_QUALITY={
   good:['mcdonalds','burger king','wendys','chick-fil-a','chickfila','popeyes','raising canes','in-n-out','five guys','shake shack','culvers','whataburger','sonic','steak n shake','waffle house','panera','chipotle','panda express','subway','jersey mikes'],
 };
 
-// ── RESTAURANT REALISM LAYER ─────────────────────────────────────────────────
-// Three-tier deterministic safety net that runs BEFORE rendering:
-//   1. Chain bias   — known heavy-pour chains inflate all estimates
-//   2. Keyword inflation — high-risk modifiers inflate the estimate
-//   3. Category floors — hard minimums for impossible outputs
-// To expand any tier: add a row to the relevant config object below.
+// ── RESTAURANT SAFETY FLOORS ─────────────────────────────────────────────────
+// Deterministic safety net — catches impossible AI outputs ONLY.
+// Realism inflation is handled entirely by the Claude prompt (see searchRestaurant).
+// These floors exist solely to prevent hallucinated low numbers from reaching users.
+// To expand: add a row to RESTAURANT_CAL_FLOORS below.
 
-// Tier 1: Chains known to pour oils, butter, and oversized portions.
-// Multiplier applied to Claude's raw estimate before anything else.
-var RESTAURANT_CHAIN_BIAS = {
-  'five guys':           1.50,
-  'cheesecake factory':  1.45,
-  'buffalo wild wings':  1.35,
-  'texas roadhouse':     1.30,
-  'olive garden':        1.25,
-  "applebee's":          1.20,
-  'applebees':           1.20,
-  "chili's":             1.20,
-  'chilis':              1.20,
-  'outback':             1.25,
-  'longhorn':            1.25,
-  'red lobster':         1.20,
-  'ihop':                1.20,
-  'dennys':              1.15,
-};
-
-// Tier 2: Keywords in the item name that signal hidden calories.
-// inflate = fraction added to estimate (0.35 = add 35%).
-// Only the highest-matching inflate value is applied per item.
-var RESTAURANT_KEYWORD_INFLATION = [
-  { keywords: ['alfredo','carbonara','creamy','cream sauce','cream-based'], inflate: 0.45 },
-  { keywords: ['fried','crispy','battered','breaded','deep fried'],         inflate: 0.40 },
-  { keywords: ['loaded','queso','bacon','ranch','aioli','cheese sauce'],    inflate: 0.35 },
-  { keywords: ['large','double','combo','riblets','triple'],                inflate: 0.30 },
-  { keywords: ['cajun','buttery','butter sauce','glazed','smothered'],      inflate: 0.25 },
-];
-
-// Tier 3: Hard calorie floors. Nothing in these categories can display below floor.
+// Hard calorie floors. Nothing in these categories can display below floor.
 // Listed most-specific first — first match wins.
 var RESTAURANT_CAL_FLOORS = [
   { keywords: ['large cajun fries','large fries','large french fries'],     floor: 700,  label: 'large fries'      },
@@ -86,44 +55,7 @@ function _applyRestaurantFloors(item, restaurantName) {
   if (!cal) return item;
   item.warningFlags = item.warningFlags || [];
 
-  // ── Tier 1: Chain bias — scaled by meal complexity ────────────────────
-  // Simple grilled meals (salmon, plain sirloin) need moderate inflation.
-  // Heavy loaded/fried meals need full chain inflation.
-  // Flat multipliers on simple meals cause over-inflation (e.g. 6oz sirloin → 1,650 cal).
-  var chainKey = (restaurantName||'').toLowerCase().replace(/[^a-z\s']/g,'').trim();
-  var chainMult = 1;
-  Object.keys(RESTAURANT_CHAIN_BIAS).forEach(function(chain) {
-    if (chainKey.indexOf(chain) >= 0) chainMult = Math.max(chainMult, RESTAURANT_CHAIN_BIAS[chain]);
-  });
-  if (chainMult > 1) {
-    // Score meal complexity to determine how much chain bias to apply
-    var _highRisk = ['loaded','fried','crispy','creamy','alfredo','queso','ranch','bacon',
-                     'double','triple','large','cajun','smothered','buttery','battered','breaded'];
-    var _lowRisk  = ['grilled','plain','herb','steamed','baked','simple','light',
-                     'salmon','sirloin','filet','broccoli','vegetables','salad'];
-    var _hi=0, _lo=0;
-    _highRisk.forEach(function(kw){ if(name.indexOf(kw)>=0) _hi++; });
-    _lowRisk.forEach(function(kw){  if(name.indexOf(kw)>=0) _lo++; });
-    // complexityFactor: 1.0 = full bias, 0.5 = half, 0.3 = minimal
-    var complexityFactor = _hi > _lo ? 1.0 : _lo > _hi ? 0.3 : 0.6;
-    chainMult = 1 + (chainMult - 1) * complexityFactor;
-    cal = Math.round(cal * chainMult);
-    if (chainMult > 1.1) item.warningFlags.push('Conservative estimate for ' + (restaurantName||'this chain'));
-  }
-
-  // ── Tier 2: Keyword inflation ────────────────────────────────────────────
-  var maxInflate = 0;
-  RESTAURANT_KEYWORD_INFLATION.forEach(function(rule) {
-    rule.keywords.forEach(function(kw) {
-      if (name.indexOf(kw) >= 0) maxInflate = Math.max(maxInflate, rule.inflate);
-    });
-  });
-  if (maxInflate > 0) {
-    cal = Math.round(cal * (1 + maxInflate));
-    item.warningFlags.push('Hidden calories adjusted for sauces, oils, and preparation');
-  }
-
-  // ── Tier 3: Category floors ──────────────────────────────────────────────
+  // ── Category floors — catch impossible outputs only ────────────────────
   var hit = null;
   RESTAURANT_CAL_FLOORS.forEach(function(rule) {
     rule.keywords.forEach(function(kw) {
@@ -155,30 +87,18 @@ function _applyRestaurantFloors(item, restaurantName) {
     item.warningFlags.push('Calorie estimate adjusted to restaurant minimum');
   }
 
-  // ── Apply adjusted cal, sync macros, build range ────────────────────────
-  var originalCal = item.cal || cal;
+  // ── Apply floors, sync macros, build range ──────────────────────────────
   item.cal    = _roundToFifty(cal);
   item.calLow = item.cal;
 
-  // Normalize macros so they always add up to the final displayed calorie total.
-  // The inflation ratio approach propagated Claude's original macro inconsistency.
-  // Normalization preserves the pro:carb:fat ratio from Claude but scales to match item.cal.
+  // Normalize macros so they always add up to the displayed calorie total.
+  // Preserves Claude's pro:carb:fat ratio but scales to match any floor adjustments.
   var _macroCal = (item.pro||0)*4 + (item.carb||0)*4 + (item.fat||0)*9;
   if (_macroCal > 50 && item.cal > 0) {
-    var _normRatio = item.cal / _macroCal;
-    item.pro  = Math.round((item.pro  || 0) * _normRatio);
-    item.carb = Math.round((item.carb || 0) * _normRatio);
-    item.fat  = Math.round((item.fat  || 0) * _normRatio);
-  }
-
-  // Surface the inflation as a visible component so users understand why total > line items.
-  var prepAdjustment = item.cal - originalCal;
-  if (prepAdjustment > 100) {
-    item.components = item.components || [];
-    item.components.push({
-      item: 'Typical restaurant cooking additions',
-      cal:  Math.round(prepAdjustment)
-    });
+    var _nr = item.cal / _macroCal;
+    item.pro  = Math.round((item.pro  || 0) * _nr);
+    item.carb = Math.round((item.carb || 0) * _nr);
+    item.fat  = Math.round((item.fat  || 0) * _nr);
   }
 
   // Range: variance based on confidence — low confidence = wider range
@@ -431,25 +351,25 @@ async function searchRestaurant(){
       'You are a physique nutrition coach at '+restaurant+'. Your job has TWO phases. Complete them in order.\n\n'+
 
       '── PHASE 1: REALISTIC ESTIMATION (ignore the calorie budget completely) ──\n'+
-      'Estimate what these restaurant meals actually contain. Do NOT look at the calorie budget yet.\n'+
-      'Nutrition databases undercount restaurant calories by 20–50%. Apply these realities:\n'+
-      '- Every grilled or sautéed item: add 80–150 cal for cooking oil and butter\n'+
-      '- Every sauce, glaze, or dressing: add 80–200 cal\n'+
-      '- Restaurant portions are 30–60% larger than home portions\n'+
-      '- Known heavy-pour chains:\n'+
-      '    Five Guys: all estimates ×1.5 (oil-soaked buns, massive patties, enormous fries)\n'+
-      '    Cheesecake Factory: ×1.45 (extreme portions, heavy sauces)\n'+
-      '    Buffalo Wild Wings, Texas Roadhouse, Olive Garden: ×1.25–1.35\n'+
-      '- Category minimums (never go below these):\n'+
-      '    Burger + large fries combo: 1,400–2,200 cal\n'+
-      '    Bacon cheeseburger alone: 850–1,200 cal\n'+
-      '    Large fries at Five Guys, BWW, Chilis: 750–950 cal\n'+
-      '    Pasta entrée: 950–1,600 cal\n'+
-      '    Wings 10-count sauced: 900–1,400 cal\n'+
-      '    Loaded or smothered anything: add 350–550 cal\n'+
-      '    Olive Garden breadstick: 140 cal each\n'+
-      '    12oz ribeye at steakhouse: 950–1,250 cal\n\n'+
-      'Return a calLow and calHigh RANGE. Never a single exact number. Round to nearest 50.\n\n'+
+      'Estimate what these restaurant meals actually contain. Do NOT look at the calorie budget yet.\n\n'+
+      'CRITICAL — build restaurant realism DIRECTLY INTO each component\'s calorie estimate.\n'+
+      'Do not add a separate "restaurant preparation" or "cooking additions" line item.\n'+
+      'Each component should already reflect: cooking oils, butter, sauces, and restaurant portion size.\n\n'+
+      'How to estimate each component realistically:\n'+
+      '- Grilled protein: include 60–120 cal of cooking fat in the estimate itself\n'+
+      '- Any sauce, glaze, or dressing: include in the component cal, not separately\n'+
+      '- Sides: use restaurant portion sizes (30–50% larger than home portions)\n'+
+      '- Fried items: already reflect the full oil absorption\n\n'+
+      'Realistic component ranges by category:\n'+
+      '- Simple grilled protein (6oz chicken/sirloin): 300–420 cal total including cooking fat\n'+
+      '- Large restaurant burger patty: 500–700 cal\n'+
+      '- Large fries (Five Guys, BWW, Chilis): 750–950 cal\n'+
+      '- Restaurant pasta entrée: 950–1,500 cal\n'+
+      '- Wings 10-count sauced: 900–1,300 cal\n'+
+      '- Breadstick (Olive Garden): 140 cal each\n'+
+      '- 12oz ribeye: 900–1,200 cal\n'+
+      '- Loaded/smothered sides: 450–700 cal\n\n'+
+      'Return calLow and calHigh as a realistic RANGE. Round to nearest 50. Never a single exact number.\n\n'+
 
       '── PHASE 2: SMART RECOMMENDATION (use the budget here) ──\n'+
       'User\'s '+slotLabel+' budget: '+foodBudget+' cal.\n\n'+
@@ -490,7 +410,10 @@ async function searchRestaurant(){
       '4. Include pro, carb, fat in grams\n'+
       '5. Do not invent items not on the menu\n'+
       '6. confidence: "high" = simple grilled protein, "medium" = standard item, "low" = fried/loaded/sauced\n'+
-      '7. ordering_notes: practical tips like "sauce on the side" or "ask for no butter"\n\n'+
+      '7. ordering_notes: practical tips like "sauce on the side" or "ask for no butter"\n'+
+      '8. MENU ACCURACY: Only recommend items that genuinely exist on this restaurant\'s menu. '+
+         'If unsure whether a specific branded dish exists, use a simple generic description '+
+         '(e.g. "6oz sirloin" not "Grilled Beef Tips Toscano"). Never invent dish names.\n\n'+
 
       'JSON format (return ONLY this JSON):\n'+
       '{"restaurant":"name","items":[{'+

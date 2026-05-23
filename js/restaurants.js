@@ -425,7 +425,7 @@ async function searchRestaurant(){
       '{"restaurant":"name","items":[{'+
       '"rank":"best",'+
       '"name":"full meal name",'+
-      '"protein":"chicken|steak|fish|other",'+
+      '"protein":"chicken|beef|steak|fish|seafood|other",'+
       '"cal":0,'+
       '"calLow":0,'+
       '"calHigh":0,'+

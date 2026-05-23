@@ -290,103 +290,170 @@ function drawChart(){
   if(display.length<2){
     var W=cv.offsetWidth||340;cv.width=W;cv.height=10;
     var ctx=cv.getContext('2d');ctx.clearRect(0,0,W,10);
-    if(noteEl)noteEl.textContent='Log at least 2 entries to see your trend line.';
+    if(noteEl)noteEl.textContent='Log at least 2 entries to see your trend.';
     return;
   }
 
-  var W=cv.offsetWidth||340,H=180;
-  cv.width=W;cv.height=H;
+  // ── Retina / device pixel ratio support ─────────────────────
+  // Without this the chart is blurry on iPhone and iPad screens.
+  var dpr=window.devicePixelRatio||1;
+  var W=cv.offsetWidth||340,H=220;
+  cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);
+  cv.style.width=W+'px';cv.style.height=H+'px';
   var ctx=cv.getContext('2d');
+  ctx.scale(dpr,dpr);
   ctx.clearRect(0,0,W,H);
 
-  var pad={t:24,r:16,b:28,l:44};
+  var pad={t:22,r:20,b:34,l:44};
+  var cw=W-pad.l-pad.r;
+  var ch=H-pad.t-pad.b;
+
   var ws=display.map(function(e){return e.w;});
-  var goalW=currentPlan.tz?Math.round(currentPlan.tz.high):null;
-  var allVals=goalW?ws.concat([goalW]):ws;
-  var mn=Math.min.apply(null,allVals)-3;
-  var mx=Math.max.apply(null,allVals)+3;
+  var goalLow=currentPlan.tz?currentPlan.tz.low:null;
+  var goalHigh=currentPlan.tz?currentPlan.tz.high:null;
+  var allVals=ws.slice();
+  if(goalLow)allVals.push(goalLow);
+  if(goalHigh)allVals.push(goalHigh);
+  var mn=Math.min.apply(null,allVals)-2;
+  var mx=Math.max.apply(null,allVals)+2;
   var rng=mx-mn||1;
 
-  function xPos(i){return pad.l+(i/(display.length-1))*(W-pad.l-pad.r);}
-  function yPos(w){return H-pad.b-((w-mn)/rng)*(H-pad.t-pad.b);}
+  function xPos(i){return pad.l+(i/(display.length-1))*cw;}
+  function yPos(w){return pad.t+((mx-w)/rng)*ch;}
+  var bottomY=H-pad.b;
 
-  // Grid lines + Y labels
-  ctx.strokeStyle='rgba(184,150,60,.1)';ctx.lineWidth=1;
-  ctx.fillStyle='rgba(154,138,106,.6)';ctx.font='10px sans-serif';ctx.textAlign='right';
+  // ── Goal zone band ───────────────────────────────────────────
+  if(goalLow&&goalHigh){
+    var gy1=yPos(Math.min(goalHigh,mx));
+    var gy2=yPos(Math.max(goalLow,mn));
+    if(gy2>gy1){
+      ctx.fillStyle='rgba(61,200,100,.07)';
+      ctx.fillRect(pad.l,gy1,cw,gy2-gy1);
+      ctx.strokeStyle='rgba(61,200,100,.22)';
+      ctx.lineWidth=1;
+      ctx.setLineDash([3,5]);
+      ctx.beginPath();ctx.moveTo(pad.l,gy1);ctx.lineTo(W-pad.r,gy1);ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle='rgba(61,200,100,.6)';
+      ctx.font='500 9px sans-serif';
+      ctx.textAlign='right';
+      ctx.fillText('Goal Zone',W-pad.r-2,gy1-4);
+    }
+  }
+
+  // ── Horizontal grid lines + Y labels ────────────────────────
+  ctx.lineWidth=1;
   for(var g=0;g<=4;g++){
     var yv=mn+(g/4)*rng;
     var yp=yPos(yv);
+    ctx.strokeStyle='rgba(0,212,255,.06)';
     ctx.beginPath();ctx.moveTo(pad.l,yp);ctx.lineTo(W-pad.r,yp);ctx.stroke();
+    ctx.fillStyle='rgba(140,190,215,.6)';
+    ctx.font='500 10px sans-serif';
+    ctx.textAlign='right';
     ctx.fillText(Math.round(yv),pad.l-6,yp+4);
   }
 
-  // Goal line
-  if(goalW&&goalW>=mn&&goalW<=mx){
-    var gy=yPos(goalW);
-    ctx.strokeStyle='rgba(61,122,82,.5)';ctx.lineWidth=1;ctx.setLineDash([4,4]);
-    ctx.beginPath();ctx.moveTo(pad.l,gy);ctx.lineTo(W-pad.r,gy);ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle='rgba(61,122,82,.8)';ctx.font='10px sans-serif';ctx.textAlign='left';
-    ctx.fillText('Goal',pad.l+4,gy-4);
-  }
-
-  // Trend line (linear regression)
+  // ── Trend line (linear regression) ──────────────────────────
   if(display.length>=3){
     var n=display.length;
     var sumX=0,sumY=0,sumXY=0,sumX2=0;
     for(var t=0;t<n;t++){sumX+=t;sumY+=display[t].w;sumXY+=t*display[t].w;sumX2+=t*t;}
     var slope=(n*sumXY-sumX*sumY)/(n*sumX2-sumX*sumX);
     var intercept=(sumY-slope*sumX)/n;
-    ctx.strokeStyle='rgba(184,150,60,.35)';ctx.lineWidth=1.5;ctx.setLineDash([3,3]);
+    ctx.strokeStyle='rgba(0,212,255,.22)';
+    ctx.lineWidth=1.5;
+    ctx.setLineDash([4,5]);
     ctx.beginPath();
     ctx.moveTo(xPos(0),yPos(intercept));
     ctx.lineTo(xPos(n-1),yPos(intercept+slope*(n-1)));
-    ctx.stroke();ctx.setLineDash([]);
+    ctx.stroke();
+    ctx.setLineDash([]);
   }
 
-  // Main weight line
+  // ── Point positions ──────────────────────────────────────────
   var pts=display.map(function(e,i){return{x:xPos(i),y:yPos(e.w)};});
-  // Gradient fill under line
-  var grad=ctx.createLinearGradient(0,pad.t,0,H-pad.b);
-  grad.addColorStop(0,'rgba(232,132,90,.25)');
-  grad.addColorStop(1,'rgba(232,132,90,.0)');
-  ctx.beginPath();
-  ctx.moveTo(pts[0].x,H-pad.b);
-  pts.forEach(function(p){ctx.lineTo(p.x,p.y);});
-  ctx.lineTo(pts[pts.length-1].x,H-pad.b);
-  ctx.closePath();ctx.fillStyle=grad;ctx.fill();
 
-  ctx.strokeStyle='#E8845A';ctx.lineWidth=2.5;ctx.lineJoin='round';ctx.lineCap='round';
+  // ── Catmull-Rom control points (smooth bezier curves) ────────
+  // Converts Catmull-Rom spline to cubic bezier — much smoother than lineTo.
+  function cp(p0,p1,p2,p3){
+    var a=0.5;
+    return{
+      cp1x:p1.x+(p2.x-p0.x)*a/3,cp1y:p1.y+(p2.y-p0.y)*a/3,
+      cp2x:p2.x-(p3.x-p1.x)*a/3,cp2y:p2.y-(p3.y-p1.y)*a/3
+    };
+  }
+
+  // ── Gradient fill under curve ────────────────────────────────
+  var grad=ctx.createLinearGradient(0,pad.t,0,bottomY);
+  grad.addColorStop(0,'rgba(0,212,255,.16)');
+  grad.addColorStop(0.65,'rgba(0,212,255,.05)');
+  grad.addColorStop(1,'rgba(0,212,255,.0)');
   ctx.beginPath();
-  pts.forEach(function(p,i){i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y);});
+  ctx.moveTo(pts[0].x,bottomY);
+  ctx.lineTo(pts[0].x,pts[0].y);
+  for(var i=0;i<pts.length-1;i++){
+    var c=cp(pts[Math.max(0,i-1)],pts[i],pts[i+1],pts[Math.min(pts.length-1,i+2)]);
+    ctx.bezierCurveTo(c.cp1x,c.cp1y,c.cp2x,c.cp2y,pts[i+1].x,pts[i+1].y);
+  }
+  ctx.lineTo(pts[pts.length-1].x,bottomY);
+  ctx.closePath();
+  ctx.fillStyle=grad;
+  ctx.fill();
+
+  // ── Smooth weight line ───────────────────────────────────────
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x,pts[0].y);
+  for(var i=0;i<pts.length-1;i++){
+    var c=cp(pts[Math.max(0,i-1)],pts[i],pts[i+1],pts[Math.min(pts.length-1,i+2)]);
+    ctx.bezierCurveTo(c.cp1x,c.cp1y,c.cp2x,c.cp2y,pts[i+1].x,pts[i+1].y);
+  }
+  ctx.strokeStyle='#00D4FF';
+  ctx.lineWidth=2.5;
+  ctx.lineJoin='round';
+  ctx.lineCap='round';
   ctx.stroke();
 
-  // Dots + labels for recent points
-  var showLabels=display.length<=14;
+  // ── Data points ──────────────────────────────────────────────
   pts.forEach(function(p,i){
-    ctx.beginPath();ctx.arc(p.x,p.y,3.5,0,Math.PI*2);
-    ctx.fillStyle='#E8845A';ctx.fill();
-    ctx.strokeStyle='rgba(20,17,14,.8)';ctx.lineWidth=1.5;ctx.stroke();
-    if(showLabels){
-      ctx.fillStyle='rgba(154,138,106,.85)';ctx.font='9px sans-serif';ctx.textAlign='center';
-      ctx.fillText(display[i].w,p.x,p.y-8);
+    var isLast=i===pts.length-1;
+    // Glow ring on latest entry
+    if(isLast){
+      ctx.beginPath();ctx.arc(p.x,p.y,9,0,Math.PI*2);
+      ctx.fillStyle='rgba(0,212,255,.1)';ctx.fill();
+      ctx.beginPath();ctx.arc(p.x,p.y,6,0,Math.PI*2);
+      ctx.fillStyle='rgba(0,212,255,.18)';ctx.fill();
+    }
+    // Dot
+    ctx.beginPath();ctx.arc(p.x,p.y,isLast?5:3.5,0,Math.PI*2);
+    ctx.fillStyle=isLast?'#00D4FF':'rgba(0,180,220,.75)';ctx.fill();
+    ctx.strokeStyle='#0D1B2A';ctx.lineWidth=isLast?2:1.5;ctx.stroke();
+    // Weight label: always first + last; others only if ≤ 10 entries
+    if(isLast||i===0||display.length<=10){
+      ctx.fillStyle=isLast?'rgba(0,212,255,.95)':'rgba(170,215,235,.75)';
+      ctx.font=isLast?'600 10px sans-serif':'500 9px sans-serif';
+      ctx.textAlign='center';
+      ctx.fillText(display[i].w,p.x,p.y-(isLast?13:10));
     }
   });
 
-  // X axis labels (dates)
-  ctx.fillStyle='rgba(154,138,106,.6)';ctx.font='9px sans-serif';ctx.textAlign='center';
+  // ── X-axis date labels ───────────────────────────────────────
+  ctx.fillStyle='rgba(140,190,215,.55)';
+  ctx.font='500 9px sans-serif';
+  ctx.textAlign='center';
   var labelEvery=Math.max(1,Math.floor(display.length/5));
   display.forEach(function(e,i){
     if(i===0||i===display.length-1||i%labelEvery===0){
       var parts=e.d.split('-');
-      ctx.fillText(parts[1]+'/'+parts[2],xPos(i),H-pad.b+14);
+      ctx.fillText(parts[1]+'/'+parts[2],xPos(i),H-pad.b+17);
     }
   });
 
+  // ── Chart note ───────────────────────────────────────────────
   if(noteEl){
     var totalChange=display[display.length-1].w-display[0].w;
     var changeStr=(totalChange>0?'+':'')+parseFloat(totalChange.toFixed(1));
-    noteEl.textContent='Shown: '+display.length+' entries · '+changeStr+' lbs over this period · Gold dashed line = trend direction';
+    noteEl.textContent=display.length+' entries · '+changeStr+' lbs this period';
   }
 }
 

@@ -106,7 +106,7 @@ function _obError(msg) {
 function _obSave() {
   var g = function(id){ var el=document.getElementById(id); return el?el.value:''; };
   if (_ob.step === 1) {
-    _ob.height     = g('ob-height');
+    _ob.height     = _ob.height; // set directly by selectHeight()
     _ob.weight     = g('ob-weight');
     _ob.age        = g('ob-age');
     _ob.goalWeight = g('ob-goal');
@@ -131,11 +131,11 @@ function _obRestoreStep() {
     s('ob-weight', _ob.weight);
     s('ob-age',    _ob.age);
     s('ob-goal',   _ob.goalWeight);
-    // Height select — restore value and update color
-    var hEl = document.getElementById('ob-height');
-    if (hEl && _ob.height) {
-      hEl.value = _ob.height;
-      hEl.style.color = 'var(--t1)';
+    // Height button — restore value and update color
+    var hBtn = document.getElementById('ob-height-btn');
+    if (hBtn && _ob.height) {
+      hBtn.textContent = _obHeightLabel(_ob.height);
+      hBtn.style.color = 'var(--t1)';
     }
   }
   if (_ob.step === 2) {
@@ -205,14 +205,6 @@ function _obButtons(step, continueLabel) {
 // STEP 1 — ABOUT YOU
 // ══════════════════════════════════════════════════════════════
 function _obStep1() {
-  var heights = ['<option value="" disabled selected>Select height</option>'];
-  var hLabels = {60:"5'0\"",61:"5'1\"",62:"5'2\"",63:"5'3\"",64:"5'4\"",65:"5'5\"",
-                 66:"5'6\"",67:"5'7\"",68:"5'8\"",69:"5'9\"",70:"5'10\"",71:"5'11\"",
-                 72:"6'0\"",73:"6'1\"",74:"6'2\"",75:"6'3\"",76:"6'4\"",77:"6'5\"",
-                 78:"6'6\"",79:"6'7\"",80:"6'8\""};
-  for (var i = 60; i <= 80; i++)
-    heights.push('<option value="' + i + '">' + hLabels[i] + '</option>');
-
   var maleActive   = _ob.sex === 'male';
   var femaleActive = _ob.sex === 'female';
 
@@ -239,11 +231,11 @@ function _obStep1() {
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">' +
       '<div>' +
         _obFieldLabel('Height') +
-        '<select id="ob-height" ' +
-          'onchange="this.style.color=this.value?\'var(--t1)\':\' var(--t3)\'}" ' +
-          'style="' + _obInputStyle + ';color:' + (_ob.height ? 'var(--t1)' : 'var(--t3)') + ';cursor:pointer">' +
-          heights.join('') +
-        '</select>' +
+        '<button id="ob-height-btn" onclick="openHeightPicker()" ' +
+          'style="' + _obInputStyle + ';color:' + (_ob.height ? 'var(--t1)' : 'var(--t3)') + ';' +
+          'text-align:left;cursor:pointer;display:block">' +
+          (_ob.height ? _obHeightLabel(_ob.height) : 'Select height') +
+        '</button>' +
       '</div>' +
       '<div>' +
         _obFieldLabel('Age') +
@@ -288,6 +280,58 @@ function _obSetSex(sex) {
     btn.style.borderColor  = active ? 'rgba(0,212,255,.45)' : 'var(--border)';
     btn.style.color        = active ? 'var(--gold-light)' : 'var(--t2)';
   });
+}
+
+// ── Height picker ────────────────────────────────────────────
+// Generate label like 5'10" from total inches — no hardcoded quote escaping needed
+function _obHeightLabel(in_) {
+  var n = parseInt(in_);
+  if (!n) return '';
+  return Math.floor(n / 12) + "'" + (n % 12) + '"';
+}
+
+function openHeightPicker() {
+  var overlay = document.getElementById('height-picker-overlay');
+  var sheet   = document.getElementById('height-picker-sheet');
+  if (!overlay || !sheet) return;
+  overlay.style.display = 'block';
+  sheet.style.display   = 'flex';
+  setTimeout(function(){ sheet.style.transform = 'translateY(0)'; }, 10);
+  // Scroll selected item into view after sheet opens
+  setTimeout(function(){
+    if (_ob.height) {
+      var sel = document.getElementById('hpick-' + _ob.height);
+      if (sel) sel.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  }, 150);
+}
+
+function closeHeightPicker() {
+  var sheet = document.getElementById('height-picker-sheet');
+  if (sheet) sheet.style.transform = 'translateY(100%)';
+  setTimeout(function(){
+    var overlay = document.getElementById('height-picker-overlay');
+    if (sheet)   sheet.style.display   = 'none';
+    if (overlay) overlay.style.display = 'none';
+  }, 320);
+}
+
+function selectHeight(in_) {
+  _ob.height = String(in_);
+  var btn = document.getElementById('ob-height-btn');
+  if (btn) {
+    btn.textContent = _obHeightLabel(in_);
+    btn.style.color = 'var(--t1)';
+  }
+  // Highlight selected row
+  document.querySelectorAll('.hpick-row').forEach(function(r) {
+    var active = r.getAttribute('data-in') === String(in_);
+    r.style.color      = active ? 'var(--gold-light)' : 'var(--t1)';
+    r.style.background = active ? 'rgba(0,212,255,.07)' : 'transparent';
+    var check = r.querySelector('.hpick-check');
+    if (check) check.style.opacity = active ? '1' : '0';
+  });
+  setTimeout(closeHeightPicker, 200);
 }
 
 // ══════════════════════════════════════════════════════════════

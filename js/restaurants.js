@@ -604,6 +604,110 @@ async function searchDrinks(){
   }catch(err){el.innerHTML='<div class="error-box">⚠️ Something went wrong. Try again. <span onclick="location.reload()" style="color:var(--gold);cursor:pointer;font-weight:600">Reload app</span></div>';}
 }
 
+
+// ── Dashboard Drink Widget search ────────────────────────────
+// Standalone drink lookup for the dashboard, shown on drinking nights.
+// Improved over searchDrinks(): natural serving sizes, lighter alternatives,
+// cleaner cards showing budget fit prominently.
+async function searchDrinkWidget() {
+  var q = document.getElementById('dash-drink-input');
+  if (!q || !q.value.trim()) return;
+  var query = q.value.trim();
+
+  // Legal drinking age gate — reuses the same confirmation as the restaurant feature
+  if (!drinkingAgeConfirmed) {
+    var ok = confirm(
+      'The drink feature is intended for users of legal drinking age.\n\n' +
+      'In the United States that is 21 and older. Laws vary by country.\n\n' +
+      'By continuing you confirm you are of legal drinking age where you live.'
+    );
+    if (!ok) return;
+    drinkingAgeConfirmed = true;
+    try { localStorage.setItem('fft_drink_age', '1'); } catch(e) {}
+  }
+
+  var el = document.getElementById('dash-drink-results');
+  if (!el) return;
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Looking up "' + query + '"...</div>';
+
+  // Get today's drink budget from the actual level set on the dashboard
+  var todayIdx   = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+  var todayLevel = (drinkingDays && drinkingDays[todayIdx]) || 'regular';
+  var budget     = (typeof DRINK_RESERVES !== 'undefined' ? DRINK_RESERVES[todayLevel] : 0) || 450;
+
+  try {
+    var data = await askClaude(
+      'Calorie data for the alcoholic drink: "' + query + '". ' +
+      'Return exactly 3 entries covering: a standard pour, a lighter version or smaller size, and a premium or stronger version. ' +
+      'Use natural human serving sizes — e.g. "12oz can", "5oz glass", "1.5oz shot", "pint", "bottle". Never use grams. ' +
+      'If any version exceeds 300 cal, include a brief lighter swap suggestion. ' +
+      'JSON: {"drink":"' + query + '","items":[{"name":"variation name","serving":"natural size","cal":0,"notes":"brief note or lighter swap"}]}'
+    );
+
+    if (!data.items || !data.items.length) {
+      el.innerHTML = '<div class="empty">No results found. Try a different spelling.</div>';
+      return;
+    }
+
+    var html = '';
+    data.items.forEach(function(d) {
+      var cal   = d.cal || 0;
+      var fits  = cal > 0 && cal <= budget;
+      var count = cal > 0 ? Math.floor(budget / cal) : 0;
+      var pct   = cal > 0 ? Math.min(Math.round((cal / budget) * 100), 100) : 0;
+
+      // Badge colour
+      var badgeColor = fits
+        ? 'background:rgba(0,180,80,.12);color:rgba(0,210,100,.9);border:1px solid rgba(0,180,80,.2)'
+        : 'background:rgba(249,115,22,.1);color:rgba(249,150,50,.9);border:1px solid rgba(249,115,22,.2)';
+
+      html +=
+        '<div style="padding:14px 0;border-bottom:1px solid rgba(103,232,249,.07)">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">' +
+
+            // Left: name + serving + notes
+            '<div style="flex:1;min-width:0">' +
+              '<div style="font-size:.9rem;font-weight:700;color:var(--t1);margin-bottom:2px">' + d.name + '</div>' +
+              '<div style="font-size:.72rem;color:var(--t3)">' + (d.serving || '') + '</div>' +
+              (d.notes ? '<div style="font-size:.68rem;color:var(--t3);margin-top:4px;font-style:italic">' + d.notes + '</div>' : '') +
+            '</div>' +
+
+            // Right: cal + how many fit
+            '<div style="text-align:right;flex-shrink:0">' +
+              '<div style="font-size:1rem;font-weight:800;color:var(--t1)">' + cal + '<span style="font-size:.65rem;font-weight:500;color:var(--t3)"> cal</span></div>' +
+              '<div style="font-size:.68rem;font-weight:700;margin-top:4px;padding:3px 8px;border-radius:20px;' + badgeColor + '">' +
+                (fits
+                  ? (count === 1 ? '1 fits' : count + ' fit')
+                  : 'Over budget') +
+              '</div>' +
+            '</div>' +
+
+          '</div>' +
+          // Progress bar showing how much of the budget this drink uses
+          '<div style="margin-top:8px;height:3px;background:rgba(103,232,249,.08);border-radius:2px">' +
+            '<div style="height:3px;width:' + pct + '%;background:' +
+              (fits ? 'rgba(0,200,100,.5)' : 'rgba(249,115,22,.5)') +
+              ';border-radius:2px;transition:width .4s ease"></div>' +
+          '</div>' +
+        '</div>';
+    });
+
+    // Remaining budget tip
+    html +=
+      '<div style="font-size:.68rem;color:var(--t3);margin-top:12px;text-align:center;font-style:italic">' +
+        'Budget tonight: ' + budget + ' cal · Tap a drink to use as reference' +
+      '</div>';
+
+    el.innerHTML = html;
+
+  } catch(err) {
+    el.innerHTML =
+      '<div class="error-box">⚠️ Something went wrong. Try again. ' +
+      '<span onclick="location.reload()" style="color:var(--gold);cursor:pointer;font-weight:600">Reload app</span></div>';
+  }
+}
+// ── End Dashboard Drink Widget ────────────────────────────────
+
 async function searchFood(){var q=document.getElementById('food-input').value.trim();if(!q){alert('Please enter a food.');return;}var el=document.getElementById('food-results');el.innerHTML='<div class="loading"><div class="spinner"></div>Looking up "'+q+'"...</div>';try{var data=await askClaude('USDA nutritional data for: '+q+'. 3 serving sizes. JSON: {"food":"'+q+'","items":[{"name":"preparation","serving":"size","cal":0,"pro":0,"carb":0,"fat":0}]}');var html='<div class="section-title">Nutrition — "'+q+'"</div>';data.items.forEach(function(item,i){html+=renderFoodCard(item,i===0,0,false);});el.innerHTML=html;}catch(err){el.innerHTML='<div class="error-box">⚠️ Something went wrong. Try again. <span onclick="location.reload()" style="color:var(--gold);cursor:pointer;font-weight:600">Reload app</span></div>';}}
 
 async function searchStore(){var store=document.getElementById('store-input').value.trim();if(!store){alert('Please enter a store name.');return;}var eoCal=parseInt(document.getElementById('eo-cal').value)||currentPlan.cal||1800;var dow=new Date().getDay();var dayIdx=dow===0?6:dow-1;var rotation=buildRotation();var todayProtein=rotation[dayIdx].protein;var el=document.getElementById('store-results');el.innerHTML='<div class="loading"><div class="spinner"></div>Finding products at '+store+'...</div>';var prompt='';if(storeMode==='protein')prompt='Find 3 specific branded products for '+todayProtein+' at '+store+'. Real whole food. JSON: {"store":"'+store+'","items":[{"name":"brand+product","size":"size","cal":0,"pro":0,"carb":0,"fat":0,"price":"~$X","tip":"tip"}]}';else if(storeMode==='day')prompt='Full day IF meals from '+store+' for '+eoCal+' cal plan. JSON: {"store":"'+store+'","meals":[{"meal":"First Meal|Dinner|Dessert","items":[{"name":"product","cal":0,"pro":0}],"totalCal":0}]}';else prompt='Best brands for these ingredients at '+store+': chicken, salmon, beef, potatoes, eggs, cottage cheese, Greek yogurt, honey, soy sauce. JSON: {"store":"'+store+'","items":[{"ingredient":"name","brand":"brand","product":"product","size":"size","price":"~$X","tip":"why"}]}';try{var data=await askClaude(prompt);var html='';if(storeMode==='day'&&data.meals){data.meals.forEach(function(meal){html+='<div class="food-card"><div class="food-name">'+meal.meal+'</div><div style="margin:8px 0">'+meal.items.map(function(i){return '<div style="font-size:.84rem;padding:3px 0;border-bottom:1px solid var(--border)"><span style="color:var(--warm)">→</span> '+i.name+' ('+i.cal+' cal)</div>';}).join('')+'</div><div style="font-size:.82rem;font-weight:700;color:var(--warm)">Total: '+meal.totalCal+' cal</div></div>';});}else if(storeMode==='recipe'&&data.items){data.items.forEach(function(item){html+='<div class="food-card"><div class="food-name">'+item.ingredient+'</div><div class="food-desc">'+item.brand+' — '+item.product+' ('+item.size+') · '+item.price+'</div><div class="coach-note" style="margin-top:8px">'+item.tip+'</div></div>';});}else if(data.items){data.items.forEach(function(item,i){html+='<div class="food-card'+(i===0?' best':'')+'">'+( i===0?'<div class="best-badge top">Best Pick</div>':'')+' <div class="food-name">'+item.name+'</div><div class="food-desc">'+item.size+(item.price?' · '+item.price:'')+'</div><div class="food-macros"><div class="macro"><div class="mv">'+item.cal+'</div><div class="ml">Cal</div></div><div class="macro"><div class="mv">'+item.pro+'g</div><div class="ml">Protein</div></div></div>'+(item.tip?'<div class="coach-note" style="margin-top:8px">'+item.tip+'</div>':'')+'</div>';});}el.innerHTML=html||'<div class="empty">No results.</div>';}catch(err){el.innerHTML='<div class="error-box">⚠️ Something went wrong. Try again. <span onclick="location.reload()" style="color:var(--gold);cursor:pointer;font-weight:600">Reload app</span></div>';}}

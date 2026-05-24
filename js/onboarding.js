@@ -157,7 +157,7 @@ function _obProgress(step) {
   return '<div style="margin-bottom:28px">' +
     '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">' +
       '<div style="font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-light)">' + name + '</div>' +
-      '<div style="font-size:.6rem;color:var(--t3);letter-spacing:.05em">' + step + ' of 5</div>' +
+      '' +
     '</div>' +
     '<div style="height:3px;background:rgba(103,232,249,.1);border-radius:2px">' +
       '<div style="height:3px;width:' + pct + ';background:linear-gradient(90deg,var(--gold),rgba(0,212,255,.7));' +
@@ -236,7 +236,6 @@ function _obStep1() {
     '</div>' +
 
     // Height + Age
-    _obSection('About You') +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">' +
       '<div>' +
         _obFieldLabel('Height') +
@@ -264,7 +263,7 @@ function _obStep1() {
       '</div>' +
     '</div>' +
 
-    '<div style="font-size:.68rem;color:var(--t3);margin-bottom:4px;line-height:1.6;font-style:italic">' +
+    '<div style="font-size:.68rem;color:var(--t2);margin-bottom:4px;line-height:1.6;font-style:italic">' +
       'Goal weight helps track your progress — the system calculates your deficit automatically.' +
     '</div>' +
 
@@ -277,7 +276,7 @@ function _obSexBtn(sex, label, active) {
     'transition:all .2s;' +
     'background:' + (active ? 'rgba(0,212,255,.1)' : 'var(--s2)') + ';' +
     'border-color:' + (active ? 'rgba(0,212,255,.45)' : 'var(--border)') + ';' +
-    'color:' + (active ? 'var(--gold-light)' : 'var(--t3)') + '">' +
+    'color:' + (active ? 'var(--gold-light)' : 'var(--t2)') + '">' +
     label + '</button>';
 }
 
@@ -289,7 +288,7 @@ function _obSetSex(sex) {
     var active = s === sex;
     btn.style.background   = active ? 'rgba(0,212,255,.1)' : 'var(--s2)';
     btn.style.borderColor  = active ? 'rgba(0,212,255,.45)' : 'var(--border)';
-    btn.style.color        = active ? 'var(--gold-light)' : 'var(--t3)';
+    btn.style.color        = active ? 'var(--gold-light)' : 'var(--t2)';
   });
 }
 

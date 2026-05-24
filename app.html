@@ -221,6 +221,24 @@
       <div class="swipe-container" id="dash-swipe">
         <div id="dash-day-content"></div>
       </div>
+
+      <!-- Drink Widget — shown only on drinking nights, hidden by default -->
+      <div id="dash-drink-widget" style="display:none;margin-top:14px">
+        <div style="background:var(--s1);border:1px solid rgba(103,232,249,.12);border-radius:14px;padding:16px 18px">
+          <div style="font-size:.58rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-light);margin-bottom:4px;font-family:var(--font-body)">Tonight's Drinks</div>
+          <div id="dash-drink-budget" style="font-size:.75rem;color:var(--t2);margin-bottom:14px;line-height:1.5"></div>
+          <div style="display:flex;gap:8px;margin-bottom:12px">
+            <input type="text" id="dash-drink-input"
+              placeholder="Search any drink..."
+              style="flex:1;padding:11px 12px;background:var(--s2);border:1px solid var(--border);border-radius:10px;color:var(--t1);font-size:.88rem;outline:none"
+              onkeydown="if(event.key==='Enter')searchDrinkWidget()">
+            <button onclick="searchDrinkWidget()"
+              style="padding:11px 18px;background:var(--gold);border:none;border-radius:10px;color:var(--bg);font-size:.82rem;font-weight:800;cursor:pointer;white-space:nowrap;letter-spacing:.02em">Search</button>
+          </div>
+          <div id="dash-drink-results"></div>
+        </div>
+      </div>
+
       <!-- Weekly Dinner Family Selector -->
       <div id="dinner-theme-section" style="display:none;margin-top:14px;background:var(--s1);border:1px solid var(--gold-line);border-radius:14px;padding:16px 18px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">

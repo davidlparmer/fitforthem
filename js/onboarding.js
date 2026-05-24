@@ -525,8 +525,7 @@ var _obProteins = [
   {key:'steak',   label:'Steak'},
   {key:'fish',    label:'Fish'},
   {key:'eggs',    label:'Eggs'},
-  {key:'turkey',  label:'Turkey'},
-  {key:'pork',    label:'Pork'}
+  {key:'turkey',  label:'Turkey'}
 ];
 
 function _obStep4() {

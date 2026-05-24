@@ -573,37 +573,43 @@ function _obToggleProtein(key) {
 // STEP 5 — ALMOST THERE
 // ══════════════════════════════════════════════════════════════
 function _obStep5() {
+  var walkLabels = {flat:'Outdoor walk', treadmill:'Flat treadmill', incline:'Incline treadmill'};
+  var workLabels = {office:'Office', wfh:'Work from home'};
   var proteinList = _ob.proteins.length
     ? _ob.proteins.map(function(p){ return p.charAt(0).toUpperCase()+p.slice(1); }).join(', ')
-    : 'All proteins';
-  var walkLabels = {flat:'Outdoor walking', treadmill:'Flat treadmill', incline:'Incline treadmill'};
-  var workLabels = {office:'Office', wfh:'Work from home'};
+    : 'Not specified';
+  var walkDetail = walkLabels[_ob.walkType] || _ob.walkType;
+  if (_ob.walkType === 'treadmill') walkDetail += ' · ' + _ob.speed + ' mph';
+  if (_ob.walkType === 'incline')   walkDetail += ' · ' + _ob.speed + ' mph · ' + _ob.incline + '% grade';
+  var heightLabel = _obHeightLabel(_ob.height);
 
   return '<div style="padding:4px 0 8px">' +
     _obProgress(5) +
-    '<div style="margin-bottom:28px">' +
+    '<div style="margin-bottom:24px">' +
       '<div style="font-size:1.45rem;font-weight:800;color:var(--t1);line-height:1.25;margin-bottom:10px">Your structure is ready to build.</div>' +
-      '<div style="font-size:.85rem;color:var(--t2);line-height:1.65">We have everything we need. Here is what we are building for you.</div>' +
+      '<div style="font-size:.85rem;color:var(--t2);line-height:1.65">Here is everything we collected. Tap below to generate your plan.</div>' +
     '</div>' +
 
-    '<div style="background:var(--s2);border:1px solid rgba(103,232,249,.12);border-radius:16px;padding:20px;margin-bottom:24px">' +
-      _obSummaryRow('Calorie target',   'Calculated from your stats') +
-      _obSummaryRow('Protein target',   'Set for your phase') +
-      _obSummaryRow('Daily steps',      walkLabels[_ob.walkType] || 'Calculated') +
-      _obSummaryRow('Meal rotation',    proteinList) +
-      _obSummaryRow('Schedule',         'Wake ' + _ob.wakeTime + ' · Sleep ' + _ob.bedTime) +
-      _obSummaryRow('Work setup',       workLabels[_ob.workMode] || '') +
+    '<div style="background:var(--s2);border:1px solid rgba(103,232,249,.12);border-radius:16px;padding:4px 20px;margin-bottom:24px">' +
+      _obSummaryRow('Height',     heightLabel) +
+      _obSummaryRow('Weight',     _ob.weight + ' lbs') +
+      (_ob.goalWeight ? _obSummaryRow('Goal Weight', _ob.goalWeight + ' lbs') : '') +
+      _obSummaryRow('Age',        _ob.age + ' yrs') +
+      _obSummaryRow('Sex',        _ob.sex === 'male' ? 'Male' : 'Female') +
+      _obSummaryRow('Schedule',   'Wake ' + _ob.wakeTime + ' · Sleep ' + _ob.bedTime) +
+      _obSummaryRow('Work',       workLabels[_ob.workMode] || _ob.workMode) +
+      _obSummaryRow('Activity',   walkDetail) +
+      _obSummaryRow('Proteins',   proteinList) +
     '</div>' +
-
-    '<div style="font-size:.72rem;color:var(--t3);line-height:1.6;text-align:center;margin-bottom:4px;font-style:italic">Your plan updates automatically as your weight changes.</div>' +
 
     _obButtons(5, 'Build My Structure →');
 }
 
 function _obSummaryRow(label, value) {
-  return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(103,232,249,.06)">' +
-    '<span style="font-size:.78rem;color:var(--t3)">' + label + '</span>' +
-    '<span style="font-size:.78rem;font-weight:700;color:var(--t1);text-align:right;max-width:55%">' + value + '</span>' +
+  return '<div style="display:flex;justify-content:space-between;align-items:center;' +
+    'padding:12px 0;border-bottom:1px solid rgba(103,232,249,.06)">' +
+    '<span style="font-size:.78rem;color:var(--t2);font-weight:500">' + label + '</span>' +
+    '<span style="font-size:.78rem;font-weight:700;color:var(--t1);text-align:right;max-width:60%">' + value + '</span>' +
   '</div>';
 }
 

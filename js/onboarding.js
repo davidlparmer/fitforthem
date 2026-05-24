@@ -428,9 +428,9 @@ function _obStep3() {
 
     _obSection('Walk Type') +
     '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">' +
-      _obWalkBtn('flat',      '🚶',  'Outdoor',   'Flat walk',      isFlat) +
-      _obWalkBtn('treadmill', '➡',   'Treadmill', 'Flat belt',      isTreadmill) +
-      _obWalkBtn('incline',   '↗',   'Incline',   'Treadmill',      isIncline) +
+      _obWalkBtn('flat',      'Outdoor',   'Flat walk',   isFlat) +
+      _obWalkBtn('treadmill', 'Treadmill', 'Flat belt',   isTreadmill) +
+      _obWalkBtn('incline',   'Incline',   'With grade',  isIncline) +
     '</div>' +
 
     '<div id="ob-speed-section" style="' + (showSpeed ? '' : 'display:none;') + '">' +
@@ -462,15 +462,14 @@ function _obStep3() {
     _obButtons(3);
 }
 
-function _obWalkBtn(type, icon, label, sub, active) {
+function _obWalkBtn(type, label, sub, active) {
   var onclk = "onclick=\"_obSetWalkType('" + type + "')\"";
   return '<button id="ob-walk-' + type + '" ' + onclk + ' ' +
-    'style="padding:14px 6px;border-radius:14px;border:1px solid;cursor:pointer;text-align:center;transition:all .2s;' +
+    'style="padding:16px 6px;border-radius:14px;border:1px solid;cursor:pointer;text-align:center;transition:all .2s;' +
     'background:' + (active ? 'rgba(0,212,255,.1)' : 'var(--s2)') + ';' +
-    'border-color:' + (active ? 'rgba(0,212,255,.45)' : 'var(--border)') + '">' +
-    '<div style="font-size:1.2rem;margin-bottom:4px">' + icon + '</div>' +
-    '<div style="font-size:.78rem;font-weight:700;color:' + (active ? 'var(--gold-light)' : 'var(--t1)') + '">' + label + '</div>' +
-    '<div style="font-size:.6rem;color:' + (active ? 'rgba(0,212,255,.6)' : 'var(--t3)') + ';margin-top:2px">' + sub + '</div>' +
+    'border-color:' + (active ? 'rgba(0,212,255,.45)' : 'var(--border)') + ';">' +
+    '<div style="font-size:.85rem;font-weight:700;color:' + (active ? 'var(--gold-light)' : 'var(--t1)') + ';margin-bottom:4px">' + label + '</div>' +
+    '<div style="font-size:.65rem;color:' + (active ? 'rgba(0,212,255,.7)' : 'var(--t2)') + '">' + sub + '</div>' +
   '</button>';
 }
 
@@ -491,7 +490,7 @@ function _obSetWalkType(type) {
     btn.style.borderColor = active ? 'rgba(0,212,255,.45)' : 'var(--border)';
     var divs = btn.querySelectorAll('div');
     if (divs[1]) divs[1].style.color = active ? 'var(--gold-light)' : 'var(--t1)';
-    if (divs[2]) divs[2].style.color = active ? 'rgba(0,212,255,.6)' : 'var(--t3)';
+    if (divs[2]) divs[2].style.color = active ? 'rgba(0,212,255,.7)' : 'var(--t2)';
   });
   var speedSec   = document.getElementById('ob-speed-section');
   var inclineSec = document.getElementById('ob-incline-section');

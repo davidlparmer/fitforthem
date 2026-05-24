@@ -755,3 +755,8 @@ body.light-mode .badge.home{background:rgba(5,150,105,.12);color:var(--green)}
 body.light-mode .badge.work{background:rgba(2,132,199,.12);color:var(--blue)}
 body.light-mode .section-divider{color:var(--gold) !important}
 
+
+/* ── Onboarding build animation ───────────────────────────── */
+@keyframes ob-ring-spin {
+  to { transform: rotate(360deg); }
+}

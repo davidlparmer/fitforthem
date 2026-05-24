@@ -292,6 +292,15 @@ function _obHeightLabel(in_) {
   return Math.floor(n / 12) + "'" + (n % 12) + '"';
 }
 
+function _obFormatTime(t) {
+  if (!t) return '';
+  var parts = t.split(':');
+  var h = parseInt(parts[0]), m = parts[1];
+  var ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return h + ':' + m + ' ' + ampm;
+}
+
 function openHeightPicker() {
   var overlay = document.getElementById('height-picker-overlay');
   var sheet   = document.getElementById('height-picker-sheet');
@@ -596,7 +605,7 @@ function _obStep5() {
       (_ob.goalWeight ? _obSummaryRow('Goal Weight', _ob.goalWeight + ' lbs') : '') +
       _obSummaryRow('Age',        _ob.age + ' yrs') +
       _obSummaryRow('Sex',        _ob.sex === 'male' ? 'Male' : 'Female') +
-      _obSummaryRow('Schedule',   'Wake ' + _ob.wakeTime + ' · Sleep ' + _ob.bedTime) +
+      _obSummaryRow('Schedule',   _obFormatTime(_ob.wakeTime) + ' wake · ' + _obFormatTime(_ob.bedTime) + ' bed') +
       _obSummaryRow('Work',       workLabels[_ob.workMode] || _ob.workMode) +
       _obSummaryRow('Activity',   walkDetail) +
       _obSummaryRow('Proteins',   proteinList) +
@@ -614,11 +623,8 @@ function _obSummaryRow(label, value) {
 }
 
 // ── Inject _ob values into engine.js hidden inputs ────────────
-function _obInjectAndGenerate() {
-  function _set(id, val) {
-    var el = document.getElementById(id);
-    if (el) el.value = val;
-  }
+function _obSetValues() {
+  function _set(id, val) { var el=document.getElementById(id); if(el) el.value=val; }
   _set('inp-height', _ob.height);
   _set('inp-weight', _ob.weight);
   _set('inp-age',    _ob.age);
@@ -634,5 +640,56 @@ function _obInjectAndGenerate() {
       if (typeof setIncline === 'function') setIncline(_ob.incline, null);
     }
   }
-  generatePlan();
+}
+
+function _obInjectAndGenerate() {
+  // Inject values immediately so engine is ready
+  _obSetValues();
+
+  // Show animated building screen
+  var c = document.getElementById('onboarding-container');
+  if (c) {
+    c.innerHTML =
+      '<div style="text-align:center;padding:52px 20px 48px">' +
+        '<div style="width:48px;height:48px;border:3px solid rgba(103,232,249,.12);' +
+          'border-top-color:var(--gold);border-radius:50%;' +
+          'animation:ob-ring-spin .9s linear infinite;margin:0 auto 36px"></div>' +
+        '<div id="ob-build-msg" style="font-size:.9rem;font-weight:600;color:var(--t1);' +
+          'min-height:1.5em;transition:opacity .25s ease">Calculating your calorie target...</div>' +
+        '<div style="font-size:.72rem;color:var(--t3);margin-top:10px;letter-spacing:.02em">' +
+          'Building your personalized structure' +
+        '</div>' +
+      '</div>';
+  }
+
+  // Cycle through messages
+  var msgs = [
+    'Calculating your calorie target...',
+    'Building your meal rotation...',
+    'Setting your daily step goal...',
+    'Preparing your restaurant guidance...',
+    'Almost ready...'
+  ];
+  var msgIdx = 0;
+  var msgEl  = document.getElementById('ob-build-msg');
+  var ticker = setInterval(function() {
+    msgIdx++;
+    if (msgIdx >= msgs.length) { clearInterval(ticker); return; }
+    if (msgEl) {
+      msgEl.style.opacity = '0';
+      setTimeout(function() {
+        if (msgEl) { msgEl.textContent = msgs[msgIdx]; msgEl.style.opacity = '1'; }
+      }, 150);
+    }
+  }, 520);
+
+  // Generate plan after animation completes, then hide the animated card
+  setTimeout(function() {
+    clearInterval(ticker);
+    generatePlan();
+    // Hide the onboarding card — results div takes over
+    setTimeout(function() {
+      if (c) c.style.display = 'none';
+    }, 80);
+  }, 2600);
 }

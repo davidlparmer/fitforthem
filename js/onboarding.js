@@ -677,11 +677,20 @@ function _obInjectAndGenerate() {
       if (!container) return;
       var div = document.createElement('div');
       div.textContent = msg.text;
+      // Set initial hidden state via transition — avoids iOS keyframe/fill-mode conflict
       div.style.cssText =
         'font-size:.85rem;font-weight:600;padding:7px 0;' +
         'color:' + msg.color + ';' +
-        'animation:ob-msg-appear .65s ease forwards;opacity:0';
+        'opacity:0;transform:translateY(8px);' +
+        'transition:opacity .6s ease, transform .6s ease';
       container.appendChild(div);
+      // Double rAF ensures browser paints initial state before transition starts
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() {
+          div.style.opacity   = '1';
+          div.style.transform = 'translateY(0)';
+        });
+      });
     }, i * 2000);
   });
 

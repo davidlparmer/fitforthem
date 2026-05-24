@@ -605,16 +605,114 @@ async function searchDrinks(){
 }
 
 
-// ── Dashboard Drink Widget search ────────────────────────────
-// Standalone drink lookup for the dashboard, shown on drinking nights.
-// Improved over searchDrinks(): natural serving sizes, lighter alternatives,
-// cleaner cards showing budget fit prominently.
-async function searchDrinkWidget() {
-  var q = document.getElementById('dash-drink-input');
-  if (!q || !q.value.trim()) return;
-  var query = q.value.trim();
+// ── Dashboard Drink Widget ───────────────────────────────────
+// Smart drink lookup: detects beer / wine / shot / cocktail automatically.
+// Beer/wine/shot → simple list with how many fit the budget.
+// Cocktail → 3 variations as tappable accordion rows with full ingredient recipes.
 
-  // Legal drinking age gate — reuses the same confirmation as the restaurant feature
+function toggleDrinkVariation(idx) {
+  // Accordion — close all, then open the tapped one (or close if already open)
+  var recipes = document.querySelectorAll('.dwv-recipe');
+  var rows    = document.querySelectorAll('.dwv-row');
+  var clicked = document.getElementById('dwv-recipe-' + idx);
+  var isOpen  = clicked && clicked.style.display === 'block';
+  recipes.forEach(function(r){ r.style.display = 'none'; });
+  rows.forEach(function(r){ r.style.background = 'transparent'; });
+  if (clicked && !isOpen) {
+    clicked.style.display = 'block';
+    var row = document.getElementById('dwv-row-' + idx);
+    if (row) row.style.background = 'rgba(0,212,255,.05)';
+  }
+}
+
+function _dwFitBadge(cal, budget) {
+  var fits  = cal > 0 && cal <= budget;
+  var count = cal > 0 ? Math.floor(budget / cal) : 0;
+  var color = fits
+    ? 'background:rgba(0,180,80,.12);color:rgba(0,210,100,.9);border:1px solid rgba(0,180,80,.2)'
+    : 'background:rgba(249,115,22,.1);color:rgba(249,150,50,.9);border:1px solid rgba(249,115,22,.2)';
+  var label = fits ? (count === 1 ? '1 fits' : count + ' fit') : 'Over budget';
+  return '<span style="font-size:.68rem;font-weight:700;padding:3px 9px;border-radius:20px;' + color + '">' + label + '</span>';
+}
+
+function _dwBar(cal, budget) {
+  var pct = cal > 0 ? Math.min(Math.round((cal / budget) * 100), 100) : 0;
+  var fits = cal <= budget;
+  return '<div style="margin-top:6px;height:3px;background:rgba(103,232,249,.08);border-radius:2px">' +
+    '<div style="height:3px;width:' + pct + '%;background:' +
+    (fits ? 'rgba(0,200,100,.5)' : 'rgba(249,115,22,.5)') +
+    ';border-radius:2px"></div></div>';
+}
+
+function _dwRenderSimple(data, budget) {
+  // Used for beer / wine / shot
+  var html = '';
+  (data.items || []).forEach(function(d) {
+    var cal = d.cal || 0;
+    html +=
+      '<div style="display:flex;justify-content:space-between;align-items:center;' +
+        'padding:12px 0;border-bottom:1px solid rgba(103,232,249,.07)">' +
+        '<div>' +
+          '<div style="font-size:.88rem;font-weight:700;color:var(--t1)">' + d.name + '</div>' +
+          '<div style="font-size:.7rem;color:var(--t3);margin-top:2px">' + (d.serving || '') + '</div>' +
+        '</div>' +
+        '<div style="text-align:right;flex-shrink:0">' +
+          '<div style="font-size:.95rem;font-weight:800;color:var(--t1);margin-bottom:4px">' +
+            cal + '<span style="font-size:.6rem;font-weight:400;color:var(--t3)"> cal</span></div>' +
+          _dwFitBadge(cal, budget) +
+        '</div>' +
+      '</div>' +
+      _dwBar(cal, budget);
+  });
+  return html;
+}
+
+function _dwRenderCocktail(data, budget) {
+  // Accordion: tap a variation to reveal its recipe
+  var html = '<div style="font-size:.68rem;color:var(--t3);margin-bottom:10px;font-style:italic">Tap a variation to see the recipe</div>';
+  (data.variations || []).forEach(function(v, i) {
+    var cal = v.total_cal || 0;
+    // Variation header row (tappable)
+    html +=
+      '<div id="dwv-row-' + i + '" class="dwv-row" onclick="toggleDrinkVariation(' + i + ')" ' +
+        'style="cursor:pointer;padding:12px 10px;border-radius:10px;transition:background .2s;' +
+        'border-bottom:1px solid rgba(103,232,249,.07);margin-bottom:2px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center">' +
+          '<div style="font-size:.88rem;font-weight:700;color:var(--t1)">' + v.name + '</div>' +
+          '<div style="display:flex;align-items:center;gap:8px">' +
+            '<span style="font-size:.88rem;font-weight:800;color:var(--t1)">' + cal +
+              '<span style="font-size:.6rem;font-weight:400;color:var(--t3)"> cal</span></span>' +
+            _dwFitBadge(cal, budget) +
+            '<span style="font-size:.8rem;color:var(--t3)">›</span>' +
+          '</div>' +
+        '</div>' +
+        _dwBar(cal, budget) +
+      '</div>' +
+      // Recipe panel (hidden by default)
+      '<div id="dwv-recipe-' + i + '" class="dwv-recipe" ' +
+        'style="display:none;background:rgba(0,212,255,.03);border-radius:0 0 10px 10px;' +
+        'padding:10px 14px 14px;margin-bottom:8px;border:1px solid rgba(103,232,249,.08);border-top:none">' +
+        (v.recipe || []).map(function(r) {
+          return '<div style="display:flex;justify-content:space-between;align-items:center;' +
+            'padding:6px 0;border-bottom:1px solid rgba(103,232,249,.05)">' +
+            '<span style="font-size:.8rem;color:var(--t2)">' + r.ingredient + '</span>' +
+            '<span style="font-size:.78rem;color:var(--t3)">' + r.amount +
+              ' <span style="color:var(--gold-light);font-weight:700">· ' + (r.cal || 0) + ' cal</span></span>' +
+          '</div>';
+        }).join('') +
+        '<div style="font-size:.78rem;font-weight:700;color:var(--gold-light);margin-top:10px;' +
+          'padding-top:8px;border-top:1px solid rgba(103,232,249,.1)">' +
+          'Total: ' + cal + ' cal</div>' +
+      '</div>';
+  });
+  return html;
+}
+
+async function searchDrinkWidget() {
+  var qEl = document.getElementById('dash-drink-input');
+  if (!qEl || !qEl.value.trim()) return;
+  var query = qEl.value.trim();
+
   if (!drinkingAgeConfirmed) {
     var ok = confirm(
       'The drink feature is intended for users of legal drinking age.\n\n' +
@@ -630,73 +728,51 @@ async function searchDrinkWidget() {
   if (!el) return;
   el.innerHTML = '<div class="loading"><div class="spinner"></div>Looking up "' + query + '"...</div>';
 
-  // Get today's drink budget from the actual level set on the dashboard
   var todayIdx   = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
   var todayLevel = (drinkingDays && drinkingDays[todayIdx]) || 'regular';
   var budget     = (typeof DRINK_RESERVES !== 'undefined' ? DRINK_RESERVES[todayLevel] : 0) || 450;
 
-  try {
-    var data = await askClaude(
-      'Calorie data for the alcoholic drink: "' + query + '". ' +
-      'Return exactly 3 entries covering: a standard pour, a lighter version or smaller size, and a premium or stronger version. ' +
-      'Use natural human serving sizes — e.g. "12oz can", "5oz glass", "1.5oz shot", "pint", "bottle". Never use grams. ' +
-      'If any version exceeds 300 cal, include a brief lighter swap suggestion. ' +
-      'JSON: {"drink":"' + query + '","items":[{"name":"variation name","serving":"natural size","cal":0,"notes":"brief note or lighter swap"}]}'
-    );
+  var prompt =
+    'Classify this alcoholic drink and return the correct JSON structure.\n\n' +
+    'Categories:\n' +
+    '  beer — any beer, hard seltzer, hard cider, malt beverage\n' +
+    '  wine — wine, champagne, prosecco, rosé, sake, port\n' +
+    '  shot — straight liquor ordered as a shot or neat\n' +
+    '  cocktail — any mixed drink or named cocktail\n\n' +
+    'For BEER return:\n' +
+    '{"category":"beer","drink":"brand name","items":[' +
+    '{"name":"12oz bottle/can","cal":0},{"name":"16oz can","cal":0},{"name":"24oz can","cal":0}]}\n\n' +
+    'For WINE return:\n' +
+    '{"category":"wine","drink":"wine type","items":[' +
+    '{"name":"variety 1","serving":"5oz glass","cal":0},' +
+    '{"name":"variety 2","serving":"5oz glass","cal":0},' +
+    '{"name":"variety 3","serving":"5oz glass","cal":0}]}\n\n' +
+    'For SHOT return:\n' +
+    '{"category":"shot","drink":"liquor name","items":[' +
+    '{"name":"type 1","serving":"1.5oz shot","cal":0},' +
+    '{"name":"type 2","serving":"1.5oz shot","cal":0},' +
+    '{"name":"type 3","serving":"1.5oz shot","cal":0}]}\n\n' +
+    'For COCKTAIL return:\n' +
+    '{"category":"cocktail","drink":"cocktail name","variations":[' +
+    '{"name":"variation 1","total_cal":0,"recipe":[{"ingredient":"name","amount":"1.5oz","cal":0}]},' +
+    '{"name":"variation 2","total_cal":0,"recipe":[{"ingredient":"name","amount":"1oz","cal":0}]},' +
+    '{"name":"variation 3","total_cal":0,"recipe":[{"ingredient":"name","amount":"1oz","cal":0}]}' +
+    ']}\n\n' +
+    'Drink to classify: "' + query + '"';
 
-    if (!data.items || !data.items.length) {
-      el.innerHTML = '<div class="empty">No results found. Try a different spelling.</div>';
-      return;
+  try {
+    var data = await askClaude(prompt);
+    var category = data.category || 'beer';
+    var html = '';
+
+    if (category === 'cocktail') {
+      html = _dwRenderCocktail(data, budget);
+    } else {
+      html = _dwRenderSimple(data, budget);
     }
 
-    var html = '';
-    data.items.forEach(function(d) {
-      var cal   = d.cal || 0;
-      var fits  = cal > 0 && cal <= budget;
-      var count = cal > 0 ? Math.floor(budget / cal) : 0;
-      var pct   = cal > 0 ? Math.min(Math.round((cal / budget) * 100), 100) : 0;
-
-      // Badge colour
-      var badgeColor = fits
-        ? 'background:rgba(0,180,80,.12);color:rgba(0,210,100,.9);border:1px solid rgba(0,180,80,.2)'
-        : 'background:rgba(249,115,22,.1);color:rgba(249,150,50,.9);border:1px solid rgba(249,115,22,.2)';
-
-      html +=
-        '<div style="padding:14px 0;border-bottom:1px solid rgba(103,232,249,.07)">' +
-          '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">' +
-
-            // Left: name + serving + notes
-            '<div style="flex:1;min-width:0">' +
-              '<div style="font-size:.9rem;font-weight:700;color:var(--t1);margin-bottom:2px">' + d.name + '</div>' +
-              '<div style="font-size:.72rem;color:var(--t3)">' + (d.serving || '') + '</div>' +
-              (d.notes ? '<div style="font-size:.68rem;color:var(--t3);margin-top:4px;font-style:italic">' + d.notes + '</div>' : '') +
-            '</div>' +
-
-            // Right: cal + how many fit
-            '<div style="text-align:right;flex-shrink:0">' +
-              '<div style="font-size:1rem;font-weight:800;color:var(--t1)">' + cal + '<span style="font-size:.65rem;font-weight:500;color:var(--t3)"> cal</span></div>' +
-              '<div style="font-size:.68rem;font-weight:700;margin-top:4px;padding:3px 8px;border-radius:20px;' + badgeColor + '">' +
-                (fits
-                  ? (count === 1 ? '1 fits' : count + ' fit')
-                  : 'Over budget') +
-              '</div>' +
-            '</div>' +
-
-          '</div>' +
-          // Progress bar showing how much of the budget this drink uses
-          '<div style="margin-top:8px;height:3px;background:rgba(103,232,249,.08);border-radius:2px">' +
-            '<div style="height:3px;width:' + pct + '%;background:' +
-              (fits ? 'rgba(0,200,100,.5)' : 'rgba(249,115,22,.5)') +
-              ';border-radius:2px;transition:width .4s ease"></div>' +
-          '</div>' +
-        '</div>';
-    });
-
-    // Remaining budget tip
-    html +=
-      '<div style="font-size:.68rem;color:var(--t3);margin-top:12px;text-align:center;font-style:italic">' +
-        'Budget tonight: ' + budget + ' cal · Tap a drink to use as reference' +
-      '</div>';
+    html += '<div style="font-size:.67rem;color:var(--t3);margin-top:14px;text-align:center;font-style:italic">' +
+      'Budget tonight: ' + budget + ' cal</div>';
 
     el.innerHTML = html;
 

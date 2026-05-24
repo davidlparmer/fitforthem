@@ -263,9 +263,7 @@ function _obStep1() {
       '</div>' +
     '</div>' +
 
-    '<div style="font-size:.68rem;color:var(--t2);margin-bottom:4px;line-height:1.6;font-style:italic">' +
-      'Goal weight helps track your progress — the system calculates your deficit automatically.' +
-    '</div>' +
+
 
     _obButtons(1);
 }

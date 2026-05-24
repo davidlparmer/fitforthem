@@ -378,7 +378,7 @@ function _obStep2() {
 }
 
 function _obToggleBtn(id, label, sub, active, mode) {
-  var onclk = 'onclick="_obSetWork(' + JSON.stringify(mode) + ')"';
+  var onclk = "onclick=\"_obSetWork('" + mode + "')\"";
   return '<button id="' + id + '" ' + onclk + ' ' +
     'style="padding:14px 10px;border-radius:14px;border:1px solid;cursor:pointer;text-align:center;' +
     'transition:all .2s;' +
@@ -463,7 +463,7 @@ function _obStep3() {
 }
 
 function _obWalkBtn(type, icon, label, sub, active) {
-  var onclk = 'onclick="_obSetWalkType(' + JSON.stringify(type) + ')"';
+  var onclk = "onclick=\"_obSetWalkType('" + type + "')\"";
   return '<button id="ob-walk-' + type + '" ' + onclk + ' ' +
     'style="padding:14px 6px;border-radius:14px;border:1px solid;cursor:pointer;text-align:center;transition:all .2s;' +
     'background:' + (active ? 'rgba(0,212,255,.1)' : 'var(--s2)') + ';' +
@@ -543,7 +543,7 @@ function _obStep4() {
       _obProteins.map(function(p) {
         var active = _ob.proteins.indexOf(p.key) >= 0;
         return '<button class="ob-protein-btn' + (active?' active':'') + '" data-protein="' + p.key + '" ' +
-          'onclick="_obToggleProtein(' + JSON.stringify(p.key) + ')" ' +
+          "onclick=\"_obToggleProtein('" + p.key + "')\"" + ' ' +
           'style="padding:14px 10px;border-radius:14px;border:1px solid;cursor:pointer;text-align:center;transition:all .2s;font-size:.88rem;font-weight:700;' +
           'background:' + (active ? 'rgba(0,212,255,.1)' : 'var(--s2)') + ';' +
           'border-color:' + (active ? 'rgba(0,212,255,.45)' : 'var(--border)') + ';' +

@@ -66,11 +66,13 @@ function _obRender() {
 function _obNext() {
   if (!_obValidate()) return;
   _obSave();
-  if (_ob.step < _ob.totalSteps) {
-    _ob.step++;
-    _obRender();
-    window.scrollTo(0, 0);
+  if (_ob.step === _ob.totalSteps) {
+    _obInjectAndGenerate();
+    return;
   }
+  _ob.step++;
+  _obRender();
+  window.scrollTo(0, 0);
 }
 
 function _obBack() {
@@ -335,27 +337,276 @@ function selectHeight(in_) {
 }
 
 // ══════════════════════════════════════════════════════════════
-// STEPS 2–5 — Placeholders (built next sessions)
+// STEP 2 — YOUR ROUTINE
 // ══════════════════════════════════════════════════════════════
 function _obStep2() {
-  return '<div style="padding:4px 0 8px">' + _obProgress(2) +
-    '<div style="color:var(--t2);padding:24px 0">Step 2 — Your Routine. Coming next.</div>' +
+  var officeActive = _ob.workMode === 'office';
+  var wfhActive    = _ob.workMode === 'wfh';
+  return '<div style="padding:4px 0 8px">' +
+    _obProgress(2) +
+    '<div style="margin-bottom:28px">' +
+      '<div style="font-size:1.45rem;font-weight:800;color:var(--t1);line-height:1.25;margin-bottom:10px">When does your day begin?</div>' +
+      '<div style="font-size:.85rem;color:var(--t2);line-height:1.65">Your eating window and meal timing adapt to your real schedule.</div>' +
+    '</div>' +
+
+    _obSection('Sleep Schedule') +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px">' +
+      '<div>' +
+        _obFieldLabel('Wake Up') +
+        '<input id="ob-wake" type="time" value="' + _ob.wakeTime + '" ' +
+          'style="' + _obInputStyle + ';text-align:center;cursor:pointer">' +
+      '</div>' +
+      '<div>' +
+        _obFieldLabel('Bedtime') +
+        '<input id="ob-bed" type="time" value="' + _ob.bedTime + '" ' +
+          'style="' + _obInputStyle + ';text-align:center;cursor:pointer">' +
+      '</div>' +
+    '</div>' +
+
+    _obSection('Work Setup') +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">' +
+      _obToggleBtn('ob-work-office', 'Office', 'Out of house', officeActive, 'office') +
+      _obToggleBtn('ob-work-wfh',    'Home',   'Work from home', wfhActive,  'wfh') +
+    '</div>' +
+    '<div id="ob-work-note" style="font-size:.72rem;color:var(--t3);line-height:1.6;font-style:italic;min-height:2.4em">' +
+      (officeActive
+        ? 'Your first meal travels with you — portable, no cooking required until dinner.'
+        : 'More flexibility in your first meal window — home-cooked options available.') +
+    '</div>' +
+
     _obButtons(2);
 }
+
+function _obToggleBtn(id, label, sub, active, mode) {
+  var onclk = 'onclick="_obSetWork(' + JSON.stringify(mode) + ')"';
+  return '<button id="' + id + '" ' + onclk + ' ' +
+    'style="padding:14px 10px;border-radius:14px;border:1px solid;cursor:pointer;text-align:center;' +
+    'transition:all .2s;' +
+    'background:' + (active ? 'rgba(0,212,255,.1)' : 'var(--s2)') + ';' +
+    'border-color:' + (active ? 'rgba(0,212,255,.45)' : 'var(--border)') + ';">' +
+    '<div style="font-size:.88rem;font-weight:700;color:' + (active ? 'var(--gold-light)' : 'var(--t1)') + '">' + label + '</div>' +
+    '<div style="font-size:.65rem;color:' + (active ? 'rgba(0,212,255,.6)' : 'var(--t3)') + ';margin-top:3px">' + sub + '</div>' +
+  '</button>';
+}
+
+function _obSetWork(mode) {
+  _ob.workMode = mode;
+  var btns = {
+    office: document.getElementById('ob-work-office'),
+    wfh:    document.getElementById('ob-work-wfh')
+  };
+  var notes = {
+    office: 'Your first meal travels with you — portable, no cooking required until dinner.',
+    wfh:    'More flexibility in your first meal window — home-cooked options available.'
+  };
+  Object.keys(btns).forEach(function(k) {
+    var btn = btns[k]; if (!btn) return;
+    var active = k === mode;
+    btn.style.background   = active ? 'rgba(0,212,255,.1)'   : 'var(--s2)';
+    btn.style.borderColor  = active ? 'rgba(0,212,255,.45)'  : 'var(--border)';
+    btn.querySelector('div').style.color = active ? 'var(--gold-light)' : 'var(--t1)';
+  });
+  var note = document.getElementById('ob-work-note');
+  if (note) note.textContent = notes[mode];
+}
+
+// ══════════════════════════════════════════════════════════════
+// STEP 3 — YOUR ACTIVITY
+// ══════════════════════════════════════════════════════════════
 function _obStep3() {
-  return '<div style="padding:4px 0 8px">' + _obProgress(3) +
-    '<div style="color:var(--t2);padding:24px 0">Step 3 — Your Activity. Coming next.</div>' +
+  var isFlat      = _ob.walkType === 'flat';
+  var isTreadmill = _ob.walkType === 'treadmill';
+  var isIncline   = _ob.walkType === 'incline';
+  var showSpeed   = isTreadmill || isIncline;
+
+  return '<div style="padding:4px 0 8px">' +
+    _obProgress(3) +
+    '<div style="margin-bottom:28px">' +
+      '<div style="font-size:1.45rem;font-weight:800;color:var(--t1);line-height:1.25;margin-bottom:10px">How do you earn your steps?</div>' +
+      '<div style="font-size:.85rem;color:var(--t2);line-height:1.65">Your activity style sets your daily step target precisely.</div>' +
+    '</div>' +
+
+    _obSection('Walk Type') +
+    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">' +
+      _obWalkBtn('flat',      '🚶',  'Outdoor',   'Flat walk',      isFlat) +
+      _obWalkBtn('treadmill', '➡',   'Treadmill', 'Flat belt',      isTreadmill) +
+      _obWalkBtn('incline',   '↗',   'Incline',   'Treadmill',      isIncline) +
+    '</div>' +
+
+    '<div id="ob-speed-section" style="' + (showSpeed ? '' : 'display:none;') + '">' +
+      _obSection('Speed (mph)') +
+      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:20px">' +
+        [2.0,2.5,3.0,3.5].map(function(s){
+          return '<button id="ob-spd-' + Math.round(s*10) + '" onclick="_obSetSpeed(' + s + ')" ' +
+            'class="sel-btn' + (Math.abs(_ob.speed-s)<0.01?' active':'') + '" ' +
+            'style="padding:12px 4px;font-size:.85rem;font-weight:700">' + s + '</button>';
+        }).join('') +
+      '</div>' +
+    '</div>' +
+
+    '<div id="ob-incline-section" style="' + (isIncline ? '' : 'display:none;') + '">' +
+      _obSection('Incline (%)') +
+      '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:20px">' +
+        [0,1,2,3,4,5,6].map(function(inc){
+          return '<button id="ob-inc-' + inc + '" onclick="_obSetIncline(' + inc + ')" ' +
+            'class="sel-btn' + (_ob.incline===inc?' active':'') + '" ' +
+            'style="padding:12px 2px;font-size:.82rem;font-weight:700">' + inc + '</button>';
+        }).join('') +
+      '</div>' +
+    '</div>' +
+
+    '<div id="ob-walk-note" style="font-size:.72rem;color:var(--t3);line-height:1.6;font-style:italic;min-height:2.4em">' +
+      _obWalkNote() +
+    '</div>' +
+
     _obButtons(3);
 }
+
+function _obWalkBtn(type, icon, label, sub, active) {
+  var onclk = 'onclick="_obSetWalkType(' + JSON.stringify(type) + ')"';
+  return '<button id="ob-walk-' + type + '" ' + onclk + ' ' +
+    'style="padding:14px 6px;border-radius:14px;border:1px solid;cursor:pointer;text-align:center;transition:all .2s;' +
+    'background:' + (active ? 'rgba(0,212,255,.1)' : 'var(--s2)') + ';' +
+    'border-color:' + (active ? 'rgba(0,212,255,.45)' : 'var(--border)') + '">' +
+    '<div style="font-size:1.2rem;margin-bottom:4px">' + icon + '</div>' +
+    '<div style="font-size:.78rem;font-weight:700;color:' + (active ? 'var(--gold-light)' : 'var(--t1)') + '">' + label + '</div>' +
+    '<div style="font-size:.6rem;color:' + (active ? 'rgba(0,212,255,.6)' : 'var(--t3)') + ';margin-top:2px">' + sub + '</div>' +
+  '</button>';
+}
+
+function _obWalkNote() {
+  if (_ob.walkType === 'flat')      return 'Outdoor walking — natural movement, great daily burn.';
+  if (_ob.walkType === 'treadmill') return 'Flat belt — consistent pace, calculated from your speed setting.';
+  if (_ob.walkType === 'incline')   return 'Incline training — maximum calorie burn per step at your pace.';
+  return '';
+}
+
+function _obSetWalkType(type) {
+  _ob.walkType = type;
+  ['flat','treadmill','incline'].forEach(function(t) {
+    var btn = document.getElementById('ob-walk-' + t);
+    if (!btn) return;
+    var active = t === type;
+    btn.style.background  = active ? 'rgba(0,212,255,.1)' : 'var(--s2)';
+    btn.style.borderColor = active ? 'rgba(0,212,255,.45)' : 'var(--border)';
+    var divs = btn.querySelectorAll('div');
+    if (divs[1]) divs[1].style.color = active ? 'var(--gold-light)' : 'var(--t1)';
+    if (divs[2]) divs[2].style.color = active ? 'rgba(0,212,255,.6)' : 'var(--t3)';
+  });
+  var speedSec   = document.getElementById('ob-speed-section');
+  var inclineSec = document.getElementById('ob-incline-section');
+  if (speedSec)   speedSec.style.display   = (type !== 'flat')     ? 'block' : 'none';
+  if (inclineSec) inclineSec.style.display = (type === 'incline')  ? 'block' : 'none';
+  var note = document.getElementById('ob-walk-note');
+  if (note) note.textContent = _obWalkNote();
+}
+
+function _obSetSpeed(speed) {
+  _ob.speed = speed;
+  [2.0,2.5,3.0,3.5].forEach(function(s) {
+    var btn = document.getElementById('ob-spd-' + Math.round(s*10));
+    if (btn) btn.classList.toggle('active', Math.abs(s-speed)<0.01);
+  });
+}
+
+function _obSetIncline(inc) {
+  _ob.incline = inc;
+  [0,1,2,3,4,5,6].forEach(function(i) {
+    var btn = document.getElementById('ob-inc-' + i);
+    if (btn) btn.classList.toggle('active', i === inc);
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// STEP 4 — YOUR FOOD
+// ══════════════════════════════════════════════════════════════
+var _obProteins = [
+  {key:'chicken', label:'Chicken'},
+  {key:'beef',    label:'Beef'},
+  {key:'steak',   label:'Steak'},
+  {key:'fish',    label:'Fish'},
+  {key:'eggs',    label:'Eggs'},
+  {key:'turkey',  label:'Turkey'},
+  {key:'pork',    label:'Pork'}
+];
+
 function _obStep4() {
-  return '<div style="padding:4px 0 8px">' + _obProgress(4) +
-    '<div style="color:var(--t2);padding:24px 0">Step 4 — Your Food. Coming next.</div>' +
+  return '<div style="padding:4px 0 8px">' +
+    _obProgress(4) +
+    '<div style="margin-bottom:28px">' +
+      '<div style="font-size:1.45rem;font-weight:800;color:var(--t1);line-height:1.25;margin-bottom:10px">What proteins do you eat?</div>' +
+      '<div style="font-size:.85rem;color:var(--t2);line-height:1.65">Select all you eat regularly — we\'ll rotate them through your plan and restaurant recommendations.</div>' +
+    '</div>' +
+
+    _obSection('Proteins') +
+    '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:24px">' +
+      _obProteins.map(function(p) {
+        var active = _ob.proteins.indexOf(p.key) >= 0;
+        return '<button class="ob-protein-btn' + (active?' active':'') + '" data-protein="' + p.key + '" ' +
+          'onclick="_obToggleProtein(' + JSON.stringify(p.key) + ')" ' +
+          'style="padding:14px 10px;border-radius:14px;border:1px solid;cursor:pointer;text-align:center;transition:all .2s;font-size:.88rem;font-weight:700;' +
+          'background:' + (active ? 'rgba(0,212,255,.1)' : 'var(--s2)') + ';' +
+          'border-color:' + (active ? 'rgba(0,212,255,.45)' : 'var(--border)') + ';' +
+          'color:' + (active ? 'var(--gold-light)' : 'var(--t2)') + '">' +
+          p.label +
+        '</button>';
+      }).join('') +
+    '</div>' +
+
+    '<div style="font-size:.72rem;color:var(--t3);line-height:1.6;font-style:italic">Select at least one. You can always adjust your meals later.</div>' +
+
     _obButtons(4);
 }
+
+function _obToggleProtein(key) {
+  var idx = _ob.proteins.indexOf(key);
+  if (idx >= 0) _ob.proteins.splice(idx, 1);
+  else           _ob.proteins.push(key);
+  var btn = document.querySelector('.ob-protein-btn[data-protein="' + key + '"]');
+  if (!btn) return;
+  var active = _ob.proteins.indexOf(key) >= 0;
+  btn.classList.toggle('active', active);
+  btn.style.background  = active ? 'rgba(0,212,255,.1)' : 'var(--s2)';
+  btn.style.borderColor = active ? 'rgba(0,212,255,.45)' : 'var(--border)';
+  btn.style.color       = active ? 'var(--gold-light)' : 'var(--t2)';
+}
+
+// ══════════════════════════════════════════════════════════════
+// STEP 5 — ALMOST THERE
+// ══════════════════════════════════════════════════════════════
 function _obStep5() {
-  return '<div style="padding:4px 0 8px">' + _obProgress(5) +
-    '<div style="color:var(--t2);padding:24px 0">Step 5 — Generate. Coming next.</div>' +
-    _obButtons(5, 'Build My Plan →');
+  var proteinList = _ob.proteins.length
+    ? _ob.proteins.map(function(p){ return p.charAt(0).toUpperCase()+p.slice(1); }).join(', ')
+    : 'All proteins';
+  var walkLabels = {flat:'Outdoor walking', treadmill:'Flat treadmill', incline:'Incline treadmill'};
+  var workLabels = {office:'Office', wfh:'Work from home'};
+
+  return '<div style="padding:4px 0 8px">' +
+    _obProgress(5) +
+    '<div style="margin-bottom:28px">' +
+      '<div style="font-size:1.45rem;font-weight:800;color:var(--t1);line-height:1.25;margin-bottom:10px">Your structure is ready to build.</div>' +
+      '<div style="font-size:.85rem;color:var(--t2);line-height:1.65">We have everything we need. Here is what we are building for you.</div>' +
+    '</div>' +
+
+    '<div style="background:var(--s2);border:1px solid rgba(103,232,249,.12);border-radius:16px;padding:20px;margin-bottom:24px">' +
+      _obSummaryRow('Calorie target',   'Calculated from your stats') +
+      _obSummaryRow('Protein target',   'Set for your phase') +
+      _obSummaryRow('Daily steps',      walkLabels[_ob.walkType] || 'Calculated') +
+      _obSummaryRow('Meal rotation',    proteinList) +
+      _obSummaryRow('Schedule',         'Wake ' + _ob.wakeTime + ' · Sleep ' + _ob.bedTime) +
+      _obSummaryRow('Work setup',       workLabels[_ob.workMode] || '') +
+    '</div>' +
+
+    '<div style="font-size:.72rem;color:var(--t3);line-height:1.6;text-align:center;margin-bottom:4px;font-style:italic">Your plan updates automatically as your weight changes.</div>' +
+
+    _obButtons(5, 'Build My Structure →');
+}
+
+function _obSummaryRow(label, value) {
+  return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(103,232,249,.06)">' +
+    '<span style="font-size:.78rem;color:var(--t3)">' + label + '</span>' +
+    '<span style="font-size:.78rem;font-weight:700;color:var(--t1);text-align:right;max-width:55%">' + value + '</span>' +
+  '</div>';
 }
 
 // ── Inject _ob values into engine.js hidden inputs ────────────

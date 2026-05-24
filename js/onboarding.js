@@ -624,6 +624,7 @@ function _obSummaryRow(label, value) {
 
 // ── Inject _ob values into engine.js hidden inputs ────────────
 function _obSetValues() {
+  // Set hidden inputs that generatePlan() reads from the DOM
   function _set(id, val) { var el=document.getElementById(id); if(el) el.value=val; }
   _set('inp-height', _ob.height);
   _set('inp-weight', _ob.weight);
@@ -632,14 +633,17 @@ function _obSetValues() {
   _set('inp-sex',    _ob.sex);
   _set('inp-wake',   _ob.wakeTime);
   _set('inp-bed',    _ob.bedTime);
-  if (typeof setWorkMode === 'function') setWorkMode(_ob.workMode, null);
-  if (typeof setWalkType === 'function') {
-    setWalkType(_ob.walkType, null);
-    if (_ob.walkType !== 'flat') {
-      if (typeof setSpeed   === 'function') setSpeed(_ob.speed, null);
-      if (typeof setIncline === 'function') setIncline(_ob.incline, null);
+  // Set S directly — avoids calling setWalkType/setWorkMode which update
+  // old builder DOM elements (#wk-flat, #incline-options etc.) that no longer exist
+  try {
+    if (typeof S !== 'undefined') {
+      S.work     = _ob.workMode;
+      S.walkType = _ob.walkType;
+      S.speed    = parseFloat(_ob.speed)   || 2.5;
+      S.incline  = parseInt(_ob.incline)   || 3;
     }
-  }
+    if (typeof workMode !== 'undefined') workMode = _ob.workMode;
+  } catch(e) {}
 }
 
 function _obInjectAndGenerate() {

@@ -760,3 +760,7 @@ body.light-mode .section-divider{color:var(--gold) !important}
 @keyframes ob-ring-spin {
   to { transform: rotate(360deg); }
 }
+@keyframes ob-msg-appear {
+  from { opacity:0; transform:translateY(10px); }
+  to   { opacity:1; transform:translateY(0); }
+}

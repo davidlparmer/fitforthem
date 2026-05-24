@@ -654,46 +654,42 @@ function _obInjectAndGenerate() {
   var c = document.getElementById('onboarding-container');
   if (c) {
     c.innerHTML =
-      '<div style="text-align:center;padding:52px 20px 48px">' +
-        '<div style="width:48px;height:48px;border:3px solid rgba(103,232,249,.12);' +
+      '<div style="text-align:center;padding:44px 20px 40px">' +
+        '<div style="width:44px;height:44px;border:3px solid rgba(103,232,249,.1);' +
           'border-top-color:var(--gold);border-radius:50%;' +
-          'animation:ob-ring-spin .9s linear infinite;margin:0 auto 36px"></div>' +
-        '<div id="ob-build-msg" style="font-size:.9rem;font-weight:600;color:var(--t1);' +
-          'min-height:1.5em;transition:opacity .25s ease">Calculating your calorie target...</div>' +
-        '<div style="font-size:.72rem;color:var(--t3);margin-top:10px;letter-spacing:.02em">' +
-          'Building your personalized structure' +
-        '</div>' +
+          'animation:ob-ring-spin .9s linear infinite;margin:0 auto 32px"></div>' +
+        '<div id="ob-msgs" style="display:flex;flex-direction:column;align-items:center;gap:2px"></div>' +
       '</div>';
   }
 
-  // Cycle through messages
+  // Messages stack below the spinner one by one — 2s apart, 10s total
   var msgs = [
-    'Calculating your calorie target...',
-    'Building your meal rotation...',
-    'Setting your daily step goal...',
-    'Preparing your restaurant guidance...',
-    'Almost ready...'
+    {text: 'Calculating your calorie target...',    color: 'var(--t2)'},
+    {text: 'Building your meal rotation...',        color: 'var(--t2)'},
+    {text: 'Setting your daily step goal...',       color: 'var(--t2)'},
+    {text: 'Preparing your restaurant guidance...', color: 'var(--t2)'},
+    {text: 'Your structure is ready.',              color: 'var(--gold-light)'}
   ];
-  var msgIdx = 0;
-  var msgEl  = document.getElementById('ob-build-msg');
-  var ticker = setInterval(function() {
-    msgIdx++;
-    if (msgIdx >= msgs.length) { clearInterval(ticker); return; }
-    if (msgEl) {
-      msgEl.style.opacity = '0';
-      setTimeout(function() {
-        if (msgEl) { msgEl.textContent = msgs[msgIdx]; msgEl.style.opacity = '1'; }
-      }, 150);
-    }
-  }, 520);
 
-  // Generate plan after animation completes, then hide the animated card
+  msgs.forEach(function(msg, i) {
+    setTimeout(function() {
+      var container = document.getElementById('ob-msgs');
+      if (!container) return;
+      var div = document.createElement('div');
+      div.textContent = msg.text;
+      div.style.cssText =
+        'font-size:.85rem;font-weight:600;padding:7px 0;' +
+        'color:' + msg.color + ';' +
+        'animation:ob-msg-appear .65s ease forwards;opacity:0';
+      container.appendChild(div);
+    }, i * 2000);
+  });
+
+  // Generate after all messages shown + brief pause
   setTimeout(function() {
-    clearInterval(ticker);
     generatePlan();
-    // Hide the onboarding card — results div takes over
     setTimeout(function() {
       if (c) c.style.display = 'none';
     }, 80);
-  }, 2600);
+  }, 10000);
 }

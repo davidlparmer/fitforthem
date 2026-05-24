@@ -1176,6 +1176,27 @@ function updateDashboard(){
     var loggedToday=currentLog&&currentLog.some(function(e){return e.d===todayStr;});
     nudgeEl.style.display=loggedToday?'none':'flex';
   }
+
+  // Drink widget — show only on drinking nights with correct budget
+  var _dwEl     = document.getElementById('dash-drink-widget');
+  var _dwBudget = document.getElementById('dash-drink-budget');
+  if (_dwEl) {
+    if (drinkLevel && typeof DRINK_RESERVES !== 'undefined') {
+      var _dwCal = DRINK_RESERVES[drinkLevel] || 450;
+      var _dwLabel = {light:'Light Night',regular:'Regular Night',big:'Big Night'}[drinkLevel] || '';
+      _dwEl.style.display = 'block';
+      if (_dwBudget) {
+        _dwBudget.innerHTML =
+          _dwLabel + ' · <strong>' + _dwCal + ' cal</strong> reserved for drinks. ' +
+          'Search below to compare options.';
+      }
+    } else {
+      _dwEl.style.display = 'none';
+      // Clear results when not a drinking night
+      var _dwRes = document.getElementById('dash-drink-results');
+      if (_dwRes) _dwRes.innerHTML = '';
+    }
+  }
 }
 
 function updateDashGreeting(){

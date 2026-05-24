@@ -246,105 +246,44 @@
 
 <div class="page" id="page-builder">
   <div class="wrap">
-  <div class="card">
-    <h2>Build My Plan</h2>
-    <div class="form-grid">
-      <div><label>Your Height</label><select id="inp-height"><option value="" disabled="">Select your height</option><option value="60">5'0"</option><option value="61">5'1"</option><option value="62">5'2"</option><option value="63">5'3"</option><option value="64">5'4"</option><option value="65">5'5"</option><option value="66">5'6"</option><option value="67">5'7"</option><option value="68">5'8"</option><option value="69">5'9"</option><option value="70">5'10"</option><option value="71">5'11"</option><option value="72">6'0"</option><option value="73">6'1"</option><option value="74">6'2"</option><option value="75">6'3"</option><option value="76">6'4"</option><option value="77">6'5"</option><option value="78">6'6"</option><option value="79">6'7"</option><option value="80">6'8"</option><option value="81">6'9"</option><option value="82">6'10"</option><option value="83">6'11"</option></select></div>
-      <div><label>Current Weight (lbs)</label><input type="number" id="inp-weight" placeholder="e.g. 220" min="80" max="700"></div>
-    </div>
-    <div class="form-grid">
-      <div><label>Your Age</label><input type="number" id="inp-age" placeholder="e.g. 38" min="18" max="80"></div>
-      <div><label>Goal Weight <span style="font-size:.7rem;color:var(--muted);font-weight:400">(optional)</span></label><input type="number" id="inp-goal" placeholder="e.g. 165" min="80" max="400"></div>
-    </div>
-    <div style="margin-bottom:14px">
-      <label>Biological Sex <span style="font-size:.7rem;color:var(--muted);font-weight:400">(used for calorie formula)</span></label>
-      <div class="tog-row" style="margin-top:6px">
-        <div class="tog active" id="sex-male" onclick="document.getElementById('inp-sex').value='male';document.querySelectorAll('#sex-male,#sex-female').forEach(function(e){e.classList.remove('active')});this.classList.add('active')">Male</div>
-        <div class="tog" id="sex-female" onclick="document.getElementById('inp-sex').value='female';document.querySelectorAll('#sex-male,#sex-female').forEach(function(e){e.classList.remove('active')});this.classList.add('active')">Female</div>
-      </div>
-      <input type="hidden" id="inp-sex" value="male">
-    </div>
-    <div class="form-grid">
-      <div><label>Wake Up Time</label><input type="time" id="inp-wake" value="06:00" style="padding:6px 12px;font-size:.88rem;max-height:44px;-webkit-appearance:none;appearance:none;text-align:center"></div>
-      <div><label>Bedtime</label><input type="time" id="inp-bed" value="22:00" style="padding:6px 12px;font-size:.88rem;max-height:44px;-webkit-appearance:none;appearance:none;text-align:center"></div>
-    </div>
-    <div style="margin-bottom:14px">
-      <label>Your Work Setup</label>
-      <div class="tog-row">
-        <div class="tog active" id="wm-office" onclick="setWorkMode(&#39;office&#39;,this)">Office / Out of House</div>
-        <div class="tog" id="wm-wfh" onclick="setWorkMode(&#39;wfh&#39;,this)">Work From Home</div>
-      </div>
-      <div class="coach-note" id="workmode-note">Office mode — portable first meals you can take anywhere. No cooking required until dinner.</div>
-    </div>
-    <!-- Protein selection removed — meal variation handled via Swap Meal, Weekly Dinner Family, Eating Out, and What's in My Fridge -->
-    <div style="margin-bottom:14px">
-      <label>How Do You Walk?</label>
-      <div class="tog-row">
-        <div class="tog active" id="wk-flat" onclick="setWalkType('flat',this)">Outside</div>
-        <div class="tog" id="wk-treadmill" onclick="setWalkType('treadmill',this)">Flat Treadmill</div>
-        <div class="tog" id="wk-incline" onclick="setWalkType('incline',this)">Incline Treadmill</div>
-      </div>
-      <div class="coach-note" id="walk-note">Walking outside or on a flat surface.</div>
-    </div>
-    <div id="incline-options" class="hidden" style="margin-bottom:14px">
-      <div style="margin-bottom:12px">
-        <label>Walking Speed</label>
-        <div class="speed-grid">
-          <div class="sel-btn" onclick="setSpeed(2.0,this)">2.0 mph</div>
-          <div class="sel-btn active" onclick="setSpeed(2.5,this)">2.5 mph</div>
-          <div class="sel-btn" onclick="setSpeed(3.0,this)">3.0 mph</div>
-          <div class="sel-btn" onclick="setSpeed(3.5,this)">3.5 mph</div>
-        </div>
-        <div class="coach-note" id="speed-note">Comfortable pace — fat-burning zone.</div>
-      </div>
-      <div>
-        <label>Incline Level</label>
-        <div class="incline-grid">
-          <div class="sel-btn" onclick="setIncline(0,this)">0%</div>
-          <div class="sel-btn" onclick="setIncline(1,this)">1%</div>
-          <div class="sel-btn" onclick="setIncline(2,this)">2%</div>
-          <div class="sel-btn active" onclick="setIncline(3,this)">3%</div>
-          <div class="sel-btn" onclick="setIncline(4,this)">4%</div>
-          <div class="sel-btn" onclick="setIncline(5,this)">5%</div>
-          <div class="sel-btn" onclick="setIncline(6,this)">6%</div>
-          <div class="sel-btn" style="opacity:.4;cursor:not-allowed">7%+</div>
-        </div>
-        <div class="coach-note" id="incline-note">Moderate incline — excellent burn.</div>
-      </div>
-    </div>
-    <div style="margin-top:24px;text-align:center">
-      <button onclick="generatePlan()" style="width:100%;padding:20px;background:linear-gradient(135deg,var(--warm),var(--sun));color:var(--white);border:none;border-radius:16px;font-size:1.2rem;font-weight:800;cursor:pointer;box-shadow:0 8px 32px rgba(232,132,90,.4);letter-spacing:.5px;transition:transform .2s,box-shadow .2s" onmouseover="this.style.transform=&#39;translateY(-2px)&#39;;this.style.boxShadow=&#39;0 12px 40px rgba(232,132,90,.55)&#39;" onmouseout="this.style.transform=&#39;&#39;;this.style.boxShadow=&#39;0 8px 32px rgba(232,132,90,.4)&#39;">
-        Build My Plan →
-      </button>
-      <div style="font-size:.75rem;color:var(--muted);margin-top:10px">Takes 60 seconds. Your personalized plan is instant.</div>
-    </div>
-  </div>
+    <!-- Onboarding steps rendered here by onboarding.js -->
+    <div class="card" id="onboarding-container"></div>
 
-  <div id="results" class="hidden">
-    <div class="card">
-      <h2>Your Plan</h2>
-      <div id="phase-banner" class="phase-banner"></div>
-          <div class="stats-grid">
-        <div class="stat"><div class="val" id="s-cal">—</div><div class="lbl">Daily Calories</div></div>
-        <div class="stat"><div class="val" id="s-pro">—</div><div class="lbl">Daily Protein</div></div>
-        <div class="stat"><div class="val" id="s-steps">—</div><div class="lbl">Steps Today</div></div>
-        <div class="stat hl"><div class="val" id="s-goal">—</div><div class="lbl">Your Target Weight</div></div>
-      </div>
-      <div id="s-range-wrap" class="hidden" style="margin-bottom:14px">
-        <div class="stat" style="background:rgba(103,232,249,.08);border:1px solid rgba(103,232,249,.25)">
-          <div class="val" id="s-range" style="font-size:.9rem;color:var(--gold-light)">—</div>
-          <div class="lbl">Calorie Range</div>
+    <!-- Hidden inputs — read by generatePlan() in engine.js unchanged -->
+    <input type="hidden" id="inp-height" value="">
+    <input type="hidden" id="inp-weight" value="">
+    <input type="hidden" id="inp-age"    value="">
+    <input type="hidden" id="inp-goal"   value="">
+    <input type="hidden" id="inp-sex"    value="male">
+    <input type="hidden" id="inp-wake"   value="06:00">
+    <input type="hidden" id="inp-bed"    value="22:00">
+
+    <!-- Plan results — shown by generatePlan() unchanged -->
+    <div id="results" class="hidden">
+      <div class="card">
+        <h2>Your Plan</h2>
+        <div id="phase-banner" class="phase-banner"></div>
+        <div class="stats-grid">
+          <div class="stat"><div class="val" id="s-cal">—</div><div class="lbl">Daily Calories</div></div>
+          <div class="stat"><div class="val" id="s-pro">—</div><div class="lbl">Daily Protein</div></div>
+          <div class="stat"><div class="val" id="s-steps">—</div><div class="lbl">Steps Today</div></div>
+          <div class="stat hl"><div class="val" id="s-goal">—</div><div class="lbl">Your Target Weight</div></div>
         </div>
+        <div id="s-range-wrap" class="hidden" style="margin-bottom:14px">
+          <div class="stat" style="background:rgba(103,232,249,.08);border:1px solid rgba(103,232,249,.25)">
+            <div class="val" id="s-range" style="font-size:.9rem;color:var(--gold-light)">—</div>
+            <div class="lbl">Calorie Range</div>
+          </div>
+        </div>
+        <div class="prog-wrap">
+          <div class="prog-label"><span id="prog-cur">—</span><span id="prog-end">—</span></div>
+          <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:2%"></div></div>
+          <div style="font-size:.73rem;color:var(--muted);margin-top:4px;text-align:center" id="prog-txt"></div>
+        </div>
+        <button class="btn pulse-cta" onclick="showPage('dashboard')" style="margin-top:16px;background:var(--green)">Go to My Dashboard →</button>
+        <div style="margin-top:10px;text-align:center;font-size:.78rem;color:var(--muted);font-style:italic">You're someone who follows through. Let's go.</div>
       </div>
-      <div class="prog-wrap">
-        <div class="prog-label"><span id="prog-cur">—</span><span id="prog-end">—</span></div>
-        <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:2%"></div></div>
-        <div style="font-size:.73rem;color:var(--muted);margin-top:4px;text-align:center" id="prog-txt"></div>
-      </div>
-      <button class="btn pulse-cta" onclick="showPage('dashboard')" style="margin-top:16px;background:var(--green)">Go to My Dashboard →</button>
-      <div style="margin-top:10px;text-align:center;font-size:.78rem;color:var(--muted);font-style:italic">You're someone who follows through. Let's go.</div>
     </div>
-  </div>
   </div>
 </div>
 
@@ -730,6 +669,7 @@
 <script src="js/plan-templates.js"></script>
 <script src="js/swap-options.js"></script>
 <script src="js/engine.js"></script>
+<script src="js/onboarding.js"></script>
 <script src="js/meals.js"></script>
 <script src="js/stripe.js"></script>
 <script src="js/grocery.js"></script>

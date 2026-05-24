@@ -124,6 +124,7 @@ function showPage(id){
   else if(nav.style.display==='none'&&hasPlan){nav.style.display='flex';}
   window.scrollTo({top:0,behavior:'instant'});
   if(id==='progress'){document.getElementById('log-d').value=new Date().toISOString().split('T')[0];renderProgress();switchProgressTab('weight');mealHistoryLoaded=false;}
+  if(id==='builder'){if(typeof startOnboarding==='function')startOnboarding();}
   if(id==='grocery'){setTimeout(function(){generateGroceryList();},50);}
   if(id==='eatout'&&typeof initEatOut==='function'){initEatOut();}
   if(id==='dashboard'){

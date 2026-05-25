@@ -290,15 +290,6 @@ function pullGroupData(callback) {
         }
       } catch(e) {}
 
-      // Compute and cache the active plan while all phone data is fresh.
-      // renderWeeklyGrid() will use this cache instead of calling getActivePlan()
-      // at render time when currentPlan or workMode might still be stale.
-      try {
-        if (typeof getActivePlan === 'function') {
-          window._ipadPlanCache = getActivePlan();
-        }
-      } catch(e) {}
-
       // Re-render grid with latest data
       _refreshWeeklyGridIfOpen();
       // Reset the "synced X ago" clock on the grid

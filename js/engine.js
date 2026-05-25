@@ -273,7 +273,8 @@ function generatePlan(){
     tmp:tmp,
     workMode:workMode,
     sex:sex,
-    lane:lane
+    lane:lane,
+    planId:(workMode==='wfh'?(sex==='female'?'WFH_F':'WFH_M'):(sex==='female'?'OFF_F':'OFF_M'))
   };
   try{localStorage.setItem('fft_plan',JSON.stringify(currentPlan));localStorage.setItem('fft_workmode',workMode);localStorage.setItem('fft_age',age);saveAllData();}catch(e){}
 

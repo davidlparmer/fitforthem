@@ -152,11 +152,22 @@ function _scaleGridIngredients(items, effectiveScale) {
 }
 
 function renderWeeklyGrid() {
-  // On iPad, use the plan cached by pullGroupData() when phone data was fresh.
-  // This prevents getActivePlan() from using stale sex/phase/workMode values
-  // that might still be set from restoreFromServer() at render time.
-  var plan = (window.FFT_IS_IPAD && window._ipadPlanCache) 
-             ? window._ipadPlanCache 
+  // On iPad, use the planId stored in currentPlan (set by the phone at generation time).
+  // This means the iPad NEVER independently decides which plan to use —
+  // it uses exactly the same plan the phone used, regardless of local workMode/sex state.
+  var _planMap = {
+    'WFH_M':  typeof IF_PLAN_WFH              !== 'undefined' ? IF_PLAN_WFH              : null,
+    'OFF_M':  typeof IF_PLAN_OFFICE            !== 'undefined' ? IF_PLAN_OFFICE            : null,
+    'WFH_F':  typeof IF_PLAN_WFH_WOMEN         !== 'undefined' ? IF_PLAN_WFH_WOMEN         : null,
+    'OFF_F':  typeof IF_PLAN_OFFICE_WOMEN      !== 'undefined' ? IF_PLAN_OFFICE_WOMEN      : null,
+    'WFH_M+': typeof IF_PLAN_WFH_MEN_SURPLUS   !== 'undefined' ? IF_PLAN_WFH_MEN_SURPLUS   : null,
+    'OFF_M+': typeof IF_PLAN_OFFICE_MEN_SURPLUS !== 'undefined' ? IF_PLAN_OFFICE_MEN_SURPLUS: null,
+    'WFH_F+': typeof IF_PLAN_WFH_WOMEN_SURPLUS !== 'undefined' ? IF_PLAN_WFH_WOMEN_SURPLUS : null,
+    'OFF_F+': typeof IF_PLAN_OFFICE_WOMEN_SURPLUS !== 'undefined' ? IF_PLAN_OFFICE_WOMEN_SURPLUS: null
+  };
+  var _planId = currentPlan && currentPlan.planId;
+  var plan = (window.FFT_IS_IPAD && _planId && _planMap[_planId])
+             ? _planMap[_planId]
              : getActivePlan();
   if (!plan || !plan.length) return;
 
@@ -166,11 +177,7 @@ function renderWeeklyGrid() {
   // Update last-synced time shown in grid header
   try {
     var syncEl = document.getElementById('ipad-sync-time');
-    if (syncEl) {
-      var _dbgPlan = window._ipadPlanCache || null;
-      var _dbgMon = _dbgPlan && _dbgPlan[0] && _dbgPlan[0].first ? _dbgPlan[0].first.n : 'none';
-      syncEl.textContent = 'Synced ' + _ipadSyncAge() + ' | sex:' + (currentPlan&&currentPlan.sex||'?') + ' | mon:' + _dbgMon;
-    }
+    if (syncEl) syncEl.textContent = 'Synced ' + _ipadSyncAge();
   } catch(e) {}
 
   // ── PLAN NAME ────────────────────────────────────────────────

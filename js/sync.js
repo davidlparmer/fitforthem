@@ -141,14 +141,10 @@ function restoreFromServer(callback){
           if(typeof weightLog!=='undefined')weightLog=merged;
         }
       }catch(e){}
-      // iPad: skip meal prefs and custom meals from own blob — always stale.
-      // pullGroupData() sets these correctly from the phone's group slot.
-      if(!window.FFT_IS_IPAD){
-        try{if(typeof mealPrefs!=='undefined'&&d.fft_meal_prefs)mealPrefs=JSON.parse(d.fft_meal_prefs);}catch(e){}
-        try{if(typeof proteinSwaps!=='undefined'&&d.fft_swaps)proteinSwaps=JSON.parse(d.fft_swaps);}catch(e){}
-        try{if(typeof skippedMeals!=='undefined'&&d.fft_skipped)skippedMeals=JSON.parse(d.fft_skipped);}catch(e){}
-        try{if(typeof customMeals!=='undefined'&&d.fft_custom)customMeals=JSON.parse(d.fft_custom);}catch(e){}
-      }
+      try{if(typeof mealPrefs!=='undefined'&&d.fft_meal_prefs)mealPrefs=JSON.parse(d.fft_meal_prefs);}catch(e){}
+      try{if(typeof proteinSwaps!=='undefined'&&d.fft_swaps)proteinSwaps=JSON.parse(d.fft_swaps);}catch(e){}
+      try{if(typeof skippedMeals!=='undefined'&&d.fft_skipped)skippedMeals=JSON.parse(d.fft_skipped);}catch(e){}
+      try{if(typeof customMeals!=='undefined'&&d.fft_custom)customMeals=JSON.parse(d.fft_custom);}catch(e){}
       try{if(typeof savedMeals!=='undefined'&&d.fft_saved_meals)savedMeals=JSON.parse(d.fft_saved_meals);}catch(e){}
       try{if(typeof userName!=='undefined'&&d.fft_name)userName=d.fft_name;}catch(e){}
       try{if(typeof workMode!=='undefined'&&d.fft_workmode)workMode=d.fft_workmode;}catch(e){}
@@ -210,7 +206,20 @@ function pullGroupData(callback) {
 
     // ── iPAD: full restore ──────────────────────────────────
     if (window.FFT_IS_IPAD) {
-      // localStorage — all data fields
+      // Wipe all stale phone data from localStorage before writing fresh data.
+      // This kills the "ghost" — old data that survives cold launches and
+      // causes the grid to show wrong meals even after re-linking.
+      // Only fft_group_id and fft_device (cookie) are preserved.
+      var _ghostKeys = [
+        'fft_plan','fft_name','fft_workmode','fft_age',
+        'fft_meal_prefs','fft_swaps','fft_skipped','fft_milestones',
+        'fft_custom','fft_summary_dismissed','fft_saved_meals',
+        'fft_dinner_theme','fft_drinking_days','fft_log',
+        'fft_trial_start','fft_sub_status','fft_effective_cal'
+      ];
+      _ghostKeys.forEach(function(k){ try{localStorage.removeItem(k);}catch(e){}});
+
+      // Now write fresh data from the phone's group slot
       var ipadKeys = [
         'fft_plan','fft_name','fft_workmode','fft_age',
         'fft_meal_prefs','fft_swaps','fft_skipped','fft_milestones',
@@ -269,9 +278,6 @@ function pullGroupData(callback) {
       _refreshWeeklyGridIfOpen();
       // Reset the "synced X ago" clock on the grid
       if (typeof _markIpadSynced === 'function') _markIpadSynced();
-      // Keep iPad's own Netlify blob current so restoreFromServer()
-      // gets fresh data on next cold launch — not the stale pre-link blob
-      try { if (typeof saveAllData === 'function') saveAllData(); } catch(e) {}
       if(callback)callback(true);
       return;
     }

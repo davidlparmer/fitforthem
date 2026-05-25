@@ -218,7 +218,7 @@ async function claimLinkCode() {
           '<p style="font-size:.85rem;color:var(--t2);line-height:1.65;margin-bottom:24px">' +
             'Your plan and data have been synced to this device. Going forward, both devices will share the same data automatically.' +
           '</p>' +
-          '<button onclick="closeDeviceLink();if(currentPlan.cal){updateDashboard();buildDashDayTabs();}" ' +
+          '<button onclick="closeDeviceLink();if(window.FFT_IS_IPAD){if(typeof renderWeeklyGrid===\'function\')renderWeeklyGrid();}else if(currentPlan.cal){updateDashboard();buildDashDayTabs();}" ' +
             'style="width:100%;padding:16px;background:linear-gradient(150deg,var(--s3),var(--s2));border:1px solid var(--gold-line);border-top:1px solid rgba(184,150,60,.4);border-radius:12px;color:var(--gold-light);font-size:.85rem;font-weight:700;cursor:pointer;font-family:var(--font-body);letter-spacing:.06em;text-transform:uppercase">' +
             'Done →' +
           '</button>' +

@@ -252,6 +252,10 @@ function pullGroupData(callback) {
           }
         }
       } catch(e) {}
+      // Always reset mealPrefs before applying server data.
+      // If we don't, old in-memory preferences survive when the server sends
+      // empty/null fft_meal_prefs, causing stale meals to show on the grid.
+      try { mealPrefs = {}; } catch(e) {}
       try {
         if (d.fft_meal_prefs) mealPrefs = JSON.parse(d.fft_meal_prefs);
       } catch(e) {}

@@ -247,6 +247,10 @@ function pullGroupData(callback) {
       try {
         if (d.fft_meal_prefs) mealPrefs = JSON.parse(d.fft_meal_prefs);
       } catch(e) {}
+      // workMode must be set in memory — renderWeeklyGrid() reads it directly
+      // to decide which meals to show (office vs WFH). Without this, the grid
+      // renders with a stale workMode and shows the wrong meal category.
+      try { if (d.fft_workmode) workMode = d.fft_workmode; } catch(e) {}
       // These globals are read by getResolvedDinner() to resolve today-only swaps,
       // dinner theme rotation, and protein/skipped state. Without them in memory,
       // getResolvedDinner() falls through to the template on every call.

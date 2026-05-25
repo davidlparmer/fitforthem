@@ -1094,5 +1094,73 @@ if('serviceWorker' in navigator){
 </div>
 <!-- ── End Height Picker Sheet ──────────────────────────────── -->
 
+
+<!-- ── iPad Recipe Panel ─────────────────────────────────────
+     Slides up when user taps any meal in the weekly grid.
+     Populated by openMealRecipe() in app-handlers.js.
+     iPad-only — hidden on phone via FFT_IS_IPAD check.
+──────────────────────────────────────────────────────────── -->
+<div id="recipe-overlay" onclick="closeRecipePanel()"
+  style="display:none;position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.4)"></div>
+
+<div id="recipe-panel"
+  style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:701;
+         background:var(--s1);border-radius:24px 24px 0 0;
+         border-top:1px solid rgba(103,232,249,.15);
+         transform:translateY(100%);
+         transition:transform .32s cubic-bezier(.25,.46,.45,.94);
+         max-height:80vh;flex-direction:column">
+
+  <!-- Handle -->
+  <div style="display:flex;justify-content:center;padding:12px 0 4px;flex-shrink:0">
+    <div style="width:36px;height:4px;border-radius:2px;background:rgba(103,232,249,.2)"></div>
+  </div>
+
+  <!-- Header: meal name + close -->
+  <div style="display:flex;justify-content:space-between;align-items:center;
+              padding:8px 20px 14px;flex-shrink:0;
+              border-bottom:1px solid rgba(103,232,249,.08)">
+    <div id="recipe-name"
+      style="font-size:1rem;font-weight:800;color:var(--t1);
+             font-family:var(--font-display);letter-spacing:.01em"></div>
+    <button onclick="closeRecipePanel()"
+      style="background:var(--s2);border:none;color:var(--t2);
+             border-radius:50%;width:30px;height:30px;
+             font-size:.9rem;cursor:pointer;flex-shrink:0">✕</button>
+  </div>
+
+  <!-- Scrollable content -->
+  <div style="overflow-y:auto;flex:1;padding:16px 20px 40px">
+
+    <!-- Ingredients -->
+    <div style="font-size:.55rem;font-weight:700;letter-spacing:.2em;
+                text-transform:uppercase;color:rgba(0,212,255,.5);margin-bottom:10px">
+      Ingredients
+    </div>
+    <div id="recipe-ingredients" style="margin-bottom:22px"></div>
+
+    <!-- How To Make -->
+    <div style="font-size:.55rem;font-weight:700;letter-spacing:.2em;
+                text-transform:uppercase;color:rgba(0,212,255,.5);margin-bottom:10px">
+      How To Make
+    </div>
+    <div id="recipe-steps" style="margin-bottom:22px"></div>
+
+    <!-- Pro Tip -->
+    <div id="recipe-tip-wrap" style="display:none;
+         background:rgba(0,212,255,.04);border:1px solid rgba(103,232,249,.12);
+         border-radius:12px;padding:14px 16px">
+      <div style="font-size:.55rem;font-weight:700;letter-spacing:.2em;
+                  text-transform:uppercase;color:var(--gold-light);margin-bottom:6px">
+        Pro Tip
+      </div>
+      <div id="recipe-tip"
+        style="font-size:.8rem;color:var(--t2);line-height:1.65;font-style:italic"></div>
+    </div>
+
+  </div>
+</div>
+<!-- ── End iPad Recipe Panel ─────────────────────────────── -->
+
 </body>
 </html>

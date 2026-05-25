@@ -282,11 +282,12 @@ function generatePlan(){
   window.ingredientSwaps={};
   try{var keys=Object.keys(localStorage);keys.forEach(function(k){if(k.indexOf('fft_ingswap_')===0)localStorage.removeItem(k);});}catch(e){}
   mealPrefs={};
-  try{localStorage.removeItem('fft_meal_prefs');}catch(e){}
-  // Also clear today-only swaps — these contain cals from old plan targets
-  // and should not survive a plan rebuild.
+  // Set to explicit empty value (not null/removed) so buildSavePayload sends '{}'
+  // to the server. If we send null, the server skips the field and keeps old data.
+  // This ensures the group slot is actually overwritten with empty preferences.
+  try{localStorage.setItem('fft_meal_prefs','{}');}catch(e){}
   customMeals=[];
-  try{localStorage.removeItem('fft_custom');}catch(e){}
+  try{localStorage.setItem('fft_custom','[]');}catch(e){}
 
   // Update eat out field
   var eoCalEl=document.getElementById('eo-cal');

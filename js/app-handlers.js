@@ -342,8 +342,18 @@ function renderWeeklyGrid() {
 
       if (isMain) {
         if (window.FFT_IS_IPAD) {
-          bodyHTML += '<td style="' + cellStyle + '">' +
-            '<div style="' + innerStyle + '">' + cellContent + '</div>' +
+          // Derive dinner key: mealPref → template
+          var _dk = (mealPrefs&&mealPrefs[dIdx]&&mealPrefs[dIdx].dinner&&mealPrefs[dIdx].dinner.key)
+                    ? mealPrefs[dIdx].dinner.key
+                    : (dayPlan.dinner&&dayPlan.dinner.k ? dayPlan.dinner.k : '');
+          var _dn = (mealPrefs&&mealPrefs[dIdx]&&mealPrefs[dIdx].dinner&&mealPrefs[dIdx].dinner.name)
+                    ? mealPrefs[dIdx].dinner.name
+                    : (dayPlan.dinner&&dayPlan.dinner.n ? dayPlan.dinner.n : 'Dinner');
+          bodyHTML += '<td style="' + cellStyle + ';cursor:pointer">' +
+            '<div style="' + innerStyle + '" ' +
+            'data-recipe-key="' + _dk + '" ' +
+            'data-recipe-name="' + _dn.replace(/"/g,"'") + '" ' +
+            'onclick="openMealRecipe(this)">' + cellContent + '</div>' +
             '</td>';
         } else {
           cellStyle += ';cursor:pointer';
@@ -356,9 +366,25 @@ function renderWeeklyGrid() {
             '</div></td>';
         }
       } else {
-        bodyHTML += '<td style="' + cellStyle + '">' +
-          '<div style="' + innerStyle + '">' + cellContent + '</div>' +
-          '</td>';
+        if (window.FFT_IS_IPAD) {
+          // Derive key: customMeal → mealPref → template
+          var _fk = slotCustom ? (slotCustom.mealKey || slotCustom.key || '')
+                  : permPref   ? (permPref.key || '')
+                  : (dayPlan[slot.key] && dayPlan[slot.key].k || '');
+          var _fn = slotCustom ? (slotCustom.name || slot.label)
+                  : permPref   ? (permPref.name || slot.label)
+                  : (dayPlan[slot.key] && dayPlan[slot.key].n || slot.label);
+          bodyHTML += '<td style="' + cellStyle + ';cursor:pointer">' +
+            '<div style="' + innerStyle + '" ' +
+            'data-recipe-key="' + _fk + '" ' +
+            'data-recipe-name="' + _fn.replace(/"/g,"'") + '" ' +
+            'onclick="openMealRecipe(this)">' + cellContent + '</div>' +
+            '</td>';
+        } else {
+          bodyHTML += '<td style="' + cellStyle + '">' +
+            '<div style="' + innerStyle + '">' + cellContent + '</div>' +
+            '</td>';
+        }
       }
     });
 

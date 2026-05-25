@@ -152,6 +152,10 @@ function _scaleGridIngredients(items, effectiveScale) {
 }
 
 function renderWeeklyGrid() {
+  // DEBUG — temporary: shows what workMode the iPad is using for meal selection
+  var _dbgEl = document.getElementById('ipad-sync-time');
+  if (_dbgEl) _dbgEl.textContent = 'workMode: ' + workMode + ' | ' + new Date().toLocaleTimeString();
+
   var plan = getActivePlan();
   if (!plan || !plan.length) return;
 

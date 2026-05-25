@@ -53,6 +53,14 @@ function _scheduleGroupSync() {
 
 function saveAllData(){
   if(!localStorage.getItem('fft_name'))return;
+  // Flush in-memory workMode to localStorage before building payload.
+  // workMode can be changed in memory (onboarding, settings) without updating
+  // localStorage — causing the group slot to send a stale value to the iPad.
+  try{
+    if(typeof workMode!=='undefined'&&workMode){
+      localStorage.setItem('fft_workmode',workMode);
+    }
+  }catch(e){}
   // Flush in-memory currentPlan to localStorage before syncing.
   // The phone may modify currentPlan.cal in memory (migrations, adjustments)
   // without immediately saving to localStorage. This ensures the iPad always

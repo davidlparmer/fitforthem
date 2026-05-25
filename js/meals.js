@@ -1314,6 +1314,23 @@ function renderDashDay(i){
     }
   });
   el.innerHTML=buildDayHTML(i,currentPlan,false);
+  // Immediately correct the summary card steps — buildDayHTML may bake in
+  // base steps if drinkingDays wasn't fully loaded at render time.
+  // This runs synchronously so the displayed value is always drinking-aware.
+  try {
+    var _todayIdx=new Date().getDay()===0?6:new Date().getDay()-1;
+    if(i===_todayIdx){
+      var _smEl=document.getElementById('dash-day-steps-summary');
+      if(_smEl && currentPlan && currentPlan.steps){
+        var _dl=drinkingDays&&drinkingDays[i]||false;
+        var _sv=currentPlan.steps;
+        if(_dl==='light')  _sv=currentPlan.wStepsLight||currentPlan.wSteps||currentPlan.steps;
+        if(_dl==='regular')_sv=currentPlan.wSteps||currentPlan.steps;
+        if(_dl==='big')    _sv=currentPlan.wStepsBig||currentPlan.wSteps||currentPlan.steps;
+        _smEl.textContent=_sv.toLocaleString();
+      }
+    }
+  }catch(e){}
   // Restore open state after re-render
   if(openSlots.length){
     el.querySelectorAll('.meal-card').forEach(function(card){

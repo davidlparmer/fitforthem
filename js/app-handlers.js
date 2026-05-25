@@ -706,3 +706,102 @@ function applyWalkDefault() {
   closeWalkSheet(false);
 }
 // ── END WALK MODE SHEET ───────────────────────────────────────────────────────
+
+
+// ══════════════════════════════════════════════════════════════
+// iPAD RECIPE PANEL
+// openMealRecipe(el) — called when user taps a meal cell on iPad.
+// el = the inner div of the tapped cell (has data-recipe-key/name).
+// closeRecipePanel() — closes and resets the panel.
+// ══════════════════════════════════════════════════════════════
+
+function openMealRecipe(el) {
+  if (!el) return;
+  var key  = el.getAttribute('data-recipe-key')  || '';
+  var name = el.getAttribute('data-recipe-name') || '';
+
+  // Read scaled ingredient strings directly from the cell's child elements.
+  // Filter out badge lines (Custom, Dinner Family) by exact text match.
+  var _badges = ['custom', 'dinner family'];
+  var ings = [];
+  Array.prototype.forEach.call(el.children, function(child) {
+    var text = (child.textContent || '').trim();
+    if (text && _badges.indexOf(text.toLowerCase()) < 0) {
+      ings.push(text);
+    }
+  });
+
+  // Look up instructions from MEAL_INSTRUCTIONS_MAP (swap-options.js)
+  var instr = (typeof MEAL_INSTRUCTIONS_MAP !== 'undefined') ? MEAL_INSTRUCTIONS_MAP[key] : null;
+  var steps = instr && instr.how_to_make && instr.how_to_make.length ? instr.how_to_make : null;
+  var tip   = instr ? (instr.pro_tip || instr.batch_note || null) : null;
+
+  // ── Populate panel elements ──────────────────────────────────
+  var nameEl  = document.getElementById('recipe-name');
+  var ingsEl  = document.getElementById('recipe-ingredients');
+  var stepsEl = document.getElementById('recipe-steps');
+  var tipEl   = document.getElementById('recipe-tip');
+  var tipWrap = document.getElementById('recipe-tip-wrap');
+
+  if (nameEl) nameEl.textContent = name;
+
+  if (ingsEl) {
+    ingsEl.innerHTML = ings.length
+      ? ings.map(function(ing) {
+          return '<div style="display:flex;align-items:baseline;gap:8px;' +
+            'padding:7px 0;border-bottom:1px solid rgba(103,232,249,.06)">' +
+            '<span style="color:rgba(0,212,255,.4);font-size:.65rem;flex-shrink:0">•</span>' +
+            '<span style="font-size:.82rem;color:var(--t1);line-height:1.4">' + ing + '</span>' +
+            '</div>';
+        }).join('')
+      : '<div style="font-size:.8rem;color:var(--t3);font-style:italic">Ingredients shown on the grid.</div>';
+  }
+
+  if (stepsEl) {
+    stepsEl.innerHTML = steps
+      ? steps.map(function(step, i) {
+          return '<div style="display:flex;gap:12px;padding:9px 0;' +
+            'border-bottom:1px solid rgba(103,232,249,.06)">' +
+            '<div style="flex-shrink:0;width:22px;height:22px;border-radius:50%;' +
+            'background:rgba(0,212,255,.06);border:1px solid rgba(103,232,249,.2);' +
+            'display:flex;align-items:center;justify-content:center;' +
+            'font-size:.6rem;font-weight:700;color:var(--gold-light)">' + (i + 1) + '</div>' +
+            '<span style="font-size:.82rem;color:var(--t2);line-height:1.65">' + step + '</span>' +
+            '</div>';
+        }).join('')
+      : '<div style="font-size:.8rem;color:var(--t3);font-style:italic;padding:8px 0">' +
+        'No recipe available for this meal yet.</div>';
+  }
+
+  if (tipEl && tipWrap) {
+    if (tip) {
+      tipEl.textContent = tip;
+      tipWrap.style.display = 'block';
+    } else {
+      tipWrap.style.display = 'none';
+    }
+  }
+
+  // ── Show panel ───────────────────────────────────────────────
+  var overlay = document.getElementById('recipe-overlay');
+  var panel   = document.getElementById('recipe-panel');
+  if (!overlay || !panel) return;
+  overlay.style.display = 'block';
+  panel.style.display   = 'flex';
+  // Reset scroll before animating in
+  var scrollEl = panel.querySelector('div[style*="overflow-y"]');
+  if (scrollEl) scrollEl.scrollTop = 0;
+  setTimeout(function() { panel.style.transform = 'translateY(0)'; }, 10);
+}
+
+function closeRecipePanel() {
+  var panel   = document.getElementById('recipe-panel');
+  var overlay = document.getElementById('recipe-overlay');
+  if (panel) panel.style.transform = 'translateY(100%)';
+  setTimeout(function() {
+    if (panel)   panel.style.display = 'none';
+    if (overlay) overlay.style.display = 'none';
+  }, 340);
+}
+
+// ── End iPad Recipe Panel ─────────────────────────────────────

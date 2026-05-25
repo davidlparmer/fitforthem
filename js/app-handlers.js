@@ -166,7 +166,11 @@ function renderWeeklyGrid() {
   // Update last-synced time shown in grid header
   try {
     var syncEl = document.getElementById('ipad-sync-time');
-    if (syncEl) syncEl.textContent = 'Synced ' + _ipadSyncAge();
+    if (syncEl) {
+      var _dbgPlan = window._ipadPlanCache || null;
+      var _dbgMon = _dbgPlan && _dbgPlan[0] && _dbgPlan[0].first ? _dbgPlan[0].first.n : 'none';
+      syncEl.textContent = 'Synced ' + _ipadSyncAge() + ' | sex:' + (currentPlan&&currentPlan.sex||'?') + ' | mon:' + _dbgMon;
+    }
   } catch(e) {}
 
   // ── PLAN NAME ────────────────────────────────────────────────

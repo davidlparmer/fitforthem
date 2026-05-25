@@ -745,20 +745,25 @@ function buildDayHTML(i,plan,showSwap){
   }
 
   // Summary card — calories/steps row + protein/carbs/fat row
-  var _alcNote=alcCal?'<span style="font-size:.6rem;color:var(--t3)"> +'+alcCal+' drinks</span>':'';
+  // Steps get an ID on today's card so updateDashboard() can keep them in sync
+  // with the hero card when the walk mode sheet adjusts the target.
+  var _alcNote=alcCal?'<span style="font-size:.55rem;color:var(--t2)"> +'+alcCal+' drinks</span>':'';
+  var _stepsId=i===todayIdx?' id="dash-day-steps-summary"':'';
+  var _labelStyle='font-size:.52rem;color:var(--t2);letter-spacing:.1em;text-transform:uppercase;margin-top:2px';
+  var _numStyle='font-size:.88rem;font-weight:800;color:var(--gold-light)';
   var _macroRow=(_dPro||_dCarb||_dFat)
     ?'<div style="display:flex;justify-content:space-around;padding-top:10px;border-top:1px solid var(--border)">'+
         '<div style="text-align:center">'+
-          '<div style="font-size:.82rem;font-weight:700;color:var(--gold-light)">'+_dPro+'g</div>'+
-          '<div style="font-size:.52rem;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;margin-top:2px">Protein</div>'+
+          '<div style="'+_numStyle+'">'+_dPro+'g</div>'+
+          '<div style="'+_labelStyle+'">Protein</div>'+
         '</div>'+
         '<div style="text-align:center">'+
-          '<div style="font-size:.82rem;font-weight:700;color:var(--t1)">'+_dCarb+'g</div>'+
-          '<div style="font-size:.52rem;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;margin-top:2px">Carbs</div>'+
+          '<div style="'+_numStyle+'">'+_dCarb+'g</div>'+
+          '<div style="'+_labelStyle+'">Carbs</div>'+
         '</div>'+
         '<div style="text-align:center">'+
-          '<div style="font-size:.82rem;font-weight:700;color:var(--t1)">'+_dFat+'g</div>'+
-          '<div style="font-size:.52rem;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;margin-top:2px">Fat</div>'+
+          '<div style="'+_numStyle+'">'+_dFat+'g</div>'+
+          '<div style="'+_labelStyle+'">Fat</div>'+
         '</div>'+
       '</div>'
     :'';
@@ -766,13 +771,13 @@ function buildDayHTML(i,plan,showSwap){
     '<div style="margin-top:14px;background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:14px 16px">'+
       '<div style="display:flex;justify-content:space-around;margin-bottom:'+(_macroRow?'10px':'0')+'">'+
         '<div style="text-align:center">'+
-          '<div style="font-size:.9rem;font-weight:800;color:var(--t1)">'+totalFoodCal+_alcNote+'</div>'+
-          '<div style="font-size:.52rem;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;margin-top:2px">Cal</div>'+
+          '<div style="'+_numStyle+'">'+totalFoodCal+_alcNote+'</div>'+
+          '<div style="'+_labelStyle+'">Cal</div>'+
         '</div>'+
         '<div style="width:1px;background:var(--border)"></div>'+
         '<div style="text-align:center">'+
-          '<div style="font-size:.9rem;font-weight:800;color:var(--t1)">'+daySteps.toLocaleString()+'</div>'+
-          '<div style="font-size:.52rem;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;margin-top:2px">Steps</div>'+
+          '<div'+_stepsId+' style="'+_numStyle+'">'+daySteps.toLocaleString()+'</div>'+
+          '<div style="'+_labelStyle+'">Steps</div>'+
         '</div>'+
       '</div>'+
       _macroRow+
@@ -1121,6 +1126,8 @@ function updateDashboard(){
   if(typeof _walkSheet!=='undefined'&&_walkSheet.open){return;}
   document.getElementById('ds-steps').textContent=todaySteps.toLocaleString();
   document.getElementById('ds-steps-label').textContent='Steps';
+  var _dss=document.getElementById('dash-day-steps-summary');
+  if(_dss)_dss.textContent=todaySteps.toLocaleString();
   // Today-only walk override — check if user changed walk mode for today
   // Recalculates steps using today's correct burn target and override walk settings
   try{

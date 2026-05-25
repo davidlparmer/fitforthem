@@ -193,6 +193,13 @@ async function claimLinkCode() {
       }
     } catch(e) {}
 
+    // Compute and cache the active plan while phone data is fresh from claim
+    try {
+      if (typeof getActivePlan === 'function') {
+        window._ipadPlanCache = getActivePlan();
+      }
+    } catch(e) {}
+
     // Update iPad's own blob with linked data so restoreFromServer()
     // gets current data on next cold launch instead of the stale pre-link blob.
     // Also starts the 15s polling interval for the current session.

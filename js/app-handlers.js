@@ -152,7 +152,12 @@ function _scaleGridIngredients(items, effectiveScale) {
 }
 
 function renderWeeklyGrid() {
-  var plan = getActivePlan();
+  // On iPad, use the plan cached by pullGroupData() when phone data was fresh.
+  // This prevents getActivePlan() from using stale sex/phase/workMode values
+  // that might still be set from restoreFromServer() at render time.
+  var plan = (window.FFT_IS_IPAD && window._ipadPlanCache) 
+             ? window._ipadPlanCache 
+             : getActivePlan();
   if (!plan || !plan.length) return;
 
   var planCal = currentPlan && currentPlan.cal ? currentPlan.cal : 0;

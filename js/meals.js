@@ -744,14 +744,39 @@ function buildDayHTML(i,plan,showSwap){
     '</div>';
   }
 
-  html+='<div style="font-size:.62rem;color:var(--t2);margin-top:12px;padding:10px 0;border-top:1px solid var(--gold-line);display:flex;gap:16px;letter-spacing:.08em;text-transform:uppercase;font-family:var(--font-body);flex-wrap:wrap"><span>'+totalFoodCal+' cal'+(alcCal?' + '+alcCal+' drinks':'')+'</span><span style="color:var(--gold-line)">·</span><span>'+daySteps.toLocaleString()+' steps'+(S.walkType==='incline'?' · '+S.incline+'% / '+S.speed+' mph':'')+'</span>'+_macroSummary+'</div>'+_proWarning;
-
-  // Invisible coaching — completion state for today
-  if(i===todayIdx){
-    html+='<div style="margin-top:14px;padding:16px 20px;background:linear-gradient(135deg,rgba(103,232,249,.06),rgba(103,232,249,.03));border:1px solid var(--gold-line);border-top:1px solid rgba(103,232,249,.25);border-radius:10px;font-size:.65rem;color:var(--gold-light);letter-spacing:.14em;text-transform:uppercase;font-family:var(--font-body);font-weight:600;text-align:center;line-height:2">'+
-      'Eat these meals &nbsp;·&nbsp; Hit '+daySteps.toLocaleString()+' steps &nbsp;·&nbsp; Close the app &nbsp;·&nbsp; Live your life'+
-    '</div>';
-  }
+  // Summary card — calories/steps row + protein/carbs/fat row
+  var _alcNote=alcCal?'<span style="font-size:.6rem;color:var(--t3)"> +'+alcCal+' drinks</span>':'';
+  var _macroRow=(_dPro||_dCarb||_dFat)
+    ?'<div style="display:flex;justify-content:space-around;padding-top:10px;border-top:1px solid var(--border)">'+
+        '<div style="text-align:center">'+
+          '<div style="font-size:.82rem;font-weight:700;color:var(--gold-light)">'+_dPro+'g</div>'+
+          '<div style="font-size:.52rem;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;margin-top:2px">Protein</div>'+
+        '</div>'+
+        '<div style="text-align:center">'+
+          '<div style="font-size:.82rem;font-weight:700;color:var(--t1)">'+_dCarb+'g</div>'+
+          '<div style="font-size:.52rem;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;margin-top:2px">Carbs</div>'+
+        '</div>'+
+        '<div style="text-align:center">'+
+          '<div style="font-size:.82rem;font-weight:700;color:var(--t1)">'+_dFat+'g</div>'+
+          '<div style="font-size:.52rem;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;margin-top:2px">Fat</div>'+
+        '</div>'+
+      '</div>'
+    :'';
+  html+=
+    '<div style="margin-top:14px;background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:14px 16px">'+
+      '<div style="display:flex;justify-content:space-around;margin-bottom:'+(_macroRow?'10px':'0')+'">'+
+        '<div style="text-align:center">'+
+          '<div style="font-size:.9rem;font-weight:800;color:var(--t1)">'+totalFoodCal+_alcNote+'</div>'+
+          '<div style="font-size:.52rem;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;margin-top:2px">Cal</div>'+
+        '</div>'+
+        '<div style="width:1px;background:var(--border)"></div>'+
+        '<div style="text-align:center">'+
+          '<div style="font-size:.9rem;font-weight:800;color:var(--t1)">'+daySteps.toLocaleString()+'</div>'+
+          '<div style="font-size:.52rem;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;margin-top:2px">Steps</div>'+
+        '</div>'+
+      '</div>'+
+      _macroRow+
+    '</div>'+_proWarning;
   return html;
 }
 
@@ -1095,8 +1120,7 @@ function updateDashboard(){
   // Don't overwrite the live preview while the walk mode sheet is open
   if(typeof _walkSheet!=='undefined'&&_walkSheet.open){return;}
   document.getElementById('ds-steps').textContent=todaySteps.toLocaleString();
-  var drinkLabels={light:'Steps (Light Night)',regular:'Steps (Drinking Night)',big:'Steps (Big Night)'};
-  document.getElementById('ds-steps-label').textContent=drinkLevel?drinkLabels[drinkLevel]:todayIsWeekend?'Steps (Weekend)':'Steps';
+  document.getElementById('ds-steps-label').textContent='Steps';
   // Today-only walk override — check if user changed walk mode for today
   // Recalculates steps using today's correct burn target and override walk settings
   try{
@@ -1109,8 +1133,7 @@ function updateDashboard(){
       else if(drinkLevel==='big')_overrideBurn=currentPlan.burnBig||_overrideBurn+400;
       var _overrideSteps=calcSteps(currentPlan.wLbs,currentPlan.hIn,_overrideBurn,_wt.walkType,_wt.speed,_wt.incline);
       document.getElementById('ds-steps').textContent=_overrideSteps.toLocaleString();
-      var _modeLabels={flat:'Steps (Outdoor)',treadmill:'Steps (Treadmill)',incline:'Steps (Incline)'};
-      document.getElementById('ds-steps-label').textContent=_modeLabels[_wt.walkType]||'Steps';
+      document.getElementById('ds-steps-label').textContent='Steps';
     }
   }catch(e){}
   // Show calorie burn target under steps
@@ -1124,7 +1147,7 @@ function updateDashboard(){
     if(drinkLevel==='light')burnTarget=planBurnLight;
     else if(drinkLevel==='regular')burnTarget=planBurnDrink;
     else if(drinkLevel==='big')burnTarget=planBurnBig;
-    burnEl.textContent='walk target: ~'+burnTarget+' cal';
+    burnEl.textContent='~'+burnTarget+' cal';
     burnEl.style.display='block';
   }
   var displayGoal=currentPlan.goalWeight||currentPlan.tmp||Math.round(currentPlan.tz&&currentPlan.tz.mid||0);

@@ -791,7 +791,13 @@ function openMealRecipe(el) {
   // Reset scroll before animating in
   var scrollEl = panel.querySelector('div[style*="overflow-y"]');
   if (scrollEl) scrollEl.scrollTop = 0;
-  setTimeout(function() { panel.style.transform = 'translateY(0)'; }, 10);
+  // Double rAF: ensures browser paints display:flex before transform fires,
+  // which is required for CSS transitions to work on iOS Safari.
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      panel.style.transform = 'translateY(0)';
+    });
+  });
 }
 
 function closeRecipePanel() {

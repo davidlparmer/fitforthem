@@ -193,6 +193,21 @@ async function claimLinkCode() {
       }
     } catch(e) {}
 
+    // Update iPad's own blob with linked data so restoreFromServer()
+    // gets current data on next cold launch instead of the stale pre-link blob.
+    // Also starts the 15s polling interval for the current session.
+    try {
+      window.FFT_IS_IPAD = typeof isIpad === 'function' ? isIpad() : window.FFT_IS_IPAD;
+      if (typeof saveAllData === 'function') saveAllData();
+      // Start polling if not already running (finishBoot() exited early at link screen)
+      if (window.FFT_IS_IPAD && typeof pullGroupData === 'function') {
+        if (!window._ipadPollStarted) {
+          window._ipadPollStarted = true;
+          setInterval(function(){ pullGroupData(function(){}); }, 15000);
+        }
+      }
+    } catch(e) {}
+
     // Show success then close
     var content = document.getElementById('device-link-content');
     if (content) {

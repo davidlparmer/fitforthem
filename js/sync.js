@@ -141,10 +141,14 @@ function restoreFromServer(callback){
           if(typeof weightLog!=='undefined')weightLog=merged;
         }
       }catch(e){}
-      try{if(typeof mealPrefs!=='undefined'&&d.fft_meal_prefs)mealPrefs=JSON.parse(d.fft_meal_prefs);}catch(e){}
-      try{if(typeof proteinSwaps!=='undefined'&&d.fft_swaps)proteinSwaps=JSON.parse(d.fft_swaps);}catch(e){}
-      try{if(typeof skippedMeals!=='undefined'&&d.fft_skipped)skippedMeals=JSON.parse(d.fft_skipped);}catch(e){}
-      try{if(typeof customMeals!=='undefined'&&d.fft_custom)customMeals=JSON.parse(d.fft_custom);}catch(e){}
+      // iPad: skip meal prefs and custom meals from own blob — always stale.
+      // pullGroupData() sets these correctly from the phone's group slot.
+      if(!window.FFT_IS_IPAD){
+        try{if(typeof mealPrefs!=='undefined'&&d.fft_meal_prefs)mealPrefs=JSON.parse(d.fft_meal_prefs);}catch(e){}
+        try{if(typeof proteinSwaps!=='undefined'&&d.fft_swaps)proteinSwaps=JSON.parse(d.fft_swaps);}catch(e){}
+        try{if(typeof skippedMeals!=='undefined'&&d.fft_skipped)skippedMeals=JSON.parse(d.fft_skipped);}catch(e){}
+        try{if(typeof customMeals!=='undefined'&&d.fft_custom)customMeals=JSON.parse(d.fft_custom);}catch(e){}
+      }
       try{if(typeof savedMeals!=='undefined'&&d.fft_saved_meals)savedMeals=JSON.parse(d.fft_saved_meals);}catch(e){}
       try{if(typeof userName!=='undefined'&&d.fft_name)userName=d.fft_name;}catch(e){}
       try{if(typeof workMode!=='undefined'&&d.fft_workmode)workMode=d.fft_workmode;}catch(e){}
@@ -265,6 +269,9 @@ function pullGroupData(callback) {
       _refreshWeeklyGridIfOpen();
       // Reset the "synced X ago" clock on the grid
       if (typeof _markIpadSynced === 'function') _markIpadSynced();
+      // Keep iPad's own Netlify blob current so restoreFromServer()
+      // gets fresh data on next cold launch — not the stale pre-link blob
+      try { if (typeof saveAllData === 'function') saveAllData(); } catch(e) {}
       if(callback)callback(true);
       return;
     }

@@ -283,6 +283,10 @@ function generatePlan(){
   try{var keys=Object.keys(localStorage);keys.forEach(function(k){if(k.indexOf('fft_ingswap_')===0)localStorage.removeItem(k);});}catch(e){}
   mealPrefs={};
   try{localStorage.removeItem('fft_meal_prefs');}catch(e){}
+  // Also clear today-only swaps — these contain cals from old plan targets
+  // and should not survive a plan rebuild.
+  customMeals=[];
+  try{localStorage.removeItem('fft_custom');}catch(e){}
 
   // Update eat out field
   var eoCalEl=document.getElementById('eo-cal');

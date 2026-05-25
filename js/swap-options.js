@@ -32,13 +32,20 @@ var MEAL_INSTRUCTIONS = {
       batch_note: 'Best made fresh. Add cookies at the last minute so they stay crisp.'
     }
   },
+  cottage_cheese_bowl_family: {
+    cottage_cheese_bowl: {
+      how_to_make: ['Add cottage cheese to a bowl.','Top with blueberries and chia seeds.','Drizzle honey over the top.','Stir or leave layered and serve cold.'],
+      pro_tip: 'Best served cold straight from the fridge. Prep the night before and grab on your way out.'
+    },
+  },
+
   egg_potato_skillet_family: {
     classic_egg_potato_skillet: {
       how_to_make: ['Cook potatoes in a skillet until browned and tender.','Season with salt, pepper, and any simple seasoning.','Add eggs and/or egg whites to the pan.','Cook until set and serve hot.'],
       batch_note: 'Batch-cook potatoes separately, then reheat portions and add fresh eggs when serving.'
     },
     cheesy_egg_potato_skillet: {
-      how_to_make: ['Cook potatoes in a skillet until browned and tender.','Add eggs and cook until almost set.','Sprinkle cheese over the top and let it melt.','Add a dollop of sour cream and serve hot.'],
+      how_to_make: ['Boil potatoes until tender, then drain.','Mash potatoes with cheese, sour cream, salt, and pepper until smooth.','Cook eggs in a separate pan to your preference.','Serve eggs on top of the mashed potato base.'],
       batch_note: 'For family use, batch-cook potatoes first. Cook egg portions fresh for best texture.'
     },
     salsa_egg_potato_skillet: {
@@ -150,7 +157,7 @@ var MEAL_INSTRUCTIONS_MAP = {
   'berry-chia-bowl':       MEAL_INSTRUCTIONS.greek_yogurt_bowl_family.berry_chia_bowl,
   'banana-honey-bowl':     MEAL_INSTRUCTIONS.greek_yogurt_bowl_family.banana_honey_bowl,
   'banana-oat-pb-bowl':    MEAL_INSTRUCTIONS.greek_yogurt_bowl_family.banana_oat_nut_butter_bowl,
-  'cottage-bowl':          MEAL_INSTRUCTIONS.greek_yogurt_bowl_family.berry_chia_bowl,
+  'cottage-bowl':          MEAL_INSTRUCTIONS.cottage_cheese_bowl_family.cottage_cheese_bowl,
   'cheesy-egg-potato':     MEAL_INSTRUCTIONS.egg_potato_skillet_family.cheesy_egg_potato_skillet,
   'salsa-egg-potato':      MEAL_INSTRUCTIONS.egg_potato_skillet_family.salsa_egg_potato_skillet,
   'loaded-egg-potato':     MEAL_INSTRUCTIONS.egg_potato_skillet_family.loaded_egg_potato_skillet,

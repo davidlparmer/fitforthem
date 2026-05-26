@@ -947,25 +947,37 @@ if('serviceWorker' in navigator){
 ──────────────────────────────────────────────────────────────-->
 <div id="weekly-grid-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:var(--bg);overflow:auto;-webkit-overflow-scrolling:touch">
 
-  <!-- Header bar -->
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 24px 12px;border-bottom:1px solid var(--gold-line);background:var(--bg);position:sticky;top:0;z-index:2">
-    <div>
-      <div style="font-family:var(--font-display);font-size:1.1rem;font-weight:700;color:var(--gold-light)" id="wg-plan-name">Weekly Meal Plan</div>
-      <div style="font-size:.7rem;color:var(--t3);margin-top:2px;letter-spacing:.06em;text-transform:uppercase">Tap any Main Meal to swap · Rotate to portrait to exit</div>
-      <div style="font-size:.65rem;color:var(--t3);margin-top:4px" id="ipad-sync-time">Synced just now</div>
-    </div>
-    <div style="display:flex;align-items:center;gap:10px">
-      <button onclick="if(typeof pullGroupData==='function')pullGroupData(function(){})" style="background:none;border:1px solid var(--gold-line);color:var(--gold);border-radius:8px;padding:8px 14px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:var(--font-body);letter-spacing:.06em">↺ Refresh</button>
-      <button onclick="document.getElementById('ipad-link-screen').style.display='flex';document.getElementById('weekly-grid-overlay').style.display='none'" style="background:none;border:1px solid var(--gold-line);color:var(--t2);border-radius:8px;padding:8px 14px;font-size:.75rem;font-weight:700;cursor:pointer;font-family:var(--font-body);letter-spacing:.06em">Re-link</button>
+  <!-- Premium header bar -->
+  <div style="position:sticky;top:0;z-index:2;background:var(--bg);border-bottom:1px solid rgba(103,232,249,.1);padding:18px 24px 14px">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <!-- Wordmark -->
+      <div style="font-family:var(--font-display);font-size:.68rem;font-weight:600;color:rgba(103,232,249,.35);letter-spacing:.14em;text-transform:uppercase;flex-shrink:0">Loftin<br>Method</div>
+      <!-- Title + sync -->
+      <div style="text-align:center;flex:1;padding:0 20px">
+        <div id="wg-plan-name" style="font-family:var(--font-display);font-size:1.45rem;font-weight:700;color:var(--t1);letter-spacing:.01em;line-height:1.15">Weekly Meal Plan</div>
+        <div id="ipad-sync-time" style="font-size:.65rem;color:rgba(103,232,249,.45);margin-top:4px;letter-spacing:.05em">&#10003;&nbsp; Synced from iPhone</div>
+      </div>
+      <!-- Actions -->
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <button onclick="if(typeof pullGroupData==='function')pullGroupData(function(){})"
+          style="background:none;border:1px solid rgba(103,232,249,.15);color:rgba(103,232,249,.45);border-radius:8px;width:36px;height:36px;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:var(--font-body)">&#8635;</button>
+        <button onclick="document.getElementById('ipad-link-screen').style.display='flex';document.getElementById('weekly-grid-overlay').style.display='none'"
+          style="background:none;border:1px solid rgba(103,232,249,.12);color:rgba(103,232,249,.35);border-radius:8px;width:36px;height:36px;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:var(--font-body)">&#9881;</button>
+      </div>
     </div>
   </div>
 
   <!-- Grid container -->
-  <div style="padding:16px 20px 24px;overflow-x:auto">
+  <div style="padding:16px 20px 8px;overflow-x:auto">
     <table id="weekly-grid-table" style="width:100%;border-collapse:collapse;table-layout:fixed;min-width:700px">
       <thead id="weekly-grid-head"></thead>
       <tbody id="weekly-grid-body"></tbody>
     </table>
+  </div>
+
+  <!-- Bottom hint bar -->
+  <div style="position:sticky;bottom:0;z-index:2;background:var(--bg);border-top:1px solid rgba(103,232,249,.08);text-align:center;padding:12px 24px;color:rgba(103,232,249,.35);font-size:.68rem;letter-spacing:.1em;font-family:var(--font-body)">
+    &#128161;&nbsp; Tap any meal to view details.
   </div>
 
   <!-- Meal swap modal — lives inside overlay -->

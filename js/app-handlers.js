@@ -174,10 +174,17 @@ function renderWeeklyGrid() {
   var planCal = currentPlan && currentPlan.cal ? currentPlan.cal : 0;
   if (!planCal) return;
 
-  // Update last-synced time shown in grid header
+  // Update sync indicator with week date
   try {
-    var syncEl = document.getElementById('ipad-sync-time');
-    if (syncEl) syncEl.textContent = 'Synced ' + _ipadSyncAge();
+    var _syncEl = document.getElementById('ipad-sync-time');
+    if (_syncEl) {
+      var _now = new Date();
+      var _offset = _now.getDay() === 0 ? -6 : 1 - _now.getDay();
+      var _mon = new Date(_now); _mon.setDate(_now.getDate() + _offset);
+      var _months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      var _weekStr = _months[_mon.getMonth()] + ' ' + _mon.getDate();
+      _syncEl.innerHTML = '&#10003;&nbsp; Synced from iPhone &nbsp;&middot;&nbsp; Week of ' + _weekStr;
+    }
   } catch(e) {}
 
   // ── PLAN NAME ────────────────────────────────────────────────
@@ -253,23 +260,37 @@ function renderWeeklyGrid() {
   ];
 
   // ── HEADER ROW ──────────────────────────────────────────────
+  // ── HEADER ROW — day names with drink-day pill badges ───────
+  var _todayDow = new Date().getDay(); // 0=Sun
+  var _todayPlanIdx = _todayDow === 0 ? 6 : _todayDow - 1; // Mon=0
   var headHTML = '<tr>';
-  headHTML += '<th style="' + thBase() + 'width:90px;text-align:left;color:var(--t3);' +
-    'font-size:.65rem;letter-spacing:.1em;text-transform:uppercase">Meal</th>';
+  headHTML += '<th style="' + thBase() + 'width:100px;text-align:center;' +
+    'color:var(--t3);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase' +
+    '"></th>';
   days.forEach(function(day, idx) {
     var dayPlan = plan[idx] || {};
     var activeDrink = drinkingDays && drinkingDays[idx];
-    var staticDrink = dayPlan.drinks;
-    var _dlabels = { light: 'Light Night', regular: 'Regular', big: 'Big Night' };
-    var drinkText = activeDrink
-      ? (_dlabels[activeDrink] || '')
-      : (staticDrink ? 'Drinks' : '');
-    var drinkColor = activeDrink ? 'var(--gold)' : 'var(--t3)';
+    var _dlabels = { light: 'Light', regular: 'Regular', big: 'Big Night' };
+    var isToday = idx === _todayPlanIdx;
+    var dayColor = isToday ? 'var(--gold-light)' : 'var(--t1)';
+    // Pill badge — only shown for drinking days
+    var pillHTML = '';
+    if (activeDrink) {
+      pillHTML = '<div style="display:inline-block;margin-top:7px;padding:3px 11px;' +
+        'border-radius:20px;font-size:.58rem;font-weight:600;letter-spacing:.06em;' +
+        'background:rgba(0,212,255,.1);border:1px solid rgba(103,232,249,.22);' +
+        'color:var(--gold-light)">' + (_dlabels[activeDrink] || 'Drinks') + '</div>';
+    } else {
+      // Empty spacer to keep row height consistent
+      pillHTML = '<div style="margin-top:7px;height:22px"></div>';
+    }
+    var todayDot = isToday
+      ? '<div style="width:4px;height:4px;border-radius:50%;background:var(--gold-light);' +
+          'margin:0 auto 4px"></div>'
+      : '<div style="height:8px"></div>';
     headHTML += '<th style="' + thBase() +
-      'text-align:center;color:var(--gold-light);font-size:.78rem;font-weight:700">' +
-      day +
-      '<div style="font-size:.6rem;color:' + drinkColor + ';margin-top:3px;' +
-        'font-weight:500;min-height:14px">' + drinkText + '</div>' +
+      'text-align:center;font-size:.82rem;font-weight:700;color:' + dayColor + '">' +
+      todayDot + day + pillHTML +
     '</th>';
   });
   headHTML += '</tr>';
@@ -284,9 +305,40 @@ function renderWeeklyGrid() {
       : 'background:rgba(0,0,0,.08)';
     bodyHTML += '<tr>';
 
-    bodyHTML += '<td style="' + tdBase() + rowBg + ';color:var(--gold);font-size:.72rem;' +
-      'font-weight:700;font-family:var(--font-body);letter-spacing:.04em;' +
-      'vertical-align:top;padding-top:14px">' + slot.label + '</td>';
+    var _slotIcons = {
+      first:
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" ' +
+        'stroke="rgba(103,232,249,.55)" stroke-width="1.5" stroke-linecap="round">' +
+        '<circle cx="12" cy="12" r="4"/>' +
+        '<line x1="12" y1="2" x2="12" y2="5"/>' +
+        '<line x1="12" y1="19" x2="12" y2="22"/>' +
+        '<line x1="2" y1="12" x2="5" y2="12"/>' +
+        '<line x1="19" y1="12" x2="22" y2="12"/>' +
+        '<line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/>' +
+        '<line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/>' +
+        '<line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/>' +
+        '<line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/>' +
+        '</svg>',
+      dinner:
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" ' +
+        'stroke="rgba(103,232,249,.55)" stroke-width="1.5" stroke-linecap="round">' +
+        '<path d="M3 17h18"/>' +
+        '<path d="M12 3C7.5 3 4 8 4 13h16c0-5-3.5-10-8-10z"/>' +
+        '</svg>',
+      dessert:
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" ' +
+        'stroke="rgba(103,232,249,.55)" stroke-width="1.5" stroke-linecap="round">' +
+        '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>' +
+        '</svg>'
+    };
+    bodyHTML += '<td style="' + tdBase() + rowBg +
+      ';text-align:center;vertical-align:middle;padding:18px 8px;width:100px">' +
+      '<div style="display:flex;flex-direction:column;align-items:center;gap:6px">' +
+        (_slotIcons[slot.key] || '') +
+        '<div style="font-size:.7rem;font-weight:700;color:var(--t2);' +
+          'font-family:var(--font-body);letter-spacing:.04em;line-height:1.2">' +
+          slot.label + '</div>' +
+      '</div></td>';
 
     days.forEach(function(day, dIdx) {
       var dayPlan = plan[dIdx] || {};
@@ -325,8 +377,10 @@ function renderWeeklyGrid() {
 
       var isSwapped = !!permPref && !!permPref.cal && !isMain;
       var cellContent = scaledIngredients.map(function(ing) {
-        return '<div style="font-size:.72rem;color:var(--t1);padding:1px 0;line-height:1.4">' +
-          ing + '</div>';
+        return '<div style="font-size:.75rem;color:var(--t1);padding:2px 0;line-height:1.45;' +
+          'display:flex;align-items:baseline;gap:5px">' +
+          '<span style="color:rgba(103,232,249,.3);font-size:.6rem;flex-shrink:0">&bull;</span>' +
+          '<span>' + ing + '</span></div>';
       }).join('');
       if (isSwapped) {
         cellContent += '<div style="font-size:.55rem;color:var(--gold);margin-top:4px;' +
@@ -492,11 +546,11 @@ function renderRecipesPage() {
 
 
 function thBase() {
-  return 'padding:10px 8px;border-bottom:1px solid var(--gold-line);';
+  return 'padding:14px 10px 10px;border-bottom:1px solid rgba(103,232,249,.12);';
 }
 function tdBase() {
-  return 'padding:6px 8px;border-bottom:1px solid rgba(184,150,60,.08);' +
-         'border-right:1px solid rgba(184,150,60,.06);';
+  return 'padding:10px 10px;border-bottom:1px solid rgba(103,232,249,.07);' +
+         'border-right:1px solid rgba(103,232,249,.06);';
 }
 
 

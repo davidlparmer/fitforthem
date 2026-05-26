@@ -276,12 +276,11 @@ function renderWeeklyGrid() {
     // Pill badge — only shown for drinking days
     var pillHTML = '';
     if (activeDrink) {
-      pillHTML = '<div style="display:inline-block;margin-top:7px;padding:3px 11px;' +
+      pillHTML = '<div style="margin-top:7px;padding:3px 11px;' +
         'border-radius:20px;font-size:.58rem;font-weight:600;letter-spacing:.06em;' +
         'background:rgba(0,212,255,.1);border:1px solid rgba(103,232,249,.22);' +
-        'color:var(--gold-light)">' + (_dlabels[activeDrink] || 'Drinks') + '</div>';
+        'color:var(--gold-light);display:inline-block">' + (_dlabels[activeDrink] || 'Drinks') + '</div>';
     } else {
-      // Empty spacer to keep row height consistent
       pillHTML = '<div style="margin-top:7px;height:22px"></div>';
     }
     var todayDot = isToday
@@ -290,7 +289,9 @@ function renderWeeklyGrid() {
       : '<div style="height:8px"></div>';
     headHTML += '<th style="' + thBase() +
       'text-align:center;font-size:.82rem;font-weight:700;color:' + dayColor + '">' +
-      todayDot + day + pillHTML +
+      todayDot +
+      '<div>' + day + '</div>' +
+      '<div style="text-align:center">' + pillHTML + '</div>' +
     '</th>';
   });
   headHTML += '</tr>';

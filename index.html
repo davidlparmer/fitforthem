@@ -3,24 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Loftin Method — Quiet system. Visible standard.</title>
-<meta name="description" content="A precision nutrition and movement system for real fat loss — without supplements, complicated tracking, or programs that don't fit real life.">
-
-<!-- Open Graph — social preview card -->
+<title>Loftin Method — Get in Shape Without Giving Up Family Dinner</title>
+<meta name="description" content="A structured lifestyle system for real households. Build your plan on iPhone, cook from the iPad, and follow meals, portions, steps, restaurants, and real-life adjustments without starting over.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://fitforthem.app/">
 <meta property="og:site_name" content="Loftin Method">
-<meta property="og:title" content="Loftin Method">
-<meta property="og:description" content="Personalized meals. Restaurant guidance. No calorie tracking.">
+<meta property="og:title" content="Loftin Method — Get in Shape Without Giving Up Family Dinner">
+<meta property="og:description" content="A structured lifestyle system for real households. Build your plan on iPhone, cook from the iPad, and keep the household on the same page.">
 <meta property="og:image" content="https://fitforthem.app/og-image.png">
 <meta property="og:image:width" content="1734">
 <meta property="og:image:height" content="907">
 <meta property="og:image:alt" content="Loftin Method app dashboard showing personalized meal plan">
-
-<!-- Twitter / X card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Loftin Method">
-<meta name="twitter:description" content="Personalized meals. Restaurant guidance. No calorie tracking.">
+<meta name="twitter:title" content="Loftin Method — Get in Shape Without Giving Up Family Dinner">
+<meta name="twitter:description" content="Build your plan on iPhone, cook from the iPad, and follow meals, portions, and real-life adjustments without starting over.">
 <meta name="twitter:image" content="https://fitforthem.app/og-image.png">
 <meta name="theme-color" content="#0D1B2A">
 <link rel="icon" href="icon-512.png">
@@ -32,171 +28,75 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
 :root{
-  --bg:#0D1B2A;
-  --bg2:#091520;
-  --card:#162334;
-  --card2:#1E2F42;
-  --gold:#00D4FF;
-  --gold-light:#67E8F9;
-  --gold-dim:rgba(103,232,249,.2);
-  --gold-line:rgba(103,232,249,.15);
-  --gold-glow:rgba(103,232,249,.06);
-  --t1:#E0F2FE;
-  --t2:#7DB8CC;
-  --t3:#2D4A5E;
+  --bg:#0D1B2A;--bg2:#091520;--card:#162334;--card2:#1E2F42;
+  --gold:#00D4FF;--gold-light:#67E8F9;--gold-dim:rgba(103,232,249,.2);
+  --gold-line:rgba(103,232,249,.15);--gold-glow:rgba(103,232,249,.06);
+  --t1:#E0F2FE;--t2:#7DB8CC;--t3:#2D4A5E;
   --font-display:'Playfair Display',Georgia,serif;
   --font-body:'DM Sans','Segoe UI',system-ui,sans-serif;
 }
 html{scroll-behavior:smooth}
-body{
-  font-family:var(--font-body);
-  background:#0D1B2A;
-  color:var(--t1);
-  overflow-x:hidden;
-}
+body{font-family:var(--font-body);background:#0D1B2A;color:var(--t1);overflow-x:hidden}
 body::before{
   content:'';position:fixed;inset:0;
-  background:
-    linear-gradient(180deg,rgba(13,27,42,.18) 0%,rgba(13,27,42,.42) 100%),
-    url('loftin-depth-bg.png') center top / cover no-repeat;
-  pointer-events:none;z-index:0;
-  opacity:.78;
-  filter:saturate(1.05) contrast(1.08) brightness(.72);
+  background:linear-gradient(180deg,rgba(13,27,42,.18) 0%,rgba(13,27,42,.42) 100%),url('loftin-depth-bg.png') center top/cover no-repeat;
+  pointer-events:none;z-index:0;opacity:.78;filter:saturate(1.05) contrast(1.08) brightness(.72);
 }
 body>*{position:relative;z-index:1}
 body::after{
   content:'';position:fixed;inset:0;
-  background:
-    radial-gradient(ellipse at 50% 18%, rgba(103,232,249,.07) 0%, transparent 55%),
-    radial-gradient(ellipse at 80% 55%, rgba(0,212,255,.045) 0%, transparent 48%),
-    radial-gradient(ellipse at 20% 70%, rgba(103,232,249,.04) 0%, transparent 50%);
+  background:radial-gradient(ellipse at 50% 18%,rgba(103,232,249,.07) 0%,transparent 55%),radial-gradient(ellipse at 80% 55%,rgba(0,212,255,.045) 0%,transparent 48%),radial-gradient(ellipse at 20% 70%,rgba(103,232,249,.04) 0%,transparent 50%);
   pointer-events:none;z-index:0;
 }
-
-/* NAV */
-nav{
-  position:fixed;top:0;left:0;width:100%;z-index:100;
-  padding:16px 24px;
-  background:rgba(13,27,42,.95);
-  backdrop-filter:blur(24px);
-  border-bottom:1px solid var(--gold-line);
-}
+nav{position:fixed;top:0;left:0;width:100%;z-index:100;padding:16px 24px;background:rgba(13,27,42,.95);backdrop-filter:blur(24px);border-bottom:1px solid var(--gold-line)}
 .nav-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between}
 .nav-logo{font-family:var(--font-display);font-size:1rem;font-weight:600;color:var(--gold);letter-spacing:.04em;text-decoration:none}
-.nav-cta{
-  background:var(--gold);color:var(--bg);
-  font-size:.7rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
-  text-decoration:none;padding:10px 20px;border-radius:2px;
-  transition:background .2s;
-}
+.nav-cta{background:var(--gold);color:var(--bg);font-size:.7rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;padding:10px 20px;border-radius:2px;transition:background .2s}
 .nav-cta:hover{background:var(--gold-light)}
-
-/* HERO */
-.hero{
-  min-height:100svh;padding:0 24px;
-  display:flex;flex-direction:column;
-  position:relative;overflow:hidden;
-}
-.hero-glow{
-  position:absolute;width:700px;height:700px;
-  background:radial-gradient(circle,rgba(103,232,249,.06) 0%,transparent 65%);
-  top:-150px;right:-200px;pointer-events:none;
-}
-.hero-content{
-  flex:1;display:flex;flex-direction:column;justify-content:center;
-  max-width:1100px;margin:0 auto;width:100%;
-  padding:140px 0 90px;
-}
+.hero{min-height:100svh;padding:0 24px;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.hero-glow{position:absolute;width:700px;height:700px;background:radial-gradient(circle,rgba(103,232,249,.06) 0%,transparent 65%);top:-150px;right:-200px;pointer-events:none}
+.hero-content{flex:1;display:flex;flex-direction:column;justify-content:center;max-width:1100px;margin:0 auto;width:100%;padding:140px 0 90px}
 .hero-rule{width:36px;height:1px;background:var(--gold);margin-bottom:28px;opacity:0;animation:fadeUp .5s .1s forwards}
 .hero-eye{font-size:.62rem;font-weight:600;letter-spacing:.26em;text-transform:uppercase;color:var(--gold);margin-bottom:22px;opacity:0;animation:fadeUp .5s .15s forwards}
-.hero h1{
-  font-family:var(--font-display);
-  font-size:clamp(3rem,9.5vw,6rem);
-  font-weight:700;line-height:1.04;
-  color:var(--t1);margin-bottom:10px;
-  opacity:0;animation:fadeUp .6s .2s forwards;
-}
+.hero h1{font-family:var(--font-display);font-size:clamp(2.4rem,7.5vw,5.2rem);font-weight:700;line-height:1.06;color:var(--t1);margin-bottom:10px;opacity:0;animation:fadeUp .6s .2s forwards}
 .hero h1 em{font-style:italic;color:var(--gold-light)}
-.hero-tagline{
-  font-family:var(--font-display);font-style:italic;
-  font-size:clamp(.95rem,2.5vw,1.2rem);color:var(--t2);
-  margin-bottom:36px;opacity:0;animation:fadeUp .6s .28s forwards;
-}
-.hero-sub{
-  font-size:.95rem;font-weight:300;line-height:1.78;color:var(--t2);
-  max-width:460px;margin-bottom:52px;
-  opacity:0;animation:fadeUp .6s .36s forwards;
-}
+.hero-tagline{font-family:var(--font-display);font-style:italic;font-size:clamp(.95rem,2.5vw,1.2rem);color:var(--t2);margin-bottom:36px;opacity:0;animation:fadeUp .6s .28s forwards}
+.hero-sub{font-size:.95rem;font-weight:300;line-height:1.78;color:var(--t2);max-width:520px;margin-bottom:52px;opacity:0;animation:fadeUp .6s .36s forwards}
 .hero-sub strong{color:var(--t1);font-weight:500}
 .cta-group{display:flex;gap:14px;flex-wrap:wrap;align-items:center;opacity:0;animation:fadeUp .6s .44s forwards}
-.btn-primary{
-  background:var(--gold);color:var(--bg);
-  font-size:.74rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
-  text-decoration:none;padding:18px 36px;border-radius:2px;
-  display:inline-flex;align-items:center;gap:8px;
-  transition:background .2s,transform .15s;
-}
+.btn-primary{background:var(--gold);color:var(--bg);font-size:.74rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;padding:18px 36px;border-radius:2px;display:inline-flex;align-items:center;gap:8px;transition:background .2s,transform .15s}
 .btn-primary:hover{background:var(--gold-light);transform:translateY(-1px)}
-.btn-ghost{
-  color:var(--t2);font-size:.8rem;font-weight:400;letter-spacing:.06em;
-  text-decoration:none;display:inline-flex;align-items:center;gap:6px;
-  border:1px solid var(--gold-line);padding:17px 28px;border-radius:2px;
-  transition:color .2s,border-color .2s;
-}
+.btn-ghost{color:var(--t2);font-size:.8rem;font-weight:400;letter-spacing:.06em;text-decoration:none;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--gold-line);padding:17px 28px;border-radius:2px;transition:color .2s,border-color .2s}
 .btn-ghost:hover{color:var(--gold);border-color:var(--gold-dim)}
-.scroll-hint{
-  padding-bottom:36px;
-  display:flex;flex-direction:column;align-items:flex-start;gap:8px;
-  opacity:0;animation:fadeIn 1s .9s forwards;
-}
+.scroll-hint{padding-bottom:36px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;opacity:0;animation:fadeIn 1s .9s forwards}
 .scroll-line{width:1px;height:40px;background:linear-gradient(to bottom,var(--gold-dim),transparent)}
 .scroll-label{font-size:.55rem;letter-spacing:.22em;text-transform:uppercase;color:var(--t3)}
-
-/* SHARED */
 .section-wrap{max-width:1100px;margin:0 auto}
 section{padding:96px 24px}
 .s-rule{width:30px;height:1px;background:var(--gold);margin-bottom:20px}
 .s-eye{font-size:.6rem;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);margin-bottom:14px}
 .s-title{font-family:var(--font-display);font-size:clamp(1.9rem,5.5vw,3rem);font-weight:700;line-height:1.1;color:var(--t1);margin-bottom:18px}
 .s-title em{font-style:italic;color:var(--gold-light)}
-.s-sub{font-size:.92rem;font-weight:300;line-height:1.75;color:var(--t2);max-width:500px;margin-bottom:52px}
+.s-sub{font-size:.92rem;font-weight:300;line-height:1.75;color:var(--t2);max-width:520px;margin-bottom:52px}
 .s-sub strong{color:var(--t1);font-weight:500}
 .divider{height:1px;background:var(--gold-line);margin:0 24px}
-
-/* PILLARS */
 .pillars{border:1px solid var(--gold-line);border-radius:2px;overflow:hidden}
-.pillar{
-  padding:30px 28px;background:var(--card);
-  border-bottom:1px solid var(--gold-line);
-  position:relative;transition:background .2s;
-}
+.pillar{padding:30px 28px;background:var(--card);border-bottom:1px solid var(--gold-line);position:relative;transition:background .2s}
 .pillar:last-child{border-bottom:none}
-.pillar::after{
-  content:'';position:absolute;left:0;top:0;bottom:0;
-  width:2px;background:var(--gold);
-  transform:scaleY(0);transform-origin:bottom;transition:transform .3s;
-}
+.pillar::after{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--gold);transform:scaleY(0);transform-origin:bottom;transition:transform .3s}
 .pillar:hover{background:var(--card2)}
 .pillar:hover::after{transform:scaleY(1)}
 .pillar-num{font-size:.55rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--t3);margin-bottom:10px}
 .pillar-title{font-family:var(--font-display);font-size:1.1rem;font-weight:600;color:var(--t1);margin-bottom:8px}
 .pillar-body{font-size:.87rem;font-weight:300;line-height:1.68;color:var(--t2)}
-
-/* STEPS */
 .steps{border:1px solid var(--gold-line);border-radius:2px;overflow:hidden}
 .step{display:grid;grid-template-columns:56px 1fr;background:var(--card);border-bottom:1px solid var(--gold-line);transition:background .2s}
 .step:last-child{border-bottom:none}
 .step:hover{background:var(--card2)}
-.step-n{
-  display:flex;align-items:flex-start;justify-content:center;
-  padding:28px 0;font-size:.65rem;font-weight:700;letter-spacing:.1em;color:var(--gold);
-  border-right:1px solid var(--gold-line);
-}
+.step-n{display:flex;align-items:flex-start;justify-content:center;padding:28px 0;font-size:.65rem;font-weight:700;letter-spacing:.1em;color:var(--gold);border-right:1px solid var(--gold-line)}
 .step-body{padding:26px 24px}
 .step-t{font-family:var(--font-display);font-size:1rem;font-weight:600;color:var(--t1);margin-bottom:6px}
 .step-d{font-size:.87rem;font-weight:300;line-height:1.65;color:var(--t2)}
-
-/* WHO */
 .who-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media(max-width:560px){.who-grid{grid-template-columns:1fr}}
 .who-card{background:var(--card);border:1px solid var(--gold-line);border-radius:2px;padding:24px 20px}
@@ -209,38 +109,50 @@ section{padding:96px 24px}
 .who-dot.yes{background:var(--gold)}
 .who-dot.no{background:var(--t3)}
 
-/* BADGES */
-.badge-item:hover img{transform:translateY(-3px);filter:drop-shadow(0 10px 28px rgba(103,232,249,.4))}
-/* WAITLIST */
-.ws-title{font-family:var(--font-display);font-size:1.1rem;color:var(--gold);margin-bottom:8px}
-.ws-body{font-size:.86rem;color:var(--t2);font-weight:300;line-height:1.65}
+/* MEALS */
+.meals-grid{display:grid;grid-template-columns:1fr;border:1px solid var(--gold-line);border-radius:2px;overflow:hidden}
+@media(min-width:760px){.meals-grid{grid-template-columns:1fr 1fr 1fr}}
+.meal-card{padding:32px 28px;background:var(--card);border-bottom:1px solid var(--gold-line);position:relative}
+@media(min-width:760px){.meal-card{border-bottom:none;border-right:1px solid var(--gold-line)}}
+@media(min-width:760px){.meal-card:last-child{border-right:none}}
+.meal-card.center{background:var(--card2)}
+.meal-card::after{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--gold);opacity:0;transition:opacity .3s}
+.meal-card.center::after{opacity:1}
+.meal-num{font-size:.52rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--t3);margin-bottom:8px}
+.meal-label{font-size:.6rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:14px}
+.meal-title{font-family:var(--font-display);font-size:1.1rem;font-weight:600;color:var(--t1);margin-bottom:12px;line-height:1.25}
+.meal-body{font-size:.86rem;font-weight:300;line-height:1.72;color:var(--t2)}
+
+/* KITCHEN VIEW */
+.kitchen-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--gold-line);border:1px solid var(--gold-line);border-radius:2px;overflow:hidden}
+@media(max-width:640px){.kitchen-grid{grid-template-columns:1fr}}
+.kitchen-card{padding:28px 26px;background:var(--card);transition:background .2s}
+.kitchen-card:hover{background:var(--card2)}
+.kitchen-card-icon{font-size:1.1rem;margin-bottom:12px}
+.kitchen-card-title{font-family:var(--font-display);font-size:1rem;font-weight:600;color:var(--t1);margin-bottom:8px}
+.kitchen-card-body{font-size:.86rem;font-weight:300;line-height:1.68;color:var(--t2)}
+.kitchen-flow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:40px;padding:20px 24px;background:var(--card);border:1px solid var(--gold-line);border-radius:2px}
+.kitchen-flow-step{font-size:.78rem;font-weight:500;color:var(--t1)}
+.kitchen-flow-arrow{font-size:.75rem;color:var(--t3)}
+
+/* CONTRAST PULL */
+.contrast-pull{font-family:var(--font-display);font-size:clamp(1.05rem,2.8vw,1.4rem);font-style:italic;color:var(--gold-light);line-height:1.55;border-left:2px solid var(--gold);padding-left:22px;margin-top:36px;max-width:640px}
+
+/* SPECIAL DAYS */
+.special-tags{display:flex;flex-wrap:wrap;gap:10px;margin-top:32px}
+.special-tag{font-size:.66rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--t2);border:1px solid var(--gold-line);padding:9px 18px;border-radius:2px;background:var(--card)}
 
 /* FINAL CTA */
-#final-cta{
-  background:var(--bg2);text-align:center;
-  padding:100px 24px 112px;position:relative;overflow:hidden;
-}
-.final-glow{
-  position:absolute;width:600px;height:600px;
-  background:radial-gradient(circle,rgba(103,232,249,.06) 0%,transparent 65%);
-  top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;
-}
+#final-cta{background:var(--bg2);text-align:center;padding:100px 24px 112px;position:relative;overflow:hidden}
+.final-glow{position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(103,232,249,.06) 0%,transparent 65%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
 .final-rule{width:30px;height:1px;background:var(--gold);margin:0 auto 24px}
 .final-eye{font-size:.6rem;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);margin-bottom:16px}
-.final-h{font-family:var(--font-display);font-size:clamp(2rem,7vw,3.4rem);font-weight:700;line-height:1.1;color:var(--t1);margin-bottom:16px}
+.final-h{font-family:var(--font-display);font-size:clamp(1.8rem,6vw,3.2rem);font-weight:700;line-height:1.12;color:var(--t1);margin-bottom:16px}
 .final-h em{font-style:italic;color:var(--gold-light)}
-.final-sub{font-family:var(--font-display);font-style:italic;font-size:1rem;color:var(--t2);margin-bottom:44px}
-.final-btn{
-  display:inline-flex;align-items:center;justify-content:center;gap:10px;
-  background:var(--gold);color:var(--bg);
-  font-size:.76rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;
-  text-decoration:none;padding:20px 44px;border-radius:2px;margin-bottom:16px;
-  transition:background .2s,transform .15s;
-}
+.final-sub{font-size:.92rem;font-weight:300;line-height:1.72;color:var(--t2);margin-bottom:44px;max-width:480px;margin-left:auto;margin-right:auto}
+.final-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;background:var(--gold);color:var(--bg);font-size:.76rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;text-decoration:none;padding:20px 44px;border-radius:2px;margin-bottom:16px;transition:background .2s,transform .15s}
 .final-btn:hover{background:var(--gold-light);transform:translateY(-1px)}
 .final-note{display:block;font-size:.68rem;color:var(--t3);letter-spacing:.08em}
-
-/* FOOTER */
 footer{padding:28px 24px;border-top:1px solid var(--gold-line)}
 .footer-inner{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
 .footer-logo{font-family:var(--font-display);font-size:.9rem;color:var(--gold);letter-spacing:.06em}
@@ -248,42 +160,42 @@ footer{padding:28px 24px;border-top:1px solid var(--gold-line)}
 .footer-links a{font-size:.68rem;color:var(--t3);text-decoration:none;letter-spacing:.06em;transition:color .2s}
 .footer-links a:hover{color:var(--t2)}
 .footer-copy{font-size:.65rem;color:var(--t3);letter-spacing:.06em}
-
-/* REVEAL */
 .reveal{opacity:0;transform:translateY(20px);transition:opacity .7s,transform .7s}
 .reveal.visible{opacity:1;transform:translateY(0)}
 .reveal-d1{transition-delay:.1s}
 .reveal-d2{transition-delay:.2s}
 .reveal-d3{transition-delay:.3s}
-
 @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+/* FEATURE SCREENSHOTS */
+.screenshot-full{margin-top:64px;text-align:center}
+.screenshot-full img{width:100%;max-width:980px;border-radius:20px;
+  box-shadow:0 48px 120px rgba(0,0,0,.65),0 0 0 1px rgba(103,232,249,.08)}
+.feature-split{display:flex;align-items:center;gap:56px;margin-top:72px;flex-wrap:wrap}
+.feature-split.rev{flex-direction:row-reverse}
+.feature-split img{width:100%;max-width:300px;border-radius:20px;flex-shrink:0;
+  box-shadow:0 36px 90px rgba(0,0,0,.6),0 0 0 1px rgba(103,232,249,.07)}
+.feature-split-text{flex:1;min-width:260px}
+.fs-eye{font-size:.58rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:12px}
+.fs-title{font-family:var(--font-display);font-size:clamp(1.15rem,2.8vw,1.55rem);
+  font-weight:700;color:var(--t1);line-height:1.22;margin-bottom:14px}
+.fs-body{font-size:.88rem;font-weight:300;line-height:1.78;color:var(--t2)}
+@media(max-width:720px){
+  .feature-split,.feature-split.rev{flex-direction:column;align-items:center;text-align:center}
+  .feature-split img{max-width:260px}
+}
 
-@media(min-width:640px){
-  nav{padding:18px 48px}
-  .hero{padding:0 48px}
-  section{padding:104px 48px}
-  .divider{margin:0 48px}
-  footer{padding:32px 48px}
-  .cta-group{flex-wrap:nowrap}
-}
-@media(min-width:960px){
-  nav{padding:20px 72px}
-  .hero{padding:0 72px}
-  section{padding:112px 72px}
-  .divider{margin:0 72px}
-  footer{padding:36px 72px}
-  .footer-inner{flex-direction:row;justify-content:space-between;text-align:left}
-}
+@media(min-width:640px){nav{padding:18px 48px}.hero{padding:0 48px}section{padding:104px 48px}.divider{margin:0 48px}footer{padding:32px 48px}.cta-group{flex-wrap:nowrap}}
+@media(min-width:960px){nav{padding:20px 72px}.hero{padding:0 72px}section{padding:112px 72px}.divider{margin:0 72px}footer{padding:36px 72px}.footer-inner{flex-direction:row;justify-content:space-between;text-align:left}}
 </style>
 </head>
 <body>
 
-<!-- NAV -->
 <nav>
   <div class="nav-inner">
     <a href="/" class="nav-logo">Loftin Method</a>
-    <a href="app.html" class="nav-cta">Start the Method</a>
+    <a href="app.html" class="nav-cta">Build My Plan</a>
   </div>
 </nav>
 
@@ -293,14 +205,14 @@ footer{padding:28px 24px;border-top:1px solid var(--gold-line)}
   <div class="hero-content">
     <div class="hero-rule"></div>
     <div class="hero-eye">The Loftin Method</div>
-    <h1>Real fat loss.<br><em>No noise.</em></h1>
-    <p class="hero-tagline">Quiet system. Visible standard.</p>
+    <h1>Get in Shape Without<br>Giving Up <em>Family Dinner.</em></h1>
+    <p class="hero-tagline">A lifestyle system built around real meals, real routines, and the people you come home to.</p>
     <p class="hero-sub">
-      Built for <strong>people who are done with programs that don't fit real life</strong> — no supplements, no complicated tracking, no gym required. Just a calculated system you follow.
+      Loftin Method helps you build a structured daily routine around <strong>fasting, simple meals, walking, restaurants, weekends, and family life</strong> — so you can look better, feel better, and still enjoy the moments that matter.
     </p>
     <div class="cta-group">
-      <a href="app.html" class="btn-primary">Start the Method →</a>
-      <a href="#philosophy" class="btn-ghost">See How It Works</a>
+      <a href="app.html" class="btn-primary">Build My Plan →</a>
+      <a href="#problem" class="btn-ghost">See How It Works</a>
     </div>
   </div>
   <div class="scroll-hint">
@@ -311,36 +223,201 @@ footer{padding:28px 24px;border-top:1px solid var(--gold-line)}
 
 <div class="divider"></div>
 
-<!-- PHILOSOPHY -->
-<section id="philosophy" style="background:var(--bg2)">
+<!-- THE PROBLEM -->
+<section id="problem" style="background:var(--bg2)">
   <div class="section-wrap">
     <div class="s-rule reveal"></div>
-    <div class="s-eye reveal">The Philosophy</div>
-    <h2 class="s-title reveal">Precision without<br><em>complexity.</em></h2>
+    <div class="s-eye reveal">Why most plans fail</div>
+    <h2 class="s-title reveal">Built around a life<br><em>most people don't have.</em></h2>
     <p class="s-sub reveal">
-      The Loftin Method runs a <strong>calculated deficit</strong> tuned to your exact body, phase, and lifestyle. It knows when you're drinking. It adjusts for restaurants and travel. It does the thinking — you do the work.
+      Most nutrition plans ignore restaurants, weekends, holidays, nights out, and family dinners. They treat real life as a problem to be eliminated. <strong>Restriction eventually turns into burnout</strong> — and people blame themselves instead of the plan.
+    </p>
+    <div class="pillars reveal">
+      <div class="pillar">
+        <div class="pillar-num">The pattern</div>
+        <div class="pillar-title">They demand perfection, then disappear</div>
+        <div class="pillar-body">Skip the restaurant. Avoid the weekend. Hide the drink. Track every gram, forever. Most plans require you to suspend real life indefinitely — and when life inevitably wins, the plan is over.</div>
+      </div>
+      <div class="pillar">
+        <div class="pillar-num">The consequence</div>
+        <div class="pillar-title">Burnout isn't a lack of willpower</div>
+        <div class="pillar-body">You can white-knuckle restriction for weeks. You cannot do it for years. Programs that fight real life always lose — the only question is when. Most people quit not because they lack discipline, but because the plan was never designed to coexist with their actual life.</div>
+      </div>
+      <div class="pillar">
+        <div class="pillar-num">The solution</div>
+        <div class="pillar-title">Structure is what makes flexibility possible</div>
+        <div class="pillar-body">A consistent daily routine doesn't restrict special moments — it makes them safe. When you have a practice to return to, a birthday dinner or a vacation stops being a derailment. It's just a day. The routine is already waiting when you come back.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- THE METHOD -->
+<section id="philosophy">
+  <div class="section-wrap">
+    <div class="s-rule reveal"></div>
+    <div class="s-eye reveal">The Method</div>
+    <h2 class="s-title reveal">How Loftin Method<br><em>actually works.</em></h2>
+    <p class="s-sub reveal">
+      A calculated daily structure built around intermittent fasting, real food, simple movement, and honest adjustments for how life actually goes.
     </p>
     <div class="pillars reveal">
       <div class="pillar">
         <div class="pillar-num">01</div>
-        <div class="pillar-title">Calorie math built for your body</div>
-        <div class="pillar-body">Your daily target is calculated from your weight, height, age, and current phase — not a generic 1,500-calorie template. It recalculates automatically as you progress through five deficit phases.</div>
+        <div class="pillar-title">A consistent eating window as your daily anchor</div>
+        <div class="pillar-body">Most days follow the same rhythm — a defined eating window that keeps the structure intact without obsession. When special days happen, the routine is already there to come back to. Consistency is what makes the exceptions manageable.</div>
       </div>
       <div class="pillar">
         <div class="pillar-num">02</div>
-        <div class="pillar-title">Movement as a lever, not a punishment</div>
-        <div class="pillar-body">Daily step targets are calibrated to your exact burn goal. Normal days target 500 calories walking. Drinking days step up to 750. No gym membership required.</div>
+        <div class="pillar-title">Calories and portions calculated for your body</div>
+        <div class="pillar-body">Your daily target is built from your weight, height, age, and current phase — not a generic template. As you progress through deficit phases, the system recalculates automatically. You never have to figure out what to adjust.</div>
       </div>
       <div class="pillar">
         <div class="pillar-num">03</div>
-        <div class="pillar-title">Real food. No substitutes.</div>
-        <div class="pillar-body">Chicken, steak, salmon — portioned precisely for your calorie target and weighed in grams. No protein shakes, no meal bars, no supplements. Food you'd actually want to eat.</div>
+        <div class="pillar-title">Walking as a simple, effective movement tool</div>
+        <div class="pillar-body">Step targets are calibrated to your daily burn goal. Normal days target around 500 calories from walking. On nights out, steps scale up and meals scale down. No gym required — just consistent daily movement.</div>
       </div>
       <div class="pillar">
         <div class="pillar-num">04</div>
-        <div class="pillar-title">Alcohol is built into the math</div>
-        <div class="pillar-body">Not banned. Not ignored. Every drinking night has a calorie reserve. Meals adjust down. Steps adjust up. You can have a social life and still lose weight — that's the whole point.</div>
+        <div class="pillar-title">Real-life adjustments built into the plan</div>
+        <div class="pillar-body">Restaurants, nights out, meal swaps, progress plateaus — the plan adapts without starting over. Drinking-day adjustments, restaurant guidance, and meal replacements are part of the system, not exceptions to it.</div>
       </div>
+    </div>
+
+    <!-- Drinks feature screenshot -->
+    <div class="feature-split reveal">
+      <img src="Drinks.png" alt="Loftin Method drink budget — whiskey cocktail search" loading="lazy">
+      <div class="feature-split-text">
+        <div class="fs-eye">See it in action</div>
+        <h3 class="fs-title">450 calories reserved for drinks. Here are your options.</h3>
+        <p class="fs-body">Search any drink and the app shows how many fit your budget, the full ingredient recipe, and calorie breakdown per ingredient. Nights out are already in the math — no guessing, no starting over.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- KITCHEN VIEW -->
+<section id="kitchen" style="background:var(--bg2)">
+  <div class="section-wrap">
+    <div class="s-rule reveal"></div>
+    <div class="s-eye reveal">Kitchen View</div>
+    <h2 class="s-title reveal">The plan lives<br><em>in your kitchen.</em></h2>
+    <p class="s-sub reveal">
+      Build the plan on your iPhone. Cook from the iPad. Keep the household on the same page.
+    </p>
+
+    <!-- Flow indicator -->
+    <div class="kitchen-flow reveal">
+      <span class="kitchen-flow-step">Build on iPhone</span>
+      <span class="kitchen-flow-arrow">→</span>
+      <span class="kitchen-flow-step">Syncs to iPad in seconds</span>
+      <span class="kitchen-flow-arrow">→</span>
+      <span class="kitchen-flow-step">Cook from the kitchen</span>
+      <span class="kitchen-flow-arrow">→</span>
+      <span class="kitchen-flow-step">Household stays on track</span>
+    </div>
+
+    <div class="kitchen-grid reveal">
+      <div class="kitchen-card">
+        <div class="kitchen-card-title">Full Weekly Plan on iPad</div>
+        <div class="kitchen-card-body">The complete 7-day meal schedule displays on your iPad — every meal, every day, visible at a glance from the kitchen counter. No printing, no texting photos of a plan, no one asking what's for dinner tonight.</div>
+      </div>
+      <div class="kitchen-card">
+        <div class="kitchen-card-title">Tap Any Meal for Cooking Instructions</div>
+        <div class="kitchen-card-body">Tap a meal on the iPad and the exact ingredients and step-by-step cooking instructions appear instantly. Scaled to your exact portions. No recipe searching, no guessing on amounts — just follow what's there.</div>
+      </div>
+      <div class="kitchen-card">
+        <div class="kitchen-card-title">Live Household Sync</div>
+        <div class="kitchen-card-body">Change something on your iPhone — swap a meal, mark a drinking night, choose a restaurant option — and the iPad updates within seconds. The household always sees the current version of the plan, not last week's.</div>
+      </div>
+      <div class="kitchen-card">
+        <div class="kitchen-card-title">Fresh Meals Without Weekly Meal Prep</div>
+        <div class="kitchen-card-body">No Sunday containers. No planning sessions. The plan is already built and already in the kitchen. Open the app, see the week, start cooking. Every portion is calculated and every ingredient is measured.</div>
+      </div>
+    </div>
+
+    <!-- iPad Kitchen View — full-width hero screenshot -->
+    <div class="screenshot-full reveal">
+      <img src="Ipad_grid.png" alt="David's Weekly Meal Plan on iPad — Loftin Method Kitchen View" loading="lazy">
+    </div>
+
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- THREE MEALS -->
+<section id="meals">
+  <div class="section-wrap">
+    <div class="s-rule reveal"></div>
+    <div class="s-eye reveal">The meal structure</div>
+    <h2 class="s-title reveal">Three meals.<br><em>Each one intentional.</em></h2>
+    <p class="s-sub reveal">
+      Not six Tupperware containers eaten alone at a desk. A meal structure designed around how a real day actually unfolds — and what matters most at the end of it.
+    </p>
+    <div class="meals-grid reveal">
+      <div class="meal-card">
+        <div class="meal-num">First Meal</div>
+        <div class="meal-label">Quiet the hunger. Protect the focus.</div>
+        <div class="meal-title">Simple. Structured. Out of the way.</div>
+        <div class="meal-body">A light, structured first meal designed to eliminate hunger and keep your energy stable through the busiest part of your day. Not a feast — a function. So you stop thinking about food and get on with your life.</div>
+      </div>
+      <div class="meal-card center">
+        <div class="meal-num">Main Meal</div>
+        <div class="meal-label">Dinner is where life happens.</div>
+        <div class="meal-title">Your largest meal is placed where it belongs.</div>
+        <div class="meal-body">The main meal lands at the end of the day — intentionally. Because that's when families sit down, restaurants happen, and real connection takes place. You shouldn't have to choose between getting in shape and sharing a table with the people you love.</div>
+      </div>
+      <div class="meal-card">
+        <div class="meal-num">Final Meal</div>
+        <div class="meal-label">End the day satisfied.</div>
+        <div class="meal-title">Something to look forward to.</div>
+        <div class="meal-body">A sweet, simple final meal that closes the day on a good note. Not a cheat. Not a compromise. A ritual that makes the plan feel sustainable — the kind of moment worth sharing with someone.</div>
+      </div>
+    </div>
+
+    <!-- Main Meal feature screenshot -->
+    <div class="feature-split rev reveal">
+      <img src="Main_Meal.png" alt="Loftin Method main meal card — Beef and Potatoes with recipe steps" loading="lazy">
+      <div class="feature-split-text">
+        <div class="fs-eye">What a meal card looks like</div>
+        <h3 class="fs-title">Exact portions. Macro breakdown. Step-by-step instructions.</h3>
+        <p class="fs-body">Every meal opens into exact ingredient weights, a full protein/carb/fat breakdown, and numbered cooking steps. Swap it for something different, skip it, or log what you actually ate. The daily target stays on track either way.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SPECIAL DAYS -->
+<section id="special-days" style="background:var(--bg2)">
+  <div class="section-wrap">
+    <div class="s-rule reveal"></div>
+    <div class="s-eye reveal">Real life happens</div>
+    <h2 class="s-title reveal">Enjoy the birthday.<br>Take the vacation.<br><em>Come back to the routine.</em></h2>
+    <p class="s-sub reveal" style="max-width:580px">
+      Birthdays, holidays, vacations, weddings, restaurants, and weekends are not failures. They are part of life. <strong>Loftin Method gives you a consistent daily structure so special moments don't turn into permanent setbacks.</strong> Enjoy the day, enjoy the people, enjoy the food — then return to the routine that was already working.
+    </p>
+    <p class="s-sub reveal" style="max-width:580px;margin-top:-24px">
+      A few extra pounds after a holiday weekend disappear within days once the routine resumes. That's not luck — that's what happens when a structured daily habit becomes your baseline. The exception doesn't erase the foundation.
+    </p>
+    <div class="special-tags reveal">
+      <div class="special-tag">Birthday parties</div>
+      <div class="special-tag">Holiday dinners</div>
+      <div class="special-tag">Vacations</div>
+      <div class="special-tag">Weddings</div>
+      <div class="special-tag">Anniversaries</div>
+      <div class="special-tag">Weekends away</div>
+      <div class="special-tag">Date nights</div>
+      <div class="special-tag">Family gatherings</div>
+      <div class="special-tag">Restaurants</div>
     </div>
   </div>
 </section>
@@ -353,37 +430,55 @@ footer{padding:28px 24px;border-top:1px solid var(--gold-line)}
     <div class="s-rule reveal"></div>
     <div class="s-eye reveal">Simple by design</div>
     <h2 class="s-title reveal">How it works</h2>
-    <p class="s-sub reveal">Four steps. No app store. Works on any iPhone, right now.</p>
+    <p class="s-sub reveal">Five steps. No app store. Works on any iPhone, right now.</p>
     <div class="steps reveal">
       <div class="step">
         <div class="step-n">01</div>
         <div class="step-body">
-          <div class="step-t">Tell the system about you</div>
-          <div class="step-d">Height, weight, age, goal weight. 60 seconds. Every calculation — calories, protein, steps, phases — runs from there.</div>
+          <div class="step-t">Enter your body and your goal</div>
+          <div class="step-d">Height, weight, age, and goal weight. Sixty seconds. Every calculation — calories, protein, steps, and phases — runs from that input. The system does the math so you never have to.</div>
         </div>
       </div>
       <div class="step">
         <div class="step-n">02</div>
         <div class="step-body">
           <div class="step-t">Get your daily plan</div>
-          <div class="step-d">Exact meals. Exact weights in grams. Exact step target. A complete day built for your body, updated every morning.</div>
+          <div class="step-d">Exact meals with exact weights in grams. Exact step target. A complete day built for your body, ready every morning without any manual setup.</div>
         </div>
       </div>
       <div class="step">
         <div class="step-n">03</div>
         <div class="step-body">
-          <div class="step-t">Eating out? Handled.</div>
-          <div class="step-d">The system knows your current meal slot, your calorie budget, and your protein rotation. Type your location and get an actual recommendation — not a guess.</div>
+          <div class="step-t">Cook from the plan — or use Kitchen View</div>
+          <div class="step-d">Follow meals on your iPhone or open the Kitchen View on your iPad. Tap any meal to see exact ingredients and cooking instructions. The household sees the same plan you built.</div>
         </div>
       </div>
       <div class="step">
         <div class="step-n">04</div>
         <div class="step-body">
-          <div class="step-t">Log your weight. Watch it adapt.</div>
-          <div class="step-d">Each weigh-in recalculates your phase. Calories and steps adjust quietly as you get closer to goal. No manual tweaking. No thinking required.</div>
+          <div class="step-t">Adjust for real life</div>
+          <div class="step-d">Going out? The system knows your budget and suggests what to order. Night out? Meals scale down, steps scale up. Swapping a meal or choosing from your fridge? Handled. Nothing derails the plan.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">05</div>
+        <div class="step-body">
+          <div class="step-t">Log your weight and let the system recalculate</div>
+          <div class="step-d">Each weigh-in moves the system to the right phase. Calories and steps adjust automatically as you get closer to goal. No manual tweaking required.</div>
         </div>
       </div>
     </div>
+
+    <!-- Restaurant feature screenshot -->
+    <div class="feature-split reveal">
+      <img src="Restaurant.png" alt="Loftin Method restaurant recommendation — best match order this" loading="lazy">
+      <div class="feature-split-text">
+        <div class="fs-eye">Going out tonight?</div>
+        <h3 class="fs-title">Best match — order this.</h3>
+        <p class="fs-body">Tell the app what kind of restaurant. It builds a complete order — protein source, sides, how to customize it — with the calorie total already calculated and specific instructions for how to place the order. Eat out without guessing, tracking, or starting over.</p>
+      </div>
+    </div>
+
   </div>
 </section>
 
@@ -394,38 +489,30 @@ footer{padding:28px 24px;border-top:1px solid var(--gold-line)}
   <div class="section-wrap">
     <div class="s-rule reveal"></div>
     <div class="s-eye reveal">Who this is for</div>
-    <h2 class="s-title reveal">Built for people who<br><em>follow through.</em></h2>
-    <p class="s-sub reveal">If you want a sustainable system that fits around a real job, a real family, and real weekends — this is it.</p>
+    <h2 class="s-title reveal">Built for households<br><em>with real lives.</em></h2>
+    <p class="s-sub reveal">Adults, couples, and families who want a plan they can actually follow — not a challenge to survive.</p>
     <div class="who-grid">
       <div class="who-card reveal">
         <div class="who-label yes">This is for you if</div>
         <ul class="who-items">
-          <li class="who-item"><div class="who-dot yes"></div>You're done with fad programs that don't fit real life</li>
-          <li class="who-item"><div class="who-dot yes"></div>You want fat loss that survives real life — kids, work, weekends</li>
-          <li class="who-item"><div class="who-dot yes"></div>You're willing to weigh your food and trust the math</li>
-          <li class="who-item"><div class="who-dot yes"></div>You want a system that tells you exactly what to do</li>
-          <li class="who-item"><div class="who-dot yes"></div>You don't need a gym — just your feet and a kitchen scale</li>
+          <li class="who-item"><div class="who-dot yes"></div>You have a real job, a real household, and a real social life — and you're done pretending those things don't exist</li>
+          <li class="who-item"><div class="who-dot yes"></div>You or your spouse want the plan visible in the kitchen without printing anything or sending meal photos</li>
+          <li class="who-item"><div class="who-dot yes"></div>You want to look better and feel better without giving up dinner, weekends, or the people you spend them with</li>
+          <li class="who-item"><div class="who-dot yes"></div>You're tired of starting over every time life happens — and you want a routine strong enough to come back to</li>
         </ul>
       </div>
       <div class="who-card reveal reveal-d1">
-        <div class="who-label no">This isn't for you if</div>
+        <div class="who-label no">This probably isn't for you if</div>
         <ul class="who-items">
-          <li class="who-item"><div class="who-dot no"></div>You want a quick fix or a 30-day challenge</li>
-          <li class="who-item"><div class="who-dot no"></div>You're not willing to track what you eat</li>
-          <li class="who-item"><div class="who-dot no"></div>You want a supplement stack or meal delivery service</li>
-          <li class="who-item"><div class="who-dot no"></div>You expect results without consistency</li>
-          <li class="who-item"><div class="who-dot no"></div>You need entertainment — this system is quiet</li>
+          <li class="who-item"><div class="who-dot no"></div>You're looking for a 30-day challenge or a transformation that ends when the timer does</li>
+          <li class="who-item"><div class="who-dot no"></div>You want hype, constant motivation, and entertainment to stay consistent</li>
+          <li class="who-item"><div class="who-dot no"></div>You want results without building any kind of daily routine</li>
+          <li class="who-item"><div class="who-dot no"></div>You'd prefer supplements, meal kits, or someone else to handle the thinking</li>
         </ul>
       </div>
     </div>
   </div>
 </section>
-
-
-
-<div class="divider"></div>
-
-<!-- WAITLIST -->
 
 <div class="divider"></div>
 
@@ -434,13 +521,12 @@ footer{padding:28px 24px;border-top:1px solid var(--gold-line)}
   <div class="final-glow"></div>
   <div class="final-rule reveal"></div>
   <div class="final-eye reveal">Ready to start</div>
-  <h2 class="final-h reveal">The system is<br><em>already built.</em></h2>
-  <p class="final-sub reveal">Quiet system. Visible standard.</p>
-  <a href="app.html" class="final-btn reveal">Start the Method →</a>
+  <h2 class="final-h reveal">Build a routine your<br>household can <em>actually follow.</em></h2>
+  <p class="final-sub reveal">Start with your plan, follow it from the kitchen, adjust when life changes, and keep coming back to the routine.</p>
+  <a href="app.html" class="final-btn reveal">Build My Plan →</a>
   <span class="final-note reveal">Free to use · No signup required · Works on iPhone</span>
 </section>
 
-<!-- FOOTER -->
 <footer>
   <div class="footer-inner">
     <div class="footer-logo">Loftin Method</div>
@@ -455,7 +541,6 @@ footer{padding:28px 24px;border-top:1px solid var(--gold-line)}
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
 <script>
-// Scroll reveal
 var els=document.querySelectorAll('.reveal');
 var obs=new IntersectionObserver(function(entries){
   entries.forEach(function(e){
@@ -463,9 +548,6 @@ var obs=new IntersectionObserver(function(entries){
   });
 },{threshold:0.1});
 els.forEach(function(el){obs.observe(el);});
-
-// Waitlist submit
-
 </script>
 </body>
 </html>

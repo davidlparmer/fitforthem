@@ -945,7 +945,7 @@ if('serviceWorker' in navigator){
      Internal keys: first | dinner | dessert (unchanged)
      Public labels: First Meal | Main Meal | Final Meal
 ──────────────────────────────────────────────────────────────-->
-<div id="weekly-grid-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:#071A2D;overflow:auto;-webkit-overflow-scrolling:touch">
+<div id="weekly-grid-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:var(--bg);overflow:auto;-webkit-overflow-scrolling:touch">
 
   <!-- Premium header bar -->
   <div style="position:sticky;top:0;z-index:2;background:var(--bg);
@@ -981,17 +981,21 @@ if('serviceWorker' in navigator){
     </div>
   </div>
 
-  <!-- Grid container — CSS grid layout, no table -->
-  <div style="padding:14px 20px 0">
-    <div style="border-radius:16px;overflow:hidden;border:1px solid rgba(140,180,220,.22)">
-      <div id="weekly-grid-head" style="background:#0A1F36"></div>
-      <div id="weekly-grid-body"></div>
+  <!-- Grid container -->
+  <div style="padding:16px 20px 12px">
+    <!-- Day header — sits above the bordered grid, not inside it -->
+    <div id="weekly-grid-head" style="min-width:700px"></div>
+    <!-- Meal grid — rounded border contains only the meal rows -->
+    <div style="border-radius:14px;overflow:hidden;border:1px solid rgba(103,232,249,.12)">
+      <table id="weekly-grid-table" style="width:100%;border-collapse:collapse;table-layout:fixed;min-width:700px">
+        <tbody id="weekly-grid-body"></tbody>
+      </table>
     </div>
   </div>
 
   <!-- Bottom hint bar -->
-  <div style="position:sticky;bottom:0;z-index:2;background:#071A2D;text-align:center;padding:13px 24px;font-family:var(--font-body)">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#F5E6A8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;position:relative;top:-1px"><path d="M9 21h6"/><path d="M9 18h6"/><path d="M8 14c-2-1.5-3-4-3-6a7 7 0 0 1 14 0c0 2-1 4.5-3 6l-1 2H9l-1-2z"/></svg><span style="font-size:.68rem;letter-spacing:.1em;color:#90A1B4">Tap any meal to view details.</span>
+  <div style="position:sticky;bottom:0;z-index:2;background:var(--bg);text-align:center;padding:12px 24px;color:rgba(103,232,249,.35);font-size:.68rem;letter-spacing:.1em;font-family:var(--font-body)">
+    &#128161;&nbsp; Tap any meal to view details.
   </div>
 
   <!-- Meal swap modal — lives inside overlay -->

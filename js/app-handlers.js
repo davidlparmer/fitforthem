@@ -183,14 +183,7 @@ function renderWeeklyGrid() {
       var _mon = new Date(_now); _mon.setDate(_now.getDate() + _offset);
       var _months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
       var _weekStr = _months[_mon.getMonth()] + ' ' + _mon.getDate();
-      var _chkSvg = '<svg width="13" height="13" viewBox="0 0 14 14" ' +
-        'style="vertical-align:middle;margin-right:5px;position:relative;top:-1px">' +
-        '<circle cx="7" cy="7" r="7" fill="#22C55E"/>' +
-        '<polyline points="3.5,7 5.8,9.5 10.5,4.5" fill="none" stroke="white" ' +
-        'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>' +
-        '</svg>';
-      _syncEl.style.color = '#A9B8C8';
-      _syncEl.innerHTML = _chkSvg + 'Synced from iPhone&nbsp;&nbsp;&middot;&nbsp;&nbsp;Week of ' + _weekStr;
+      _syncEl.innerHTML = '&#10003;&nbsp; Synced from iPhone &nbsp;&middot;&nbsp; Week of ' + _weekStr;
     }
   } catch(e) {}
 
@@ -266,117 +259,113 @@ function renderWeeklyGrid() {
     { key: 'dessert', label: 'Final Meal' }
   ];
 
-  // ── PREMIUM COLOR SYSTEM ──────────────────────────────────────
-  var _C = {
-    bgA:     '#0B223B',            // row 1
-    bgB:     '#102947',            // row 2 (alt)
-    div:     'rgba(140,180,220,.16)', // internal dividers
-    tPri:    '#F4F7FB',            // primary text
-    tSec:    '#A9B8C8',            // secondary text
-    tMuted:  '#90A1B4',            // muted helper
-    cyan:    '#35C8FF',            // main accent
-    cyanSft: '#69D7FF',            // softer cyan
-    col:     '100px repeat(7,1fr)' // grid template
-  };
-
-  // ── ICONS (cyan family, consistent 1.5 stroke) ────────────────
-  function _ico(stroke, pathData) {
-    return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" ' +
-      'stroke="' + stroke + '" stroke-width="1.5" stroke-linecap="round" ' +
-      'stroke-linejoin="round">' + pathData + '</svg>';
-  }
-  var _icons = {
-    first: _ico(_C.cyan,
-      '<circle cx="12" cy="12" r="4"/>' +
-      '<line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/>' +
-      '<line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/>' +
-      '<line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/>' +
-      '<line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/>' +
-      '<line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/>' +
-      '<line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/>'),
-    dinner: _ico(_C.cyan,
-      '<path d="M3 17h18"/><path d="M12 3C7.5 3 4 8 4 13h16c0-5-3.5-10-8-10z"/>'),
-    dessert: _ico(_C.cyan,
-      '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>')
-  };
-
-  // ── HEADER ROW (inside outer card, above the grid lines) ──────
-  var _tdow = new Date().getDay();
-  var _tpIdx = _tdow === 0 ? 6 : _tdow - 1;
-
+  // ── HEADER ROW ──────────────────────────────────────────────
+  // ── HEADER ROW — day names with drink-day pill badges ───────
+  var _todayDow = new Date().getDay(); // 0=Sun
+  var _todayPlanIdx = _todayDow === 0 ? 6 : _todayDow - 1; // Mon=0
+  // Day header rendered as a CSS grid div — sits above the bordered meal grid.
+  // grid-template-columns matches the table's table-layout:fixed 100px first column
+  // so day labels align precisely with the meal cells below.
   var headHTML =
-    '<div style="display:grid;grid-template-columns:' + _C.col + ';' +
-    'padding:14px 0 12px;border-bottom:1px solid rgba(140,180,220,.15)">';
+    '<div style="display:grid;grid-template-columns:100px repeat(7,1fr);' +
+    'padding:0 0 12px">';
 
-  // Empty corner cell (aligns with label column)
+  // Empty corner cell (lines up with the meal-label column)
   headHTML += '<div></div>';
 
   days.forEach(function(day, idx) {
-    var isToday   = idx === _tpIdx;
-    var drinkLvl  = drinkingDays && drinkingDays[idx];
-    var dayClr    = isToday ? _C.cyanSft : _C.tPri;
+    var activeDrink = drinkingDays && drinkingDays[idx];
+    var _dlabels = { light: 'Light', regular: 'Regular', big: 'Big Night' };
+    var isToday = idx === _todayPlanIdx;
+    var dayColor = isToday ? 'var(--gold-light)' : 'var(--t1)';
 
-    // Today indicator dot
-    var dot = isToday
-      ? '<div style="width:4px;height:4px;border-radius:50%;background:' + _C.cyanSft +
-          ';margin:0 auto 6px"></div>'
-      : '<div style="height:10px"></div>';
+    // Today dot
+    var todayDot = isToday
+      ? '<div style="width:4px;height:4px;border-radius:50%;background:var(--gold-light);' +
+          'margin:0 auto 4px"></div>'
+      : '<div style="height:8px"></div>';
 
-    // Drinks pill — ONLY on drinking days, one uniform style
-    var pill = drinkLvl
+    // Drinks pill — only on drinking days, no placeholder on clean days
+    var pillHTML = activeDrink
       ? '<div style="margin-top:7px">' +
-          '<span style="padding:3px 12px;border-radius:20px;font-size:.58rem;' +
-          'font-weight:600;letter-spacing:.06em;background:rgba(53,200,255,.10);' +
-          'border:1px solid rgba(53,200,255,.26);color:#69D7FF">' +
-          'Drinks</span></div>'
-      : '<div style="height:24px;margin-top:7px"></div>';
+          '<span style="padding:3px 11px;border-radius:20px;font-size:.58rem;' +
+          'font-weight:600;letter-spacing:.06em;background:rgba(0,212,255,.1);' +
+          'border:1px solid rgba(103,232,249,.22);color:var(--gold-light);' +
+          'display:inline-block">' + (_dlabels[activeDrink] || 'Drinks') + '</span>' +
+          '</div>'
+      : '';
 
     headHTML +=
-      '<div style="text-align:center;padding:0 4px">' +
-      dot +
-      '<div style="font-size:.84rem;font-weight:700;color:' + dayClr + '">' + day + '</div>' +
-      pill +
+      '<div style="text-align:center;padding:4px 8px">' +
+      todayDot +
+      '<div style="font-size:.82rem;font-weight:700;color:' + dayColor + '">' + day + '</div>' +
+      pillHTML +
       '</div>';
   });
+
   headHTML += '</div>';
   document.getElementById('weekly-grid-head').innerHTML = headHTML;
 
-  // ── MEAL ROWS (CSS grid, starts below the header band) ────────
+  // ── BODY ROWS ───────────────────────────────────────────────
   var bodyHTML = '';
-
   slots.forEach(function(slot, sIdx) {
-    var isMain    = slot.key === 'dinner';
-    var rowBg     = sIdx % 2 === 0 ? _C.bgA : _C.bgB;
-    var isLastRow = sIdx === slots.length - 1;
+    var isMain = slot.key === 'dinner';
+    var rowBg = sIdx % 2 === 0
+      ? 'background:rgba(255,255,255,.02)'
+      : 'background:rgba(0,0,0,.08)';
+    bodyHTML += '<tr>';
 
-    var rowHTML =
-      '<div style="display:grid;grid-template-columns:' + _C.col + ';background:' + rowBg + '">';
+    var _slotIcons = {
+      first:
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" ' +
+        'stroke="rgba(255,255,255,.65)" stroke-width="1.5" stroke-linecap="round">' +
+        '<circle cx="12" cy="12" r="4"/>' +
+        '<line x1="12" y1="2" x2="12" y2="5"/>' +
+        '<line x1="12" y1="19" x2="12" y2="22"/>' +
+        '<line x1="2" y1="12" x2="5" y2="12"/>' +
+        '<line x1="19" y1="12" x2="22" y2="12"/>' +
+        '<line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/>' +
+        '<line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/>' +
+        '<line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/>' +
+        '<line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/>' +
+        '</svg>',
+      dinner:
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" ' +
+        'stroke="rgba(255,255,255,.65)" stroke-width="1.5" stroke-linecap="round">' +
+        '<path d="M3 17h18"/>' +
+        '<path d="M12 3C7.5 3 4 8 4 13h16c0-5-3.5-10-8-10z"/>' +
+        '</svg>',
+      dessert:
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" ' +
+        'stroke="rgba(255,255,255,.65)" stroke-width="1.5" stroke-linecap="round">' +
+        '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>' +
+        '</svg>'
+    };
+    bodyHTML += '<td style="' + tdBase() + rowBg +
+      ';text-align:center;vertical-align:middle;padding:18px 8px;width:100px">' +
+      '<div style="display:flex;flex-direction:column;align-items:center;gap:6px">' +
+        (_slotIcons[slot.key] || '') +
+        '<div style="font-size:.7rem;font-weight:700;color:var(--t1);' +
+          'font-family:var(--font-body);letter-spacing:.04em;line-height:1.2">' +
+          slot.label + '</div>' +
+      '</div></td>';
 
-    // ── Label cell ──────────────────────────────────────────────
-    rowHTML +=
-      '<div style="text-align:center;padding:20px 8px;' +
-      'border-right:1px solid ' + _C.div + ';' +
-      'display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px">' +
-      (_icons[slot.key] || '') +
-      '<div style="font-size:.7rem;font-weight:700;color:' + _C.tPri + ';' +
-      'letter-spacing:.04em;line-height:1.2">' + slot.label + '</div>' +
-      '</div>';
-
-    // ── Day cells ───────────────────────────────────────────────
     days.forEach(function(day, dIdx) {
-      var isLastCol = dIdx === days.length - 1;
-      var dayPlan   = plan[dIdx] || {};
-      var permPref  = !isMain && mealPrefs && mealPrefs[dIdx] && mealPrefs[dIdx][slot.key];
+      var dayPlan = plan[dIdx] || {};
+      var permPref = !isMain && mealPrefs && mealPrefs[dIdx] && mealPrefs[dIdx][slot.key];
       var slotData;
       var isThemed = false;
-      var slotCustom;
 
       if (isMain && typeof getResolvedDinner === 'function') {
         var rd = getResolvedDinner(dIdx);
         slotData = rd ? { i: rd.i, c: rd.c } : (dayPlan[slot.key] || {});
         isThemed = rd && rd.source === 'theme';
       } else {
-        slotCustom = (customMeals || []).filter(function(m) {
+        // First/dessert: mirror getResolvedDinner's priority chain.
+        // Check today-only customMeals first, then permanent mealPrefs, then template.
+        // Previously only mealPrefs was checked — today-only swaps for first/dessert
+        // went into customMeals and were never found, so the grid showed the template.
+        var slotCustom = (customMeals || []).filter(function(m) {
           return m.day === dIdx && m.slot === slot.key;
         })[0];
         if (slotCustom) {
@@ -393,75 +382,78 @@ function renderWeeklyGrid() {
         }
       }
 
-      var rawIngredients    = slotData.i || [];
+      var rawIngredients = slotData.i || [];
       var scaledIngredients = _scaleGridIngredients(rawIngredients, daySlotScales[dIdx][slot.key]);
-      var isSwapped         = !!permPref && !!permPref.cal && !isMain;
 
+      var isSwapped = !!permPref && !!permPref.cal && !isMain;
       var cellContent = scaledIngredients.map(function(ing) {
-        return '<div style="display:flex;align-items:baseline;gap:5px;padding:2px 0">' +
-          '<span style="color:rgba(53,200,255,.28);font-size:.58rem;flex-shrink:0">&bull;</span>' +
-          '<span style="font-size:.76rem;color:' + _C.tPri + ';line-height:1.45">' + ing + '</span>' +
-          '</div>';
+        return '<div style="font-size:.75rem;color:var(--t1);padding:2px 0;line-height:1.45;' +
+          'display:flex;align-items:baseline;gap:5px">' +
+          '<span style="color:rgba(103,232,249,.3);font-size:.6rem;flex-shrink:0">&bull;</span>' +
+          '<span>' + ing + '</span></div>';
       }).join('');
-
       if (isSwapped) {
-        cellContent +=
-          '<div style="font-size:.55rem;color:' + _C.cyan + ';margin-top:4px;' +
+        cellContent += '<div style="font-size:.55rem;color:var(--gold);margin-top:4px;' +
           'letter-spacing:.06em;text-transform:uppercase;opacity:.7">Custom</div>';
       }
       if (isThemed) {
-        cellContent +=
-          '<div style="font-size:.55rem;color:' + _C.cyan + ';margin-top:4px;' +
+        cellContent += '<div style="font-size:.55rem;color:var(--gold);margin-top:4px;' +
           'letter-spacing:.06em;text-transform:uppercase;opacity:.8">Dinner Family</div>';
       }
 
-      var bdrRight = isLastCol ? '' : 'border-right:1px solid ' + _C.div + ';';
-      var cellPad  = 'padding:12px 10px;vertical-align:top;';
+      var cellStyle = tdBase() + rowBg + ';vertical-align:top';
+      var innerStyle = 'padding:10px 8px;border-radius:8px;min-height:80px';
 
-      if (window.FFT_IS_IPAD) {
-        var _rk = '', _rn = '';
-        if (isMain) {
-          _rk = (mealPrefs&&mealPrefs[dIdx]&&mealPrefs[dIdx].dinner&&mealPrefs[dIdx].dinner.key)
-                ? mealPrefs[dIdx].dinner.key
-                : (dayPlan.dinner&&dayPlan.dinner.k ? dayPlan.dinner.k : '');
-          _rn = (mealPrefs&&mealPrefs[dIdx]&&mealPrefs[dIdx].dinner&&mealPrefs[dIdx].dinner.name)
-                ? mealPrefs[dIdx].dinner.name
-                : (dayPlan.dinner&&dayPlan.dinner.n ? dayPlan.dinner.n : 'Main Meal');
+      if (isMain) {
+        if (window.FFT_IS_IPAD) {
+          // Derive dinner key: mealPref → template
+          var _dk = (mealPrefs&&mealPrefs[dIdx]&&mealPrefs[dIdx].dinner&&mealPrefs[dIdx].dinner.key)
+                    ? mealPrefs[dIdx].dinner.key
+                    : (dayPlan.dinner&&dayPlan.dinner.k ? dayPlan.dinner.k : '');
+          var _dn = (mealPrefs&&mealPrefs[dIdx]&&mealPrefs[dIdx].dinner&&mealPrefs[dIdx].dinner.name)
+                    ? mealPrefs[dIdx].dinner.name
+                    : (dayPlan.dinner&&dayPlan.dinner.n ? dayPlan.dinner.n : 'Dinner');
+          bodyHTML += '<td style="' + cellStyle + ';cursor:pointer">' +
+            '<div style="' + innerStyle + '" ' +
+            'data-recipe-key="' + _dk + '" ' +
+            'data-recipe-name="' + _dn.replace(/"/g,"'") + '" ' +
+            'onclick="openMealRecipe(this)">' + cellContent + '</div>' +
+            '</td>';
         } else {
-          _rk = slotCustom ? (slotCustom.mealKey || slotCustom.key || '')
-              : permPref   ? (permPref.key || '')
-              : (dayPlan[slot.key] && dayPlan[slot.key].k || '');
-          _rn = slotCustom ? (slotCustom.name || slot.label)
-              : permPref   ? (permPref.name || slot.label)
-              : (dayPlan[slot.key] && dayPlan[slot.key].n || slot.label);
+          cellStyle += ';cursor:pointer';
+          innerStyle += ';border:1px solid transparent;transition:border-color .15s';
+          bodyHTML += '<td style="' + cellStyle + '" onclick="showMealSwap(' + dIdx + ',\'dinner\')">' +
+            '<div style="' + innerStyle + '" class="wg-dinner-cell">' +
+            cellContent +
+            '<div style="font-size:.58rem;color:var(--t3);margin-top:6px;' +
+              'letter-spacing:.06em;text-transform:uppercase">Tap to swap</div>' +
+            '</div></td>';
         }
-        rowHTML +=
-          '<div style="' + cellPad + bdrRight + 'cursor:pointer" ' +
-          'data-recipe-key="' + _rk + '" ' +
-          'data-recipe-name="' + _rn.replace(/"/g,"'") + '" ' +
-          'onclick="openMealRecipe(this)">' + cellContent + '</div>';
       } else {
-        if (isMain) {
-          rowHTML +=
-            '<div style="' + cellPad + bdrRight + 'cursor:pointer" ' +
-            'onclick="showMealSwap(' + dIdx + ',\'dinner\')">' +
-            '<div class="wg-dinner-cell">' + cellContent +
-            '<div style="font-size:.58rem;color:' + _C.tMuted + ';margin-top:6px;' +
-            'letter-spacing:.06em;text-transform:uppercase">Tap to swap</div>' +
-            '</div></div>';
+        if (window.FFT_IS_IPAD) {
+          // Derive key: customMeal → mealPref → template
+          var _fk = slotCustom ? (slotCustom.mealKey || slotCustom.key || '')
+                  : permPref   ? (permPref.key || '')
+                  : (dayPlan[slot.key] && dayPlan[slot.key].k || '');
+          var _fn = slotCustom ? (slotCustom.name || slot.label)
+                  : permPref   ? (permPref.name || slot.label)
+                  : (dayPlan[slot.key] && dayPlan[slot.key].n || slot.label);
+          bodyHTML += '<td style="' + cellStyle + ';cursor:pointer">' +
+            '<div style="' + innerStyle + '" ' +
+            'data-recipe-key="' + _fk + '" ' +
+            'data-recipe-name="' + _fn.replace(/"/g,"'") + '" ' +
+            'onclick="openMealRecipe(this)">' + cellContent + '</div>' +
+            '</td>';
         } else {
-          rowHTML += '<div style="' + cellPad + bdrRight + '">' + cellContent + '</div>';
+          bodyHTML += '<td style="' + cellStyle + '">' +
+            '<div style="' + innerStyle + '">' + cellContent + '</div>' +
+            '</td>';
         }
       }
     });
 
-    rowHTML += '</div>';
-    if (!isLastRow) {
-      rowHTML += '<div style="height:1px;background:' + _C.div + '"></div>';
-    }
-    bodyHTML += rowHTML;
+    bodyHTML += '</tr>';
   });
-
   document.getElementById('weekly-grid-body').innerHTML = bodyHTML;
 }
 

@@ -309,7 +309,7 @@ function renderWeeklyGrid() {
     var _slotIcons = {
       first:
         '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" ' +
-        'stroke="rgba(103,232,249,.55)" stroke-width="1.5" stroke-linecap="round">' +
+        'stroke="rgba(255,255,255,.65)" stroke-width="1.5" stroke-linecap="round">' +
         '<circle cx="12" cy="12" r="4"/>' +
         '<line x1="12" y1="2" x2="12" y2="5"/>' +
         '<line x1="12" y1="19" x2="12" y2="22"/>' +
@@ -322,13 +322,13 @@ function renderWeeklyGrid() {
         '</svg>',
       dinner:
         '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" ' +
-        'stroke="rgba(103,232,249,.55)" stroke-width="1.5" stroke-linecap="round">' +
+        'stroke="rgba(255,255,255,.65)" stroke-width="1.5" stroke-linecap="round">' +
         '<path d="M3 17h18"/>' +
         '<path d="M12 3C7.5 3 4 8 4 13h16c0-5-3.5-10-8-10z"/>' +
         '</svg>',
       dessert:
         '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" ' +
-        'stroke="rgba(103,232,249,.55)" stroke-width="1.5" stroke-linecap="round">' +
+        'stroke="rgba(255,255,255,.65)" stroke-width="1.5" stroke-linecap="round">' +
         '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>' +
         '</svg>'
     };
@@ -336,7 +336,7 @@ function renderWeeklyGrid() {
       ';text-align:center;vertical-align:middle;padding:18px 8px;width:100px">' +
       '<div style="display:flex;flex-direction:column;align-items:center;gap:6px">' +
         (_slotIcons[slot.key] || '') +
-        '<div style="font-size:.7rem;font-weight:700;color:var(--t2);' +
+        '<div style="font-size:.7rem;font-weight:700;color:var(--t1);' +
           'font-family:var(--font-body);letter-spacing:.04em;line-height:1.2">' +
           slot.label + '</div>' +
       '</div></td>';
